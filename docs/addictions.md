@@ -2,12 +2,13 @@
 
 ## Active Targets
 
-**Quit Date: January 24, 2025 (Day 0) - RESET**
+**Quit Date: February 1, 2025 (Day 0) - RESET**
 
 | Substance/Behavior | Status | Quit Date | Goal | End Date |
 |-------------------|--------|-----------|------|----------|
-| League of Legends | Day 0 | Jan 24 | 90 days | Apr 24 |
-| Weed | Day 0 | Jan 24 | 90 days | Apr 24 |
+| League of Legends | Day 0 | Feb 1 | 90 days | May 2 |
+| Weed | Day 0 | Feb 1 | 90 days | May 2 |
+| Poker | Day 0 | Feb 1 | 90 days | May 2 |
 
 ---
 
@@ -199,9 +200,27 @@ WEEK 4+ (what you're fighting for):
 
 ---
 
+## Triggers Log
+
+| Date | Trigger | Led To | Pattern |
+|------|---------|--------|---------|
+| Jan 31 | Lost poker tournament → late hangout with friends | All three (LoL, weed, poker) | Loss + social + late night |
+
+**Known Trigger Patterns:**
+| Trigger | Risk Level | Counter |
+|---------|------------|---------|
+| Losing (poker/games) | HIGH | Loss = dopamine crash → brain seeks hit. Leave immediately after loss. |
+| Late night + friends | HIGH | **AVOID for now.** When unavoidable: come home, go to sleep. No "one more." |
+| Boredom, evening | MEDIUM | Pre-plan evening activity |
+| Stress/anxiety | MEDIUM | Walk, cold water, pushups |
+
+---
+
 ## Log
 
-| Date | Day # | LoL | Weed | Notes |
-|------|-------|-----|------|-------|
-| Jan 17 | 0 | ✓ | ✗ | Relapsed 12:38pm. Reset. Flight in 1hr. |
-| Jan 24 | 0 | ✓ | ✗ | Back in Houston. Throwing out gear. Starting workout. RESET. |
+| Date | Day # | LoL | Weed | Poker | Notes |
+|------|-------|-----|------|-------|-------|
+| Jan 17 | 0 | ✓ | ✗ | - | Relapsed 12:38pm. Reset. Flight in 1hr. |
+| Jan 24 | 0 | ✓ | ✗ | - | Back in Houston. Throwing out gear. Starting workout. RESET. |
+| Jan 31 | 0 | ✗ | ✗ | ✗ | Full relapse - all three. 7 day streak broken. |
+| Feb 1 | 0 | | | | RESET. New month, clean start. |
