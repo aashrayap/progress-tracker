@@ -25,9 +25,10 @@ interface Props {
   initialPlan: PlanItem[];
   initialTodos: Todo[];
   onClose: () => void;
+  onTodosChange?: (todos: Todo[]) => void;
 }
 
-export default function SchedulerModal({ initialPlan, initialTodos, onClose }: Props) {
+export default function SchedulerModal({ initialPlan, initialTodos, onClose, onTodosChange }: Props) {
   const [plan, setPlan] = useState<PlanItem[]>(initialPlan);
   const [todos, setTodos] = useState<Todo[]>(initialTodos);
   const today = new Date().toISOString().split("T")[0];
@@ -44,6 +45,10 @@ export default function SchedulerModal({ initialPlan, initialTodos, onClose }: P
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
   }, []);
+
+  useEffect(() => {
+    onTodosChange?.(todos);
+  }, [todos, onTodosChange]);
 
   const scheduledItems = plan.map((p) => p.item);
 
