@@ -1,6 +1,6 @@
 # Vision
 
-## 2025
+## 2026
 - Fit, healthy, confident at 200 lbs
 - Strong daily habits that run on autopilot
 - Clear mental energy from physical health

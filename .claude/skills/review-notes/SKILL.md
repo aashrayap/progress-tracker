@@ -15,14 +15,16 @@ Surface everything that happened in a time period across all tracking files.
 | log.csv | Rows with non-empty `notes` column + all `trigger`, `relapse`, `note` metric rows | `~/Documents/tracker/log.csv` |
 | plan.csv | Scheduled items (show done status) | `~/Documents/tracker/plan.csv` |
 | todos.csv | Tasks created in the period | `~/Documents/tracker/todos.csv` |
+| workouts.csv | Set-level gym data | `~/Documents/tracker/workouts.csv` |
 
 ## Schemas
 
 ```
-notes.csv:  date,note
-log.csv:    date,metric,value,notes
-plan.csv:   date,start,end,item,done,notes
-todos.csv:  id,item,done,created
+notes.csv:    date,note
+log.csv:      date,metric,value,notes
+plan.csv:     date,start,end,item,done,notes
+todos.csv:    id,item,done,created
+workouts.csv: date,workout,exercise,set,weight,reps,notes
 ```
 
 ## Commands
@@ -54,6 +56,7 @@ todos.csv:  id,item,done,created
 ├─ ⚠ trigger: [value] — [notes from log.csv]
 ├─ 🔴 relapse: [value] — [notes from log.csv]
 ├─ 📊 [metric]: [notes from log.csv]  (only rows with non-empty notes)
+├─ 🏋 [exercise]: [weight]×[reps] ×[sets]  (from workouts.csv)
 ├─ 📅 [start]-[end] [item] [✓/✗]  (from plan.csv)
 └─ ☐/☑ [todo item]  (from todos.csv, by created date)
 

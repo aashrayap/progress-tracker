@@ -1,6 +1,6 @@
 # Dopamine Reset
 
-**90 Days: Jan 24 → Apr 24**
+**90 Days: Jan 30 → Apr 30, 2026**
 
 ---
 
@@ -73,13 +73,12 @@ OLD LOOP:                     NEW LOOP:
 ─────────────────────────     ─────────────────────────
 Bored → LoL (5 hrs)           Bored → Gym / Walk / Book
 Stressed → Weed               Stressed → Sauna / Walk
-Evening → YouTube spiral      Evening → Cook / Read / Poker
+Evening → YouTube spiral      Evening → Cook / Read / Social
 Late night → Screens          Late night → Sleep earlier
 ```
 
 **Replacement Activities:**
 - Books (physical)
-- Poker
 - Walking
 - Social (in person)
 - Cooking

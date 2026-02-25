@@ -3,8 +3,8 @@
 ## Stats
 - Age: 30
 - Height: 6'0" (183 cm)
-- Current: 239 lbs (108 kg)
-- Goal: 200 lbs by Jun 1
+- Current: 245 lbs (111 kg)
+- Goal: 200 lbs by Jun 30
 
 ## BMR (Mifflin-St Jeor)
 

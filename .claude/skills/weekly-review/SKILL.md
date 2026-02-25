@@ -19,7 +19,8 @@ date,metric,value,notes
 
 | File | Purpose |
 |------|---------|
-| log.csv | Source of truth for all metrics |
+| log.csv | Source of truth for daily metrics |
+| workouts.csv | Set-level gym data (exercise, weight, reps) |
 | CLAUDE.md | Targets, pillars (always loaded) |
 | docs/vision.md | Why (for motivation check) |
 | docs/fitness.md | Weight goal context |

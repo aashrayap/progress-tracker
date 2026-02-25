@@ -2,7 +2,7 @@
 
 ## Active Targets
 
-**Quit Date: February 1, 2025 (Day 0) - RESET**
+**Quit Date: February 1, 2026 (Day 0) - RESET**
 
 | Substance/Behavior | Status | Quit Date | Goal | End Date |
 |-------------------|--------|-----------|------|----------|

@@ -1,22 +1,80 @@
 # Progress Tracker
 
-Personal life system: weight, addiction recovery, money, travel.
+Personal life system: weight, addiction recovery, fitness, money, travel.
 
 ## Architecture
 
 ```
-CLAUDE.md ◄── ALWAYS LOADED (summary of all pillars)
-    │
-log.csv ◄──── SOURCE OF TRUTH (all daily tracking)
-    │
-docs/ ◄─────── DEEP REFERENCE (protocols, science, details)
-    │
-.claude/skills/ ◄── BEHAVIORS (how Claude helps)
+┌─────────────────────────────────────────────────────────────┐
+│                     DATA LAYER (CSVs)                       │
+├─────────────┬──────────────┬──────────────┬────────────────┤
+│  log.csv    │  plan.csv    │  todos.csv   │  notes.csv     │
+│  daily      │  scheduled   │  task        │  freeform      │
+│  habits +   │  time blocks │  backlog     │  notes         │
+│  metrics    │              │              │                │
+├─────────────┴──────────────┴──────────────┴────────────────┤
+│  workouts.csv (planned — set-level gym data)               │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+         ┌───────────────┼───────────────┐
+         ▼               ▼               ▼
+   ┌──────────┐   ┌──────────┐   ┌──────────────┐
+   │ Next.js  │   │ Claude   │   │ Voice Inbox  │
+   │ App      │   │ CLI      │   │ Pipeline     │
+   │ (app/)   │   │ /log     │   │              │
+   │          │   │ /review  │   │ iOS Shortcut │
+   │ Reads    │   │ /weekly  │   │ → GH Issue   │
+   │ CSVs →   │   │          │   │ → voice-     │
+   │ web UI   │   │ Writes   │   │   inbox.sh   │
+   │          │   │ to CSVs  │   │ → Claude CLI │
+   └──────────┘   └──────────┘   │ → CSV write  │
+                                  └──────────────┘
+```
+
+### Voice Inbox Pipeline
+
+```
+Phone (iOS Shortcut)
+  │  dictate voice note
+  ▼
+GitHub Issue (title: "Voice: ...")
+  │  created on aashrayap/progress-tracker
+  ▼
+voice-inbox.sh (scripts/, runs via launchd every 5 min)
+  │  polls open issues, filters "Voice" titles
+  ▼
+Claude CLI (--print, bypassPermissions)
+  │  reads .claude/prompts/voice-inbox.md for instructions
+  │  parses voice note → determines log entry vs note
+  ▼
+CSV write (log.csv, notes.csv, workouts.csv)
+  │  git commit + push
+  ▼
+GitHub Issue closed with summary comment
+```
+
+This same pipeline handles workout logging at the gym — voice dictate sets/reps between exercises, each creates an issue, voice-inbox processes them.
+
+### Next.js App
+
+```
+app/
+├── app/
+│   ├── page.tsx          ← / (Hub)
+│   ├── plan/page.tsx     ← /plan (Calendar planner)
+│   ├── api/
+│   │   ├── log/route.ts  ← reads log.csv, computes dashboard data
+│   │   ├── plan/         ← CRUD for plan.csv
+│   │   └── todos/        ← CRUD for todos.csv
+│   ├── components/       ← YearView, MonthView, WeekView, DayView, etc.
+│   └── lib/
+│       ├── config.ts     ← static config (profile, exercises, triggers)
+│       └── csv.ts        ← CSV read/write utilities
 ```
 
 ## Data
 
-**log.csv** — All tracking data lives here.
+### log.csv — Daily habits and metrics
 
 ```
 date,metric,value,notes
@@ -27,8 +85,35 @@ date,metric,value,notes
 | weight | number | lbs |
 | lol, weed, poker | 0/1 | 0=relapse, 1=clean |
 | gym, sleep, meditate, deep_work, ate_clean | 0/1 | 0=missed, 1=done |
+| calories | number | daily total |
 | trigger | text | what caused craving |
 | relapse | text | what was relapsed on |
+| note | text | freeform note |
+| reset | 1 | marks a reset day |
+
+### workouts.csv — Set-level gym data (planned)
+
+```
+date,workout,exercise,set,weight,reps,notes
+```
+
+### plan.csv — Daily schedule
+
+```
+date,start,end,item,done,notes
+```
+
+### todos.csv — Task backlog
+
+```
+id,item,done,created
+```
+
+### notes.csv — Freeform notes
+
+```
+date,note
+```
 
 ---
 
@@ -36,7 +121,7 @@ date,metric,value,notes
 
 ## 1. Weight
 
-**Current: 240 lbs | Goal: 200 by Jun 1**
+**Current: 245 lbs | Goal: 200 by Jun 30**
 
 | Metric | Value |
 |--------|-------|
@@ -159,18 +244,19 @@ Each session: 30-35 min compound lifts, 3 exercises x 3 sets
 
 # Skills
 
-| Skill | Purpose |
-|-------|---------|
-| /log | Data entry → log.csv |
-| /weekly-review | Accountability, metrics check |
-| /review-notes | Review notes/activity across all CSVs |
+| Skill | Purpose | Triggers |
+|-------|---------|----------|
+| /log | Data entry → log.csv | log weight, log day, log trigger, log relapse |
+| /weekly-review | Accountability, metrics check | plan the week, weekly review, how did I do |
+| /review-notes | Review notes/activity across all CSVs | review notes, what happened, show notes |
 
 ---
 
 # Rules
 
-- **log.csv is truth** — all tracking data
+- **CSVs are truth** — log.csv (habits), plan.csv (schedule), todos.csv (tasks), workouts.csv (gym), notes.csv (freeform)
 - **CLAUDE.md is context** — always loaded
 - **docs/ is reference** — read when needed
 - **Minimal by default** — no bloat
 - **Delete > comment** — no dead code
+- **Voice-first input** — at gym/on-the-go, iOS Shortcut → GitHub Issue → auto-processed

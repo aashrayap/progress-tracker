@@ -76,17 +76,42 @@ Mark today as a reset day (day 0).
 → 2025-02-01,reset,1,
 ```
 
+### /log workout <exercise> <weight>x<reps>x<sets> [...]
+Log workout sets. Auto-logs gym:1 to log.csv.
+```
+/log workout squat 225x5x3, bench 185x6x3
+→ workouts.csv:
+  2026-02-25,A,squat,1,225,5,
+  2026-02-25,A,squat,2,225,5,
+  2026-02-25,A,squat,3,225,5,
+  2026-02-25,A,bench,1,185,6,
+  2026-02-25,A,bench,2,185,6,
+  2026-02-25,A,bench,3,185,6,
+→ log.csv: 2026-02-25,gym,1,Day A
+```
+
+Format: `exercise weight×reps×sets` or `exercise weight×rep1,rep2,rep3`
+- `squat 225x5x3` → 3 sets of 5 at 225
+- `squat 225x5,5,4` → set 1: 5 reps, set 2: 5 reps, set 3: 4 reps
+
+Infer workout letter from exercises:
+- A = squat/bench/lat_pulldown
+- B = squat/incline_bench/cable_row
+- C = squat/ohp/barbell_row
+
 ## Behavior
 
 1. Parse the command
 2. Get today's date in YYYY-MM-DD format
-3. Append row(s) to log.csv
-4. Confirm what was logged
-5. If relapse logged, offer to run /craving-support
+3. For workout: append to workouts.csv + gym:1 to log.csv
+4. For all others: append row(s) to log.csv
+5. Confirm what was logged
+6. If relapse logged, offer to run /craving-support
 
-## File Location
+## File Locations
 ```
-~/Documents/tracker/log.csv
+~/Documents/tracker/log.csv        (daily habits/metrics)
+~/Documents/tracker/workouts.csv   (set-level gym data)
 ```
 
 ## Example Session

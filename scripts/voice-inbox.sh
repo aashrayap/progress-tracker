@@ -70,7 +70,7 @@ Steps:
 1. Read log.csv and notes.csv to understand current format
 2. Determine if this is a log entry, a note, or both
 3. Append to the appropriate CSV file(s)
-4. Run: git add log.csv notes.csv && git commit -m 'voice: process issue #$number'
+4. Run: git add log.csv notes.csv workouts.csv && git commit -m 'voice: process issue #$number'
 5. Run: gh issue comment $number --repo $REPO --body '<your summary>'
 6. Run: gh issue close $number --repo $REPO" \
     2>> "$LOG_FILE" || log "ERROR processing issue #$number"
