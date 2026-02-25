@@ -5,6 +5,7 @@ import YearView from "../components/YearView";
 import MonthView from "../components/MonthView";
 import WeekView from "../components/WeekView";
 import DayView from "../components/DayView";
+import TodoSidebar from "../components/TodoSidebar";
 
 export type ZoomLevel = "year" | "month" | "week" | "day";
 
@@ -18,6 +19,13 @@ export interface PlanEvent {
 }
 
 export type HabitMap = Record<string, Record<string, boolean>>;
+
+export interface Todo {
+  id: number;
+  item: string;
+  done: number;
+  created: string;
+}
 
 function toDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -66,6 +74,8 @@ export default function PlanPage() {
   const [focusDate, setFocusDate] = useState(() => new Date());
   const [data, setData] = useState<{ events: PlanEvent[]; habits: HabitMap } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [todos, setTodos] = useState<Todo[]>([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const range = useMemo(() => getDateRange(zoom, focusDate), [zoom, focusDate]);
 
@@ -80,9 +90,20 @@ export default function PlanPage() {
       .catch(() => setLoading(false));
   }, [range.start, range.end]);
 
+  const fetchTodos = useCallback(() => {
+    fetch("/api/todos")
+      .then((res) => res.json())
+      .then((t) => setTodos(t))
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  useEffect(() => {
+    fetchTodos();
+  }, [fetchTodos]);
 
   const navigate = useCallback(
     (direction: -1 | 1) => {
@@ -164,98 +185,148 @@ export default function PlanPage() {
     return items;
   }, [zoom, focusDate]);
 
+  const incompleteCount = todos.filter((t) => t.done === 0).length;
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      <div className="max-w-6xl mx-auto p-6">
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-1 text-sm mb-2">
-          <a href="/" className="text-zinc-500 hover:text-zinc-300">
-            Dashboard
-          </a>
-          {breadcrumbs.map((bc, i) => (
-            <span key={bc.level} className="flex items-center gap-1">
-              <span className="text-zinc-700">/</span>
+      <div className="flex h-screen">
+        {/* Main content */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-5xl mx-auto p-6">
+            {/* Breadcrumb */}
+            <div className="flex items-center gap-1 text-sm mb-2">
+              <a href="/" className="text-zinc-500 hover:text-zinc-300">
+                Dashboard
+              </a>
+              {breadcrumbs.map((bc, i) => (
+                <span key={bc.level} className="flex items-center gap-1">
+                  <span className="text-zinc-700">/</span>
+                  <button
+                    onClick={() => handleZoom(focusDate, bc.level)}
+                    className={
+                      i === breadcrumbs.length - 1
+                        ? "text-zinc-300"
+                        : "text-zinc-500 hover:text-zinc-300"
+                    }
+                  >
+                    {bc.label}
+                  </button>
+                </span>
+              ))}
+            </div>
+
+            {/* Navigation */}
+            <div className="flex items-center gap-4 mb-6">
               <button
-                onClick={() => handleZoom(focusDate, bc.level)}
-                className={
-                  i === breadcrumbs.length - 1
-                    ? "text-zinc-300"
-                    : "text-zinc-500 hover:text-zinc-300"
-                }
+                onClick={() => navigate(-1)}
+                className="px-3 py-1.5 rounded bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-400 text-sm"
               >
-                {bc.label}
+                &#9668;
               </button>
-            </span>
-          ))}
-        </div>
+              <h1 className="text-xl font-semibold flex-1">{title}</h1>
+              <button
+                onClick={() => navigate(1)}
+                className="px-3 py-1.5 rounded bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-400 text-sm"
+              >
+                &#9658;
+              </button>
+              <button
+                onClick={() => handleZoom(new Date(), "week")}
+                className="px-3 py-1.5 rounded bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-400 text-sm"
+              >
+                Today
+              </button>
+              {/* Mobile sidebar toggle */}
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="lg:hidden px-3 py-1.5 rounded bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-400 text-sm relative"
+              >
+                Todos
+                {incompleteCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                    {incompleteCount}
+                  </span>
+                )}
+              </button>
+            </div>
 
-        {/* Navigation */}
-        <div className="flex items-center gap-4 mb-6">
-          <button
-            onClick={() => navigate(-1)}
-            className="px-3 py-1.5 rounded bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-400 text-sm"
-          >
-            ◄
-          </button>
-          <h1 className="text-xl font-semibold flex-1">{title}</h1>
-          <button
-            onClick={() => navigate(1)}
-            className="px-3 py-1.5 rounded bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-400 text-sm"
-          >
-            ►
-          </button>
-          <button
-            onClick={() => handleZoom(new Date(), "week")}
-            className="px-3 py-1.5 rounded bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-400 text-sm"
-          >
-            Today
-          </button>
-        </div>
-
-        {/* Content */}
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <p className="text-zinc-500">Loading...</p>
+            {/* Content */}
+            {loading ? (
+              <div className="flex items-center justify-center py-20">
+                <p className="text-zinc-500">Loading...</p>
+              </div>
+            ) : data ? (
+              <>
+                {zoom === "year" && (
+                  <YearView
+                    events={data.events}
+                    habits={data.habits}
+                    focusDate={focusDate}
+                    onNavigate={handleZoom}
+                  />
+                )}
+                {zoom === "month" && (
+                  <MonthView
+                    events={data.events}
+                    habits={data.habits}
+                    focusDate={focusDate}
+                    onNavigate={handleZoom}
+                  />
+                )}
+                {zoom === "week" && (
+                  <WeekView
+                    events={data.events}
+                    habits={data.habits}
+                    focusDate={focusDate}
+                    onNavigate={handleZoom}
+                  />
+                )}
+                {zoom === "day" && (
+                  <DayView
+                    events={data.events}
+                    habits={data.habits}
+                    focusDate={focusDate}
+                    onRefresh={() => { fetchData(); fetchTodos(); }}
+                    todos={todos}
+                    onTodosChange={setTodos}
+                  />
+                )}
+              </>
+            ) : (
+              <div className="flex items-center justify-center py-20">
+                <p className="text-red-400">Failed to load data</p>
+              </div>
+            )}
           </div>
-        ) : data ? (
+        </div>
+
+        {/* Desktop sidebar — always visible */}
+        <div className="hidden lg:flex w-72 border-l border-zinc-800 bg-zinc-900/30 flex-col">
+          <TodoSidebar todos={todos} onTodosChange={setTodos} />
+        </div>
+
+        {/* Mobile sidebar — slide-out overlay */}
+        {sidebarOpen && (
           <>
-            {zoom === "year" && (
-              <YearView
-                events={data.events}
-                habits={data.habits}
-                focusDate={focusDate}
-                onNavigate={handleZoom}
-              />
-            )}
-            {zoom === "month" && (
-              <MonthView
-                events={data.events}
-                habits={data.habits}
-                focusDate={focusDate}
-                onNavigate={handleZoom}
-              />
-            )}
-            {zoom === "week" && (
-              <WeekView
-                events={data.events}
-                habits={data.habits}
-                focusDate={focusDate}
-                onNavigate={handleZoom}
-              />
-            )}
-            {zoom === "day" && (
-              <DayView
-                events={data.events}
-                habits={data.habits}
-                focusDate={focusDate}
-                onRefresh={fetchData}
-              />
-            )}
+            <div
+              className="lg:hidden fixed inset-0 bg-black/50 z-40"
+              onClick={() => setSidebarOpen(false)}
+            />
+            <div className="lg:hidden fixed right-0 top-0 bottom-0 w-80 bg-zinc-900 border-l border-zinc-800 z-50 flex flex-col">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
+                <span className="text-sm font-medium text-zinc-300">Todos</span>
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  className="text-zinc-500 hover:text-zinc-300 text-sm"
+                >
+                  x
+                </button>
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <TodoSidebar todos={todos} onTodosChange={setTodos} hideHeader />
+              </div>
+            </div>
           </>
-        ) : (
-          <div className="flex items-center justify-center py-20">
-            <p className="text-red-400">Failed to load data</p>
-          </div>
         )}
       </div>
     </div>

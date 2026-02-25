@@ -2,20 +2,15 @@
 
 import { useState, useCallback } from "react";
 import SchedulerModal from "./SchedulerModal";
-import type { PlanEvent, HabitMap } from "../plan/page";
+import type { PlanEvent, HabitMap, Todo } from "../plan/page";
 
 interface Props {
   events: PlanEvent[];
   habits: HabitMap;
   focusDate: Date;
   onRefresh: () => void;
-}
-
-interface Todo {
-  id: number;
-  item: string;
-  done: number;
-  created: string;
+  todos?: Todo[];
+  onTodosChange?: (todos: Todo[]) => void;
 }
 
 function toDateStr(d: Date): string {
@@ -41,9 +36,9 @@ const HABIT_DISPLAY: Record<string, string> = {
   ate_clean: "Ate Clean",
 };
 
-export default function DayView({ events, habits, focusDate, onRefresh }: Props) {
+export default function DayView({ events, habits, focusDate, onRefresh, todos: externalTodos, onTodosChange }: Props) {
   const [editing, setEditing] = useState(false);
-  const [todos, setTodos] = useState<Todo[]>([]);
+  const [localTodos, setLocalTodos] = useState<Todo[]>([]);
   const dateStr = toDateStr(focusDate);
   const todayStr = toDateStr(new Date());
   const isToday = dateStr === todayStr;
@@ -54,12 +49,16 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
   const timedEvents = dayEvents.filter((e) => !(e.start === 0 && e.end === 0));
   const allDayEvents = dayEvents.filter((e) => e.start === 0 && e.end === 0);
 
+  const todosForModal = externalTodos ?? localTodos;
+
   const handleEdit = useCallback(async () => {
-    const res = await fetch("/api/log");
-    const data = await res.json();
-    setTodos(data.todos || []);
+    if (!externalTodos) {
+      const res = await fetch("/api/todos");
+      const data = await res.json();
+      setLocalTodos(data);
+    }
     setEditing(true);
-  }, []);
+  }, [externalTodos]);
 
   const handleSchedulerClose = useCallback(() => {
     setEditing(false);
@@ -190,8 +189,9 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
             done: e.done,
             notes: e.notes,
           }))}
-          initialTodos={todos}
+          initialTodos={todosForModal}
           onClose={handleSchedulerClose}
+          onTodosChange={onTodosChange}
         />
       )}
     </>
