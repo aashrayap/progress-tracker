@@ -121,6 +121,12 @@ export default function Home() {
             </div>
             <div className="flex gap-2">
               <Link
+                href="/health"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 hover:border-emerald-400/50 transition-colors"
+              >
+                <span className="text-sm text-emerald-400">Health</span>
+              </Link>
+              <Link
                 href="/plan"
                 className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-500/10 border border-blue-500/30 hover:border-blue-400/50 transition-colors"
               >

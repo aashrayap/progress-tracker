@@ -11,6 +11,7 @@ export interface LogEntry {
 const LOG_PATH = path.join(process.cwd(), "..", "log.csv");
 const PLAN_PATH = path.join(process.cwd(), "..", "plan.csv");
 const TODOS_PATH = path.join(process.cwd(), "..", "todos.csv");
+const WORKOUTS_PATH = path.join(process.cwd(), "..", "workouts.csv");
 
 export interface PlanEntry {
   date: string;
@@ -227,4 +228,35 @@ export function upsertPlanEntry(entry: PlanEntry): void {
 export function deletePlanEntry(date: string, item: string): void {
   const all = readPlan().filter((p) => !(p.date === date && p.item === item));
   writePlan(all);
+}
+
+// ─── Workouts ───
+
+export interface WorkoutSetEntry {
+  date: string;
+  workout: string;
+  exercise: string;
+  set: number;
+  weight: number;
+  reps: number;
+  notes: string;
+}
+
+export function readWorkouts(): WorkoutSetEntry[] {
+  if (!fs.existsSync(WORKOUTS_PATH)) return [];
+  const content = fs.readFileSync(WORKOUTS_PATH, "utf-8");
+  const lines = content.trim().split("\n").slice(1);
+  return lines.filter(Boolean).map((line) => {
+    const fields = line.match(/(".*?"|[^,]*)(?:,|$)/g) || [];
+    const clean = fields.map((f) => f.replace(/,$/, "").replace(/^"|"$/g, "").trim());
+    return {
+      date: clean[0] || "",
+      workout: clean[1] || "",
+      exercise: clean[2] || "",
+      set: parseInt(clean[3]) || 0,
+      weight: parseFloat(clean[4]) || 0,
+      reps: parseInt(clean[5]) || 0,
+      notes: clean[6] || "",
+    };
+  });
 }
