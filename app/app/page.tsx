@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { config } from "./lib/config";
 import Link from "next/link";
+import DailyInsight, { InsightData } from "./components/DailyInsight";
 
 interface WeightData {
   current: number;
@@ -50,13 +51,17 @@ interface AppData {
 
 export default function Home() {
   const [data, setData] = useState<AppData | null>(null);
+  const [insight, setInsight] = useState<InsightData | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(() => {
-    fetch("/api/log")
-      .then((res) => res.json())
-      .then((d) => {
-        setData(d);
+    Promise.all([
+      fetch("/api/log").then((res) => res.json()),
+      fetch("/api/insight").then((res) => res.json()),
+    ])
+      .then(([logData, insightData]) => {
+        setData(logData);
+        setInsight(insightData);
         setLoading(false);
       })
       .catch((err) => {
@@ -146,6 +151,9 @@ export default function Home() {
               </div>
             </div>
           </section>
+
+          {/* ==================== DAILY INSIGHT ==================== */}
+          {insight && <DailyInsight data={insight} />}
 
           {/* ==================== 90-DAY DOPAMINE GRID ==================== */}
           <section className="mb-5">
