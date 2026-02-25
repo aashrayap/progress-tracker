@@ -52,7 +52,7 @@ export default function WeekView({ events, habits, focusDate, onNavigate }: Prop
   });
 
   return (
-    <div className="grid grid-cols-7 gap-2">
+    <div className="grid grid-cols-7 gap-1.5" style={{ minHeight: "calc(100vh - 160px)" }}>
       {days.map((day) => {
         const dateStr = toDateStr(day);
         const isToday = dateStr === todayStr;
@@ -66,7 +66,7 @@ export default function WeekView({ events, habits, focusDate, onNavigate }: Prop
         return (
           <div
             key={dateStr}
-            className={`rounded-lg border p-3 min-h-[200px] cursor-pointer hover:border-zinc-600 transition-colors ${
+            className={`rounded-lg border p-2 cursor-pointer hover:border-zinc-600 transition-colors flex flex-col ${
               isToday
                 ? "bg-blue-500/5 border-blue-500/30"
                 : "bg-zinc-900 border-zinc-800"
@@ -74,61 +74,62 @@ export default function WeekView({ events, habits, focusDate, onNavigate }: Prop
             onClick={() => onNavigate(day, "day")}
           >
             {/* Day header */}
-            <div className="mb-2">
-              <span className="text-xs text-zinc-500">
-                {day.toLocaleDateString("en-US", { weekday: "short" })}
-              </span>
-              <span
-                className={`ml-1 text-sm font-medium ${
-                  isToday ? "text-blue-400" : "text-zinc-300"
-                }`}
-              >
-                {day.getDate()}
-              </span>
-            </div>
-
-            {/* Habit dots */}
-            {Object.keys(dayHabits).length > 0 && (
-              <div className="flex gap-1 mb-2 flex-wrap">
-                {HABIT_KEYS.map((key) => {
-                  if (dayHabits[key] === undefined) return null;
-                  const isGood = dayHabits[key];
-                  return (
-                    <span
-                      key={key}
-                      className={`w-4 h-4 rounded-full text-[8px] flex items-center justify-center font-bold ${
-                        isGood
-                          ? "bg-emerald-500/20 text-emerald-400"
-                          : "bg-red-500/20 text-red-400"
-                      }`}
-                      title={`${key}: ${isGood ? "done" : "missed"}`}
-                    >
-                      {HABIT_LABELS[key]}
-                    </span>
-                  );
-                })}
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <span className="text-[11px] text-zinc-500">
+                  {day.toLocaleDateString("en-US", { weekday: "short" })}
+                </span>
+                <span
+                  className={`ml-1 text-sm font-medium ${
+                    isToday ? "text-blue-400" : "text-zinc-300"
+                  }`}
+                >
+                  {day.getDate()}
+                </span>
               </div>
-            )}
+              {/* Compact habit summary */}
+              {Object.keys(dayHabits).length > 0 && (
+                <div className="flex gap-0.5">
+                  {HABIT_KEYS.map((key) => {
+                    if (dayHabits[key] === undefined) return null;
+                    const isGood = dayHabits[key];
+                    return (
+                      <span
+                        key={key}
+                        className={`w-3 h-3 rounded-full text-[7px] flex items-center justify-center font-bold ${
+                          isGood
+                            ? "bg-emerald-500/20 text-emerald-400"
+                            : "bg-red-500/20 text-red-400"
+                        }`}
+                        title={`${key}: ${isGood ? "done" : "missed"}`}
+                      >
+                        {HABIT_LABELS[key]}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
 
             {/* All-day events */}
             {allDayEvents.map((e) => (
               <div
                 key={e.item}
-                className="text-xs px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20 mb-1 truncate"
+                className="text-[11px] px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20 mb-1 truncate"
               >
                 {e.item}
               </div>
             ))}
 
-            {/* Timed events */}
-            <div className="space-y-1">
+            {/* Timed events — fill remaining space */}
+            <div className="space-y-0.5 flex-1">
               {timedEvents.map((e) => (
-                <div key={e.item} className="text-xs">
-                  <span className="text-zinc-500">{formatTime(e.start)}</span>
+                <div key={e.item} className="text-[11px] leading-tight">
+                  <span className="text-zinc-600">{formatTime(e.start)}</span>
                   <span
                     className={`ml-1 ${
                       e.done === "1"
-                        ? "text-zinc-500 line-through"
+                        ? "text-zinc-600 line-through"
                         : "text-zinc-300"
                     }`}
                   >
@@ -137,6 +138,15 @@ export default function WeekView({ events, habits, focusDate, onNavigate }: Prop
                 </div>
               ))}
             </div>
+
+            {/* Day stats footer */}
+            {timedEvents.length > 0 && (
+              <div className="mt-auto pt-1 border-t border-zinc-800/50">
+                <span className="text-[10px] text-zinc-600">
+                  {timedEvents.filter((e) => e.done === "1").length}/{timedEvents.length} done
+                </span>
+              </div>
+            )}
           </div>
         );
       })}

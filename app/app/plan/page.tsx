@@ -189,15 +189,13 @@ export default function PlanPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      <div className="flex h-screen">
-        {/* Main content */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="max-w-5xl mx-auto p-6">
-            {/* Breadcrumb */}
-            <div className="flex items-center gap-1 text-sm mb-2">
-              <a href="/" className="text-zinc-500 hover:text-zinc-300">
-                Dashboard
-              </a>
+      <div className="p-6">
+        <div className="max-w-6xl mx-auto">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-1 text-sm mb-2">
+            <a href="/" className="text-zinc-500 hover:text-zinc-300">
+              Hub
+            </a>
               {breadcrumbs.map((bc, i) => (
                 <span key={bc.level} className="flex items-center gap-1">
                   <span className="text-zinc-700">/</span>
@@ -236,10 +234,9 @@ export default function PlanPage() {
               >
                 Today
               </button>
-              {/* Mobile sidebar toggle */}
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="lg:hidden px-3 py-1.5 rounded bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-400 text-sm relative"
+                className="px-3 py-1.5 rounded bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-400 text-sm relative"
               >
                 Todos
                 {incompleteCount > 0 && (
@@ -299,35 +296,30 @@ export default function PlanPage() {
             )}
           </div>
         </div>
-
-        {/* Desktop sidebar — always visible */}
-        <div className="hidden lg:flex w-72 border-l border-zinc-800 bg-zinc-900/30 flex-col">
-          <TodoSidebar todos={todos} onTodosChange={setTodos} />
+      {/* Todos slide-out panel */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+      <div
+        className={`fixed right-0 top-0 bottom-0 w-80 bg-zinc-900 border-l border-zinc-800 z-50 flex flex-col transform transition-transform ${
+          sidebarOpen ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
+          <span className="text-sm font-medium text-zinc-300">Todos</span>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="text-zinc-500 hover:text-zinc-300 text-sm"
+          >
+            x
+          </button>
         </div>
-
-        {/* Mobile sidebar — slide-out overlay */}
-        {sidebarOpen && (
-          <>
-            <div
-              className="lg:hidden fixed inset-0 bg-black/50 z-40"
-              onClick={() => setSidebarOpen(false)}
-            />
-            <div className="lg:hidden fixed right-0 top-0 bottom-0 w-80 bg-zinc-900 border-l border-zinc-800 z-50 flex flex-col">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
-                <span className="text-sm font-medium text-zinc-300">Todos</span>
-                <button
-                  onClick={() => setSidebarOpen(false)}
-                  className="text-zinc-500 hover:text-zinc-300 text-sm"
-                >
-                  x
-                </button>
-              </div>
-              <div className="flex-1 overflow-hidden">
-                <TodoSidebar todos={todos} onTodosChange={setTodos} hideHeader />
-              </div>
-            </div>
-          </>
-        )}
+        <div className="flex-1 overflow-hidden">
+          <TodoSidebar todos={todos} onTodosChange={setTodos} hideHeader />
+        </div>
       </div>
     </div>
   );
