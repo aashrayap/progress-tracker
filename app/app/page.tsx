@@ -110,14 +110,32 @@ export default function Home() {
       <div className="p-4 sm:p-6">
         <div className="max-w-lg mx-auto">
 
-          {/* ==================== STATUS ROW ==================== */}
-          <section className="mb-5">
-            <div className="flex items-center justify-between mb-2">
+          {/* ==================== HEADER + NAV ==================== */}
+          <div className="flex items-center justify-between mb-4">
+            <div>
               <h1 className="text-lg font-bold">Hub</h1>
               <span className="text-xs text-zinc-500">
                 {new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
               </span>
             </div>
+            <div className="flex gap-2">
+              <Link
+                href="/plan"
+                className="px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/30 hover:border-blue-400/50 transition-colors text-sm text-blue-400"
+              >
+                Plan
+              </Link>
+              <Link
+                href="/health"
+                className="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 hover:border-emerald-400/50 transition-colors text-sm text-emerald-400"
+              >
+                Health
+              </Link>
+            </div>
+          </div>
+
+          {/* ==================== STATUS ROW ==================== */}
+          <section className="mb-5">
             <div className="grid grid-cols-4 gap-2">
               <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 text-center">
                 <p className="text-xs text-zinc-500 mb-1">Day</p>
