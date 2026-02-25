@@ -28,18 +28,49 @@ export const config = {
     build: ["gym", "sleep", "meditate", "deepWork", "ateClean"],
   },
 
-  replacing: [
-    { id: "gym", label: "Gym" },
-    { id: "coding", label: "Coding personal projects" },
-    { id: "reading", label: "Reading" },
+  knownTriggers: [
+    { trigger: "Poker environment", risk: "HIGH", pattern: "Social pressure at table → impulse" },
+    { trigger: "Poker loss", risk: "HIGH", pattern: "Loss → dopamine crash → seeks hit" },
+    { trigger: "Late night + friends", risk: "HIGH", pattern: "Social + late = cascade" },
+    { trigger: "Boredom, evening", risk: "MEDIUM", pattern: "Unstructured time" },
   ],
 
-  habits: [
-    { id: "sleep", label: "Sleep 10pm", goal: "dopamine" },
+  dailyTasks: [
+    { id: "gym", label: "Gym", placeholder: "exercises" },
+    { id: "deep_work", label: "Deep Work", placeholder: "subject" },
+    { id: "meditate", label: "Meditate", placeholder: "type/duration" },
+    { id: "walk", label: "Dog Walk", placeholder: "duration" },
+    { id: "facetime_basia", label: "Facetime Basia" },
   ],
 
-  todos: [
-    { id: 1, text: "Book Poland flight", today: false, done: false },
-    { id: 2, text: "Buy ring", today: false, done: false },
-  ],
+  exercises: {
+    push: [
+      { id: "bench", name: "Bench Press", sets: 3, reps: "5-8" },
+      { id: "incline_bench", name: "Incline Bench", sets: 3, reps: "5-8" },
+      { id: "ohp", name: "Overhead Press", sets: 2, reps: "6-8" },
+    ],
+    pull: [
+      { id: "lat_pulldown", name: "Lat Pulldown", sets: 3, reps: "6-10" },
+      { id: "cable_row", name: "Cable Row", sets: 3, reps: "6-10" },
+      { id: "barbell_row", name: "Barbell Row", sets: 3, reps: "6-10" },
+    ],
+    legs: [
+      { id: "squat", name: "Back Squat", sets: 3, reps: "5-8" },
+      { id: "lunges", name: "DB Lunges", sets: 3, reps: "5-8" },
+      { id: "rdl", name: "Romanian Deadlift", sets: 2, reps: "6-8" },
+    ],
+    core: [
+      { id: "leg_raise", name: "Hanging Leg Raise", sets: 2, reps: "8-12" },
+      { id: "plank", name: "Plank", sets: 2, reps: "30-45s" },
+    ],
+  },
+
+  workoutTemplates: {
+    A: ["squat", "bench", "lat_pulldown"],
+    B: ["squat", "incline_bench", "cable_row"],
+    C: ["squat", "ohp", "barbell_row"],
+  } as Record<string, string[]>,
+
+  // Rotation cycle: A→B→C→A... (completion-based, not calendar-based)
+  workoutCycle: ["A", "B", "C"],
 };

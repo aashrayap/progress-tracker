@@ -1,22 +1,48 @@
-# Workout
+# Workout Protocol
 
-## Today: Friday Jan 24 (Day A - Full Body)
+## Rules
+- 3 exercises per session, compounds only
+- 3 sets per exercise (2 for accessories)
+- RIR 2-3 (2-3 reps left in tank)
+- 30-35 min cap
+- Rest: 2-3 min between sets
 
-**Rep Range: 10-12 | Rest: 60-90 sec**
+## Schedule
 
-| Exercise | Sets | Set 1 | Set 2 | Set 3 |
-|----------|------|-------|-------|-------|
-| Barbell Squats | 3x12 | ☐ ___ lbs | ☐ ___ lbs | ☐ ___ lbs |
-| Bench Press | 3x10 | ☐ ___ lbs | ☐ ___ lbs | ☐ ___ lbs |
-| Lat Pulldown | 3x12 | ☐ ___ lbs | ☐ ___ lbs | ☐ ___ lbs |
-| Back Row Machine | 3x12 | ☐ ___ lbs | ☐ ___ lbs | ☐ ___ lbs |
-| Dumbbell Lunges | 3x10 | ☐ ___ lbs | ☐ ___ lbs | ☐ ___ lbs |
-| Lat Raise | 3x12 | ☐ ___ lbs | ☐ ___ lbs | ☐ ___ lbs |
+5x/week, Day A/B/C rotation:
 
-**Notes:**
--
+| Day | Template |
+|-----|----------|
+| Mon | Day A    |
+| Tue | Day B    |
+| Wed | Day C    |
+| Thu | Day A    |
+| Fri | Day B    |
+| Sat | Rest     |
+| Sun | Rest     |
 
----
+## Templates
+
+### Day A — Squat / Bench / Lat Pulldown
+| Exercise | Sets | Reps |
+|----------|------|------|
+| Back Squat | 3 | 5-8 |
+| Bench Press | 3 | 5-8 |
+| Lat Pulldown | 3 | 6-10 |
+
+### Day B — Squat / Incline Bench / Cable Row
+| Exercise | Sets | Reps |
+|----------|------|------|
+| Back Squat | 3 | 5-8 |
+| Incline Bench | 3 | 5-8 |
+| Cable Row | 3 | 6-10 |
+
+### Day C — Squat / OHP / Barbell Row
+| Exercise | Sets | Reps |
+|----------|------|------|
+| Back Squat | 3 | 5-8 |
+| Overhead Press | 2 | 6-8 |
+| Barbell Row | 3 | 6-10 |
 
 ## Exercise Library
 
@@ -24,53 +50,39 @@
 | Exercise | Type | Primary |
 |----------|------|---------|
 | Bench Press | Barbell | Chest |
-| Incline Bench Press | Barbell | Upper Chest |
-| Tricep Pushdown | Cable | Triceps |
+| Incline Bench | Barbell | Upper Chest |
+| Overhead Press | Barbell | Shoulders |
 
 ### Pull
 | Exercise | Type | Primary |
 |----------|------|---------|
 | Lat Pulldown | Cable | Lats |
-| Assisted Pull Ups | Machine | Lats/Back |
-| Back Row Machine | Machine | Mid Back |
-| Back Row Pull | Cable | Mid Back |
-| Machine Bicep Curl | Machine | Biceps |
+| Cable Row | Cable | Mid Back |
+| Barbell Row | Barbell | Mid Back |
 
 ### Legs
 | Exercise | Type | Primary |
 |----------|------|---------|
-| Barbell Squats | Barbell | Quads/Glutes |
-| Dumbbell Lunges | Dumbbell | Quads/Glutes |
+| Back Squat | Barbell | Quads/Glutes |
+| DB Lunges | Dumbbell | Quads/Glutes |
+| Romanian Deadlift | Barbell | Hamstrings/Glutes |
 
-### Shoulders
+### Core
 | Exercise | Type | Primary |
 |----------|------|---------|
-| Lat Raise | Dumbbell | Side Delts |
+| Hanging Leg Raise | Bodyweight | Abs |
+| Plank | Bodyweight | Core Stability |
 
----
+## Volume Targets by Phase
 
-## Templates
+| Phase | Sets/muscle/week | Notes |
+|-------|-----------------|-------|
+| Restart (current) | 6-9 | Getting back in groove |
+| Cutting | 9-12 | Maintain muscle in deficit |
+| Hypertrophy | 12-16 | Future bulk phase |
 
-### Day A (Push + Legs Focus)
-- Barbell Squats
-- Bench Press
-- Lat Pulldown
-- Dumbbell Lunges
-- Tricep Pushdown
-- Lat Raise
+## Progression Rules
 
-### Day B (Pull + Legs Focus)
-- Barbell Squats
-- Incline Bench Press
-- Back Row Machine
-- Assisted Pull Ups
-- Machine Bicep Curl
-- Lat Raise
-
----
-
-## Log
-
-| Date | Day | Completed | Notes |
-|------|-----|-----------|-------|
-| Jan 24 | A | ☐ | First day back |
+1. Hit top of rep range on all 3 sets → add 5 lbs next session
+2. If you miss reps 2 sessions in a row → deload 10%
+3. Log feels (RPE) not just numbers

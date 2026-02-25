@@ -32,3 +32,8 @@
 - 40 lbs ÷ 21 weeks = 1.9 lbs/week
 - Need: 6,650 cal/week deficit
 - **1,900 cal + 8k steps = on track**
+
+## Cardio
+
+Daily dog walks — 20-45 min, conversational pace.
+Counts toward NEAT (non-exercise activity thermogenesis), not a formal workout.

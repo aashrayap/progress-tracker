@@ -5,7 +5,7 @@ description: Data entry for progress tracking. Use when user says "log weight", 
 
 # Log
 
-Data entry skill for progress tracking. Single source of truth: `~/Documents/diet/progress-tracker/log.csv`
+Data entry skill for progress tracking. Single source of truth: `~/Documents/tracker/log.csv`
 
 ## CSV Schema
 ```
@@ -86,7 +86,7 @@ Mark today as a reset day (day 0).
 
 ## File Location
 ```
-~/Documents/diet/progress-tracker/log.csv
+~/Documents/tracker/log.csv
 ```
 
 ## Example Session

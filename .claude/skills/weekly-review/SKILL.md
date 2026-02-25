@@ -9,7 +9,7 @@ Accountability partner - honest, structured, action-oriented.
 
 ## Data Source
 
-**All actuals come from log.csv** at `~/Documents/diet/progress-tracker/log.csv`
+**All actuals come from log.csv** at `~/Documents/tracker/log.csv`
 
 ```
 date,metric,value,notes

@@ -129,11 +129,13 @@ date,metric,value,notes
 |-----|---------|
 | Mon | Day A |
 | Tue | Day B |
-| Wed | Day A |
-| Thu | Day B |
-| Fri | Day A |
+| Wed | Day C |
+| Thu | Day A |
+| Fri | Day B |
 
-Each session: 30-45 min lift + 20 min sauna/meditation
+Each session: 30-35 min compound lifts, 3 exercises x 3 sets
+
+**Cardio:** Daily dog walks, 20-45 min
 
 *Deep reference: docs/workout.md*
 
@@ -161,6 +163,7 @@ Each session: 30-45 min lift + 20 min sauna/meditation
 |-------|---------|
 | /log | Data entry → log.csv |
 | /weekly-review | Accountability, metrics check |
+| /review-notes | Review notes/activity across all CSVs |
 
 ---
 

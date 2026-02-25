@@ -7,12 +7,18 @@ import {
   getStreak,
   getLastResetDate,
   getDaysSince,
+  readPlan,
+  getTodaysPlan,
+  readTodos,
   LogEntry,
 } from "../../lib/csv";
 import { config } from "../../lib/config";
 
 export async function GET() {
   const log = readLog();
+  const plan = readPlan();
+  const todaysPlan = getTodaysPlan(plan);
+  const todos = readTodos();
 
   // Build aggregated data for the app
   const weightHistory = getMetricHistory(log, "weight").map((w) => ({
@@ -64,7 +70,21 @@ export async function GET() {
     poker: getStreak(log, "poker"),
   };
 
+  const todayStr = new Date().toISOString().split("T")[0];
+  const gymToday = log.some(e => e.date === todayStr && e.metric === "gym" && e.value === "1");
+
+  // Completion-based workout rotation: find last completed template, serve next
+  const cycle = Object.keys(config.workoutTemplates); // ["A", "B", "C"]
+  const lastGym = [...log]
+    .reverse()
+    .find(e => e.metric === "gym" && e.value === "1" && e.notes);
+  const lastTemplate = lastGym?.notes?.replace(/^Day\s*/i, "").trim() || "";
+  const lastIdx = cycle.indexOf(lastTemplate);
+  const nextTemplate = cycle[(lastIdx + 1) % cycle.length];
+
   return NextResponse.json({
+    gymToday,
+    nextWorkout: nextTemplate,
     weight: {
       current: currentWeight,
       start: startWeight || config.weight.start,
@@ -81,6 +101,14 @@ export async function GET() {
       streaks,
       triggers,
     },
+    todaysPlan: todaysPlan.map((p) => ({
+      start: p.start,
+      end: p.end,
+      item: p.item,
+      done: p.done,
+      notes: p.notes || "",
+    })),
+    todos,
   });
 }
 
