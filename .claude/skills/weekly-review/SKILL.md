@@ -22,9 +22,7 @@ date,metric,value,notes
 | log.csv | Source of truth for daily metrics |
 | workouts.csv | Set-level gym data (exercise, weight, reps) |
 | CLAUDE.md | Targets, pillars (always loaded) |
-| docs/vision.md | Why (for motivation check) |
-| docs/fitness.md | Weight goal context |
-| docs/addictions.md | Trigger patterns, strategies |
+| docs/life-playbook.md | Vision, weight, addiction trigger context |
 
 ## How to Pull Data
 

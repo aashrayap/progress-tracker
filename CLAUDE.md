@@ -6,10 +6,8 @@ Personal life system: weight, addiction recovery, fitness, money, travel.
 
 Read these first when starting new work:
 
-1. `docs/personal-os-principles.md` - core problem, principles, and definition of done
-2. `docs/personal-os-architecture.md` - visual system map and architecture anchors
-3. `docs/personal-os-operator-view.md` - one-screen operating model and daily checklist
-4. `docs/personal-os-e2e-blueprint.md` - full app audit and phased implementation plan
+1. `docs/personal-os.md` - principles, visual map, operator flow, and phased implementation plan
+2. `docs/life-playbook.md` - domain protocols (fitness, meals, addiction, finance, travel)
 
 ## Architecture
 
@@ -168,7 +166,7 @@ date,domain,win,lesson,change
 
 **Rate:** ~2 lbs/week at this deficit
 
-*Deep reference: docs/fitness.md, docs/meals.md*
+*Deep reference: docs/life-playbook.md*
 
 ---
 
@@ -200,7 +198,7 @@ date,domain,win,lesson,change
 3. Move: Walk, pushups, cold water
 4. Remind: "Dopamine is healing"
 
-*Deep reference: docs/addictions.md, docs/dopamine-reset.md*
+*Deep reference: docs/life-playbook.md*
 
 ---
 
@@ -217,7 +215,7 @@ date,domain,win,lesson,change
 
 **Strategy:** Hold S&P, assume 10% annual return, no contributions needed.
 
-*Deep reference: docs/finance.md*
+*Deep reference: docs/life-playbook.md*
 
 ---
 
@@ -233,7 +231,7 @@ date,domain,win,lesson,change
 
 **Budget:** ~$1,300/trip (flights + food)
 
-*Deep reference: docs/2026-plans/travel.md*
+*Deep reference: docs/life-playbook.md*
 
 ---
 
@@ -255,7 +253,7 @@ Each session: 30-35 min compound lifts, 3 exercises x 3 sets
 
 **Cardio:** Daily dog walks, 20-45 min
 
-*Deep reference: docs/workout.md*
+*Deep reference: docs/life-playbook.md*
 
 ---
 
@@ -271,7 +269,7 @@ Each session: 30-35 min compound lifts, 3 exercises x 3 sets
 
 **Daily totals:** ~1,400 cal base, 115g protein
 
-*Deep reference: docs/meals.md*
+*Deep reference: docs/life-playbook.md*
 
 ---
 

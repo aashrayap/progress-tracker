@@ -67,6 +67,5 @@ cd app && npm install && npm run dev   # requires Node >= 20.9
 | File | Purpose |
 |------|---------|
 | `CLAUDE.md` | AI assistant context (always loaded) |
-| `docs/personal-os-principles.md` | Product principles + PR checklist |
-| `docs/personal-os-architecture.md` | Visual system map |
-| `docs/personal-os-operator-view.md` | Daily operator checklist |
+| `docs/personal-os.md` | Principles + visual loop + operator flow + phased plan |
+| `docs/life-playbook.md` | Consolidated life protocols (vision, fitness, meals, addiction, finance, travel) |
