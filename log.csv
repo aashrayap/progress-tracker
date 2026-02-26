@@ -140,3 +140,4 @@ date,metric,value,notes,category
 2026-02-26,note,Test,,
 2026-02-26,note,Consider how adding meditate section into the app would integrate with existing functionalities - reflections and trigger tracking already exist. Into meditation (Francis Lucille). How might this factor in?,
 2026-02-26,note,When I give a suggestion - explore whether Claude should investigate and give a concise response on whether its a good idea vs just saving it for when Im at my keyboard,,
+2026-02-26,note,Idea: notifications should give a contextual response after looking things up instead of just saying saved/logged. Unsure if good idea - logged for later review.,,,
