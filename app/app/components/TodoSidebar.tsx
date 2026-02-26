@@ -1,13 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-
-interface Todo {
-  id: number;
-  item: string;
-  done: number;
-  created: string;
-}
+import type { Todo } from "../lib/types";
 
 interface Props {
   todos: Todo[];
@@ -29,6 +23,7 @@ export default function TodoSidebar({ todos, onTodosChange, hideHeader }: Props)
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ item }),
       });
+      if (!res.ok) throw new Error("Failed to create todo");
       const entry = await res.json();
       onTodosChange([...todos, entry]);
     },
@@ -40,11 +35,12 @@ export default function TodoSidebar({ todos, onTodosChange, hideHeader }: Props)
       onTodosChange(
         todos.map((t) => (t.id === id ? { ...t, done: done ? 1 : 0 } : t))
       );
-      await fetch("/api/todos", {
+      const res = await fetch("/api/todos", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, done: done ? 1 : 0 }),
       });
+      if (!res.ok) console.error("Failed to update todo");
     },
     [todos, onTodosChange]
   );
@@ -52,11 +48,12 @@ export default function TodoSidebar({ todos, onTodosChange, hideHeader }: Props)
   const deleteTodo = useCallback(
     async (id: number) => {
       onTodosChange(todos.filter((t) => t.id !== id));
-      await fetch("/api/todos", {
+      const res = await fetch("/api/todos", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id }),
       });
+      if (!res.ok) console.error("Failed to delete todo");
     },
     [todos, onTodosChange]
   );
@@ -100,20 +97,20 @@ export default function TodoSidebar({ todos, onTodosChange, hideHeader }: Props)
         {incomplete.map((todo) => (
           <div
             key={todo.id}
-            className="group flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-zinc-800/50 transition-colors"
+            className="group flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-zinc-800/50 transition-colors min-h-[44px]"
           >
             <button
               onClick={() => toggleTodo(todo.id, true)}
-              className="w-4 h-4 rounded border border-zinc-700 flex items-center justify-center text-[10px] shrink-0 hover:border-zinc-500 transition-colors"
+              className="w-6 h-6 rounded border border-zinc-700 flex items-center justify-center text-xs shrink-0 hover:border-zinc-500 transition-colors"
             />
             <span className="text-sm text-zinc-300 flex-1 truncate">
               {todo.item}
             </span>
             <button
               onClick={() => deleteTodo(todo.id)}
-              className="text-zinc-700 hover:text-red-400 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+              className="text-zinc-700 hover:text-red-400 text-sm p-1 opacity-0 group-hover:opacity-100 transition-opacity min-w-[28px] min-h-[28px] flex items-center justify-center"
             >
-              x
+              ✕
             </button>
           </div>
         ))}
@@ -131,29 +128,29 @@ export default function TodoSidebar({ todos, onTodosChange, hideHeader }: Props)
               onClick={() => setShowDone(!showDone)}
               className="flex items-center gap-1.5 text-[11px] text-zinc-600 hover:text-zinc-500 transition-colors mb-1"
             >
-              <span className="text-[10px]">{showDone ? "v" : ">"}</span>
+              <span className="text-[10px]">{showDone ? "▼" : "▶"}</span>
               Done ({completed.length})
             </button>
             {showDone &&
               completed.map((todo) => (
                 <div
                   key={todo.id}
-                  className="group flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-zinc-800/30 transition-colors"
+                  className="group flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-zinc-800/30 transition-colors min-h-[44px]"
                 >
                   <button
                     onClick={() => toggleTodo(todo.id, false)}
-                    className="w-4 h-4 rounded border border-green-800 flex items-center justify-center text-[10px] shrink-0 text-green-600"
+                    className="w-6 h-6 rounded border border-green-800 flex items-center justify-center text-xs shrink-0 text-green-600"
                   >
-                    v
+                    ✓
                   </button>
                   <span className="text-sm text-zinc-600 line-through flex-1 truncate">
                     {todo.item}
                   </span>
                   <button
                     onClick={() => deleteTodo(todo.id)}
-                    className="text-zinc-700 hover:text-red-400 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="text-zinc-700 hover:text-red-400 text-sm p-1 opacity-0 group-hover:opacity-100 transition-opacity min-w-[28px] min-h-[28px] flex items-center justify-center"
                   >
-                    x
+                    ✕
                   </button>
                 </div>
               ))}

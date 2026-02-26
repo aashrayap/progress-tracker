@@ -11,8 +11,8 @@ Surface everything that happened in a time period across all tracking files.
 
 | File | What to pull | Path |
 |------|-------------|------|
-| notes.csv | All freeform notes | `~/Documents/tracker/notes.csv` |
 | log.csv | Rows with non-empty `notes` column + all `trigger`, `relapse`, `note` metric rows | `~/Documents/tracker/log.csv` |
+| reflections.csv | All reflections (win/lesson/change per domain) | `~/Documents/tracker/reflections.csv` |
 | plan.csv | Scheduled items (show done status) | `~/Documents/tracker/plan.csv` |
 | todos.csv | Tasks created in the period | `~/Documents/tracker/todos.csv` |
 | workouts.csv | Set-level gym data | `~/Documents/tracker/workouts.csv` |
@@ -20,11 +20,11 @@ Surface everything that happened in a time period across all tracking files.
 ## Schemas
 
 ```
-notes.csv:    date,note
-log.csv:      date,metric,value,notes
-plan.csv:     date,start,end,item,done,notes
-todos.csv:    id,item,done,created
-workouts.csv: date,workout,exercise,set,weight,reps,notes
+log.csv:          date,metric,value,notes
+reflections.csv:  date,domain,win,lesson,change
+plan.csv:         date,start,end,item,done,notes
+todos.csv:        id,item,done,created
+workouts.csv:     date,workout,exercise,set,weight,reps,notes
 ```
 
 ## Commands
@@ -52,7 +52,8 @@ workouts.csv: date,workout,exercise,set,weight,reps,notes
 📋 NOTES REVIEW — [period label] ([start date] → [end date])
 
 📅 [DATE]
-├─ 📝 [note from notes.csv]
+├─ 📝 [note from log.csv metric=note]
+├─ 🪞 [domain]: ✓ [win] | 💡 [lesson] | → [change]  (from reflections.csv)
 ├─ ⚠ trigger: [value] — [notes from log.csv]
 ├─ 🔴 relapse: [value] — [notes from log.csv]
 ├─ 📊 [metric]: [notes from log.csv]  (only rows with non-empty notes)
@@ -66,6 +67,7 @@ workouts.csv: date,workout,exercise,set,weight,reps,notes
 ───────────────────
 SUMMARY
 ├─ Notes logged: X
+├─ Reflections: X
 ├─ Triggers: X
 ├─ Relapses: X
 ├─ Plans scheduled: X (Y completed)

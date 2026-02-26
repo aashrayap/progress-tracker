@@ -1,17 +1,14 @@
 import fs from "fs";
 import path from "path";
+import type { LogEntry } from "./types";
 
-export interface LogEntry {
-  date: string;
-  metric: string;
-  value: string;
-  notes: string;
-}
+export type { LogEntry };
 
 const LOG_PATH = path.join(process.cwd(), "..", "log.csv");
 const PLAN_PATH = path.join(process.cwd(), "..", "plan.csv");
 const TODOS_PATH = path.join(process.cwd(), "..", "todos.csv");
 const WORKOUTS_PATH = path.join(process.cwd(), "..", "workouts.csv");
+const REFLECTIONS_PATH = path.join(process.cwd(), "..", "reflections.csv");
 
 export interface PlanEntry {
   date: string;
@@ -30,8 +27,7 @@ export function readPlan(): PlanEntry[] {
   const lines = content.trim().split("\n").slice(1);
 
   return lines.map((line) => {
-    const fields = line.match(/(".*?"|[^,]*)(?:,|$)/g) || [];
-    const clean = fields.map((f) => f.replace(/,$/, "").replace(/^"|"$/g, "").trim());
+    const clean = parseCSVLine(line);
     return {
       date: clean[0] || "",
       start: parseFloat(clean[1]) || 0,
@@ -50,26 +46,36 @@ export function getTodaysPlan(plan: PlanEntry[]): PlanEntry[] {
     .sort((a, b) => a.start - b.start);
 }
 
+function parseCSVLine(line: string): string[] {
+  const fields = line.match(/(".*?"|[^,]*)(?:,|$)/g) || [];
+  return fields.map((f) => f.replace(/,$/, "").replace(/^"|"$/g, "").trim());
+}
+
+function csvQuote(value: string): string {
+  return value.includes(",") ? `"${value}"` : value;
+}
+
 export function readLog(): LogEntry[] {
   if (!fs.existsSync(LOG_PATH)) {
     return [];
   }
   const content = fs.readFileSync(LOG_PATH, "utf-8");
-  const lines = content.trim().split("\n").slice(1); // skip header
+  const lines = content.trim().split("\n").slice(1).filter(Boolean);
 
   return lines.map((line) => {
-    // Handle quoted fields with commas
-    const matches = line.match(/(".*?"|[^,]+)(?=\s*,|\s*$)/g) || [];
-    const [date = "", metric = "", value = "", notes = ""] = matches.map((m) =>
-      m.replace(/^"|"$/g, "").trim()
-    );
-    return { date, metric, value, notes };
+    const clean = parseCSVLine(line);
+    return {
+      date: clean[0] || "",
+      metric: clean[1] || "",
+      value: clean[2] || "",
+      notes: clean[3] || "",
+    };
   });
 }
 
 export function appendLog(entries: LogEntry[]): void {
   const lines = entries.map(
-    (e) => `${e.date},${e.metric},${e.value},${e.notes.includes(",") ? `"${e.notes}"` : e.notes}`
+    (e) => `${e.date},${e.metric},${csvQuote(e.value)},${csvQuote(e.notes)}`
   );
   fs.appendFileSync(LOG_PATH, "\n" + lines.join("\n"));
 }
@@ -138,19 +144,19 @@ export function readTodos(): TodoEntry[] {
   const content = fs.readFileSync(TODOS_PATH, "utf-8");
   const lines = content.trim().split("\n").slice(1);
   return lines.filter(Boolean).map((line) => {
-    const [id = "", item = "", done = "", created = ""] = line.split(",");
+    const clean = parseCSVLine(line);
     return {
-      id: parseInt(id) || 0,
-      item: item.trim(),
-      done: parseInt(done) || 0,
-      created: created.trim(),
+      id: parseInt(clean[0]) || 0,
+      item: clean[1] || "",
+      done: parseInt(clean[2]) || 0,
+      created: clean[3] || "",
     };
   });
 }
 
 function writeTodos(todos: TodoEntry[]): void {
   const header = "id,item,done,created";
-  const lines = todos.map((t) => `${t.id},${t.item},${t.done},${t.created}`);
+  const lines = todos.map((t) => `${t.id},${csvQuote(t.item)},${t.done},${t.created}`);
   fs.writeFileSync(TODOS_PATH, header + "\n" + lines.join("\n") + "\n");
 }
 
@@ -208,8 +214,7 @@ export function getHabitsForDate(log: LogEntry[], date: string): Record<string, 
 function writePlan(entries: PlanEntry[]): void {
   const header = "date,start,end,item,done,notes";
   const lines = entries.map((p) => {
-    const notes = p.notes?.includes(",") ? `"${p.notes}"` : (p.notes || "");
-    return `${p.date},${p.start},${p.end},${p.item},${p.done},${notes}`;
+    return `${p.date},${p.start},${p.end},${csvQuote(p.item)},${p.done},${csvQuote(p.notes || "")}`;
   });
   fs.writeFileSync(PLAN_PATH, header + "\n" + lines.join("\n") + "\n");
 }
@@ -230,6 +235,30 @@ export function deletePlanEntry(date: string, item: string): void {
   writePlan(all);
 }
 
+// ─── Gym Rotation ───
+
+const GYM_ROTATION = ["A", "B", "C"] as const;
+const GYM_EXERCISES: Record<string, string> = {
+  A: "squat/bench/lat_pulldown",
+  B: "squat/incline_bench/cable_row",
+  C: "squat/ohp/barbell_row",
+};
+
+export function getNextWorkout(log: LogEntry[]): { day: string; exercises: string } {
+  const gymDays = log
+    .filter((e) => e.metric === "gym" && e.value === "1" && /Day [ABC]/.test(e.notes))
+    .sort((a, b) => b.date.localeCompare(a.date));
+
+  if (gymDays.length === 0) {
+    return { day: "A", exercises: GYM_EXERCISES["A"] };
+  }
+
+  const lastDay = gymDays[0].notes.match(/Day ([ABC])/)?.[1] || "A";
+  const lastIdx = GYM_ROTATION.indexOf(lastDay as "A" | "B" | "C");
+  const nextDay = GYM_ROTATION[(lastIdx + 1) % 3];
+  return { day: nextDay, exercises: GYM_EXERCISES[nextDay] };
+}
+
 // ─── Workouts ───
 
 export interface WorkoutSetEntry {
@@ -247,8 +276,7 @@ export function readWorkouts(): WorkoutSetEntry[] {
   const content = fs.readFileSync(WORKOUTS_PATH, "utf-8");
   const lines = content.trim().split("\n").slice(1);
   return lines.filter(Boolean).map((line) => {
-    const fields = line.match(/(".*?"|[^,]*)(?:,|$)/g) || [];
-    const clean = fields.map((f) => f.replace(/,$/, "").replace(/^"|"$/g, "").trim());
+    const clean = parseCSVLine(line);
     return {
       date: clean[0] || "",
       workout: clean[1] || "",
@@ -259,4 +287,40 @@ export function readWorkouts(): WorkoutSetEntry[] {
       notes: clean[6] || "",
     };
   });
+}
+
+// ─── Reflections ───
+
+export interface ReflectionEntry {
+  date: string;
+  domain: string;
+  win: string;
+  lesson: string;
+  change: string;
+}
+
+export function readReflections(): ReflectionEntry[] {
+  if (!fs.existsSync(REFLECTIONS_PATH)) return [];
+  const content = fs.readFileSync(REFLECTIONS_PATH, "utf-8");
+  const lines = content.trim().split("\n").slice(1);
+  return lines.filter(Boolean).map((line) => {
+    const clean = parseCSVLine(line);
+    return {
+      date: clean[0] || "",
+      domain: clean[1] || "",
+      win: clean[2] || "",
+      lesson: clean[3] || "",
+      change: clean[4] || "",
+    };
+  });
+}
+
+export function appendReflection(entry: ReflectionEntry): void {
+  const line = `${entry.date},${entry.domain},${csvQuote(entry.win)},${csvQuote(entry.lesson)},${csvQuote(entry.change)}`;
+  fs.appendFileSync(REFLECTIONS_PATH, line + "\n");
+}
+
+export function getYesterdayChanges(reflections: ReflectionEntry[]): ReflectionEntry[] {
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+  return reflections.filter((r) => r.date === yesterday && r.change.trim());
 }

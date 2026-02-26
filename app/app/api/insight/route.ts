@@ -21,6 +21,7 @@ interface WeightInsight {
 
 interface HabitSummary {
   last7days: Record<string, number>;
+  yesterday: Record<string, boolean>;
   bestHabit: string | null;
   worstHabit: string | null;
 }
@@ -28,15 +29,28 @@ interface HabitSummary {
 interface Pattern {
   type: "warning" | "positive" | "correlation" | "streak" | "dayofweek";
   message: string;
-  priority: number; // higher = show first
+  priority: number;
+}
+
+interface StructuredInsight {
+  streak: string;
+  opportunity: string;
+  warning: string | null;
+  momentum: string;
+}
+
+interface GroupedStreaks {
+  avoid: Record<string, StreakInfo>;
+  build: Record<string, StreakInfo>;
 }
 
 interface InsightResponse {
   date: string;
-  streaks: Record<string, StreakInfo>;
+  streaks: GroupedStreaks;
   weight: WeightInsight;
   habits: HabitSummary;
   patterns: Pattern[];
+  insight: StructuredInsight;
   todaysPlan: { itemCount: number; doneCount: number };
   resetDay: number;
 }
@@ -137,10 +151,11 @@ function computeWeight(log: LogEntry[]): WeightInsight {
 
 // ─── Habit Summary (last 7 days) ───
 
-function computeHabits(log: LogEntry[]): HabitSummary {
+function computeHabits(log: LogEntry[], dayMap: Map<string, Map<string, string>>): HabitSummary {
   const habitMetrics = ["gym", "sleep", "meditate", "deep_work", "ate_clean"];
   const sevenDaysAgo = daysAgo(7);
   const today = getToday();
+  const yesterday = daysAgo(1);
 
   const recent = log.filter(
     (e) => habitMetrics.includes(e.metric) && e.date >= sevenDaysAgo && e.date <= today
@@ -155,7 +170,13 @@ function computeHabits(log: LogEntry[]): HabitSummary {
   const bestHabit = sorted[0] && counts[sorted[0]] > 0 ? sorted[0] : null;
   const worstHabit = sorted[sorted.length - 1] ?? null;
 
-  return { last7days: counts, bestHabit, worstHabit };
+  const yesterdayData = dayMap.get(yesterday);
+  const yesterdayHabits: Record<string, boolean> = {};
+  for (const m of habitMetrics) {
+    yesterdayHabits[m] = yesterdayData?.get(m) === "1";
+  }
+
+  return { last7days: counts, yesterday: yesterdayHabits, bestHabit, worstHabit };
 }
 
 // ─── Pattern Detectors ───
@@ -165,7 +186,6 @@ function detectCascades(log: LogEntry[], dayMap: Map<string, Map<string, string>
   const addictionMetrics = ["weed", "lol", "poker"];
   const habitMetrics = ["gym", "sleep", "meditate", "deep_work", "ate_clean"];
 
-  // For each habit, check: when missed 2+ consecutive days, did relapse follow within 3 days?
   for (const habit of habitMetrics) {
     const dates = [...dayMap.keys()].sort();
     let missRun = 0;
@@ -181,14 +201,13 @@ function detectCascades(log: LogEntry[], dayMap: Map<string, Map<string, string>
       } else {
         if (missRun >= 2) {
           totalMissStreaks++;
-          // Check next 3 days for relapse
           for (let j = i; j < Math.min(i + 3, dates.length); j++) {
             const futureDay = dayMap.get(dates[j]);
             if (futureDay) {
               for (const addiction of addictionMetrics) {
                 if (futureDay.get(addiction) === "0") {
                   relapseAfterMiss++;
-                  j = dates.length; // break outer
+                  j = dates.length;
                   break;
                 }
               }
@@ -212,9 +231,7 @@ function detectCascades(log: LogEntry[], dayMap: Map<string, Map<string, string>
     }
   }
 
-  // Check trigger log for explicit cascade patterns
   const triggers = log.filter((e) => e.metric === "trigger");
-  const cascadeKeywords = ["cascade", "→", "->", "led to"];
   const recentTriggers = triggers.filter((t) => t.date >= daysAgo(14));
   if (recentTriggers.length >= 2) {
     patterns.push({
@@ -279,7 +296,6 @@ function detectStreakPatterns(streaks: Record<string, StreakInfo>): Pattern[] {
   const patterns: Pattern[] = [];
   const addictionMetrics = ["weed", "lol", "poker"];
 
-  // Highlight current streaks
   for (const metric of addictionMetrics) {
     const s = streaks[metric];
     if (!s) continue;
@@ -306,9 +322,7 @@ function detectStreakPatterns(streaks: Record<string, StreakInfo>): Pattern[] {
 function detectDayOfWeekPatterns(dayMap: Map<string, Map<string, string>>): Pattern[] {
   const patterns: Pattern[] = [];
   const addictionMetrics = ["weed", "lol", "poker"];
-  const habitMetrics = ["gym", "sleep", "ate_clean"];
 
-  // Count clean rate by day of week for addictions
   const dowCounts: Record<string, { total: number; clean: number }> = {};
   const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   for (const d of days) dowCounts[d] = { total: 0, clean: 0 };
@@ -332,7 +346,6 @@ function detectDayOfWeekPatterns(dayMap: Map<string, Map<string, string>>): Patt
     }
   }
 
-  // Find worst day
   let worstDay = "";
   let worstRate = 100;
   for (const [day, c] of Object.entries(dowCounts)) {
@@ -353,7 +366,6 @@ function detectDayOfWeekPatterns(dayMap: Map<string, Map<string, string>>): Patt
     });
   }
 
-  // Find best gym day
   const gymDow: Record<string, { total: number; done: number }> = {};
   for (const d of days) gymDow[d] = { total: 0, done: 0 };
 
@@ -394,7 +406,6 @@ function detectRecentDanger(log: LogEntry[], dayMap: Map<string, Map<string, str
   const today = getToday();
   const threeDaysAgo = daysAgo(3);
 
-  // Count consecutive red days (all addictions relapsed)
   const dates = [...dayMap.keys()].filter((d) => d <= today).sort().reverse();
   let redStreak = 0;
 
@@ -417,7 +428,6 @@ function detectRecentDanger(log: LogEntry[], dayMap: Map<string, Map<string, str
     });
   }
 
-  // Check if no positive habits in last 3 days
   const recentHabits = ["gym", "sleep", "meditate", "deep_work", "ate_clean"];
   let anyPositive = false;
   for (const date of dates.filter((d) => d >= threeDaysAgo)) {
@@ -444,64 +454,132 @@ function detectRecentDanger(log: LogEntry[], dayMap: Map<string, Map<string, str
   return patterns;
 }
 
+// ─── Structured Insight Builder ───
+
+function buildStructuredInsight(
+  allStreaks: Record<string, StreakInfo>,
+  patterns: Pattern[],
+  habits: HabitSummary,
+): StructuredInsight {
+  // Streak: find the best active streak to highlight
+  const allMetrics = [...Object.entries(allStreaks)];
+  const activeStreaks = allMetrics.filter(([, s]) => s.current > 0).sort((a, b) => b[1].current - a[1].current);
+
+  let streakMsg = "No active streaks";
+  if (activeStreaks.length > 0) {
+    const [metric, info] = activeStreaks[0];
+    const label = metric === "lol" ? "LoL" : metric === "ate_clean" ? "Ate clean" : metric === "deep_work" ? "Deep work" : metric.charAt(0).toUpperCase() + metric.slice(1);
+    const bestNote = info.current >= info.best ? " (personal best!)" : ` (best: ${info.best})`;
+    streakMsg = `${label}: ${info.current} day streak${bestNote}`;
+  }
+
+  // Opportunity: pick best correlation pattern or a positive insight
+  const correlations = patterns.filter((p) => p.type === "correlation");
+  const positives = patterns.filter((p) => p.type === "positive");
+  let opportunityMsg = "Build momentum — stack one habit on another";
+  if (correlations.length > 0) {
+    opportunityMsg = correlations[0].message;
+  } else if (positives.length > 0) {
+    opportunityMsg = positives[0].message;
+  }
+
+  // Warning: pick highest priority warning or null
+  const warnings = patterns.filter((p) => p.type === "warning");
+  const warningMsg = warnings.length > 0 ? warnings[0].message : null;
+
+  // Momentum: compute from yesterday's habits
+  const habitKeys = ["gym", "sleep", "meditate", "deep_work", "ate_clean"];
+  const yesterdayCount = habitKeys.filter((k) => habits.yesterday[k]).length;
+  const totalHabits = habitKeys.length;
+
+  // Compute last week average
+  const lastWeekTotal = habitKeys.reduce((sum, k) => sum + (habits.last7days[k] ?? 0), 0);
+  const lastWeekAvg = Math.round(lastWeekTotal / 7);
+
+  let momentumMsg: string;
+  if (yesterdayCount === 0 && lastWeekAvg === 0) {
+    momentumMsg = "Fresh start — pick one habit to own today";
+  } else if (yesterdayCount > lastWeekAvg) {
+    momentumMsg = `${yesterdayCount}/${totalHabits} habits yesterday, up from ~${lastWeekAvg}/day last week`;
+  } else if (yesterdayCount < lastWeekAvg) {
+    momentumMsg = `${yesterdayCount}/${totalHabits} habits yesterday, down from ~${lastWeekAvg}/day last week`;
+  } else {
+    momentumMsg = `${yesterdayCount}/${totalHabits} habits yesterday, steady at ~${lastWeekAvg}/day`;
+  }
+
+  return {
+    streak: streakMsg,
+    opportunity: opportunityMsg,
+    warning: warningMsg,
+    momentum: momentumMsg,
+  };
+}
+
 // ─── Main ───
 
 export async function GET() {
-  const log = readLog();
-  const plan = readPlan();
-  const todaysPlan = getTodaysPlan(plan);
-  const today = getToday();
+  try {
+    const log = readLog();
+    const plan = readPlan();
+    const todaysPlan = getTodaysPlan(plan);
+    const today = getToday();
 
-  const dayMap = buildDayMap(log);
+    const dayMap = buildDayMap(log);
 
-  // Streaks
-  const addictionMetrics = ["weed", "lol", "poker"];
-  const habitMetrics = ["gym", "sleep", "meditate", "deep_work", "ate_clean"];
-  const allStreakMetrics = [...addictionMetrics, ...habitMetrics];
+    const avoidMetrics = ["weed", "lol", "poker"];
+    const buildMetrics = ["gym", "ate_clean", "sleep"];
+    const allStreakMetrics = [...avoidMetrics, ...buildMetrics];
 
-  const streaks: Record<string, StreakInfo> = {};
-  for (const m of allStreakMetrics) {
-    streaks[m] = computeStreaks(log, m);
+    const flatStreaks: Record<string, StreakInfo> = {};
+    for (const m of allStreakMetrics) {
+      flatStreaks[m] = computeStreaks(log, m);
+    }
+
+    const streaks: GroupedStreaks = {
+      avoid: {},
+      build: {},
+    };
+    for (const m of avoidMetrics) streaks.avoid[m] = flatStreaks[m];
+    for (const m of buildMetrics) streaks.build[m] = flatStreaks[m];
+
+    const weight = computeWeight(log);
+    const habits = computeHabits(log, dayMap);
+
+    const patterns: Pattern[] = [
+      ...detectCascades(log, dayMap),
+      ...detectCorrelations(dayMap),
+      ...detectStreakPatterns(flatStreaks),
+      ...detectDayOfWeekPatterns(dayMap),
+      ...detectRecentDanger(log, dayMap),
+    ];
+
+    patterns.sort((a, b) => b.priority - a.priority);
+
+    const insight = buildStructuredInsight(flatStreaks, patterns, habits);
+
+    const todaysPlanSummary = {
+      itemCount: todaysPlan.length,
+      doneCount: todaysPlan.filter((p) => p.done === "1").length,
+    };
+
+    const resetDay = Math.floor(
+      (new Date().getTime() - new Date(config.dopamineReset.startDate).getTime()) / (1000 * 60 * 60 * 24)
+    ) + 1;
+
+    const response: InsightResponse = {
+      date: today,
+      streaks,
+      weight,
+      habits,
+      patterns,
+      insight,
+      todaysPlan: todaysPlanSummary,
+      resetDay,
+    };
+
+    return NextResponse.json(response);
+  } catch (e) {
+    console.error("GET /api/insight error:", e);
+    return NextResponse.json({ error: "Failed to compute insights" }, { status: 500 });
   }
-
-  // Weight
-  const weight = computeWeight(log);
-
-  // Habits
-  const habits = computeHabits(log);
-
-  // Patterns
-  const patterns: Pattern[] = [
-    ...detectCascades(log, dayMap),
-    ...detectCorrelations(dayMap),
-    ...detectStreakPatterns(streaks),
-    ...detectDayOfWeekPatterns(dayMap),
-    ...detectRecentDanger(log, dayMap),
-  ];
-
-  // Sort by priority descending
-  patterns.sort((a, b) => b.priority - a.priority);
-
-  // Today's plan
-  const todaysPlanSummary = {
-    itemCount: todaysPlan.length,
-    doneCount: todaysPlan.filter((p) => p.done === "1").length,
-  };
-
-  // Reset day
-  const resetDay = Math.floor(
-    (new Date().getTime() - new Date(config.dopamineReset.startDate).getTime()) / (1000 * 60 * 60 * 24)
-  ) + 1;
-
-  const response: InsightResponse = {
-    date: today,
-    streaks,
-    weight,
-    habits,
-    patterns,
-    todaysPlan: todaysPlanSummary,
-    resetDay,
-  };
-
-  return NextResponse.json(response);
 }

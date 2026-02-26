@@ -6,30 +6,8 @@ import MonthView from "../components/MonthView";
 import WeekView from "../components/WeekView";
 import DayView from "../components/DayView";
 import TodoSidebar from "../components/TodoSidebar";
-
-export type ZoomLevel = "year" | "month" | "week" | "day";
-
-export interface PlanEvent {
-  date: string;
-  start: number;
-  end: number;
-  item: string;
-  done: string;
-  notes: string;
-}
-
-export type HabitMap = Record<string, Record<string, boolean>>;
-
-export interface Todo {
-  id: number;
-  item: string;
-  done: number;
-  created: string;
-}
-
-function toDateStr(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
+import type { ZoomLevel, PlanEvent, HabitMap, Todo } from "../lib/types";
+import { toDateStr } from "../lib/utils";
 
 function getMonday(d: Date): Date {
   const date = new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -70,7 +48,7 @@ function getDateRange(zoom: ZoomLevel, focus: Date): { start: string; end: strin
 }
 
 export default function PlanPage() {
-  const [zoom, setZoom] = useState<ZoomLevel>("week");
+  const [zoom, setZoom] = useState<ZoomLevel>("day");
   const [focusDate, setFocusDate] = useState(() => new Date());
   const [data, setData] = useState<{ events: PlanEvent[]; habits: HabitMap } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -82,7 +60,10 @@ export default function PlanPage() {
   const fetchData = useCallback(() => {
     setLoading(true);
     fetch(`/api/plan/range?start=${range.start}&end=${range.end}`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch plan");
+        return res.json();
+      })
       .then((d) => {
         setData(d);
         setLoading(false);
@@ -92,7 +73,10 @@ export default function PlanPage() {
 
   const fetchTodos = useCallback(() => {
     fetch("/api/todos")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch todos");
+        return res.json();
+      })
       .then((t) => setTodos(t))
       .catch(() => {});
   }, []);
@@ -189,54 +173,53 @@ export default function PlanPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="max-w-6xl mx-auto">
           {/* Breadcrumb */}
           <div className="flex items-center gap-1 text-sm mb-2">
-            <a href="/" className="text-zinc-500 hover:text-zinc-300">
-              Hub
-            </a>
-              {breadcrumbs.map((bc, i) => (
-                <span key={bc.level} className="flex items-center gap-1">
-                  <span className="text-zinc-700">/</span>
-                  <button
-                    onClick={() => handleZoom(focusDate, bc.level)}
-                    className={
-                      i === breadcrumbs.length - 1
-                        ? "text-zinc-300"
-                        : "text-zinc-500 hover:text-zinc-300"
-                    }
-                  >
-                    {bc.label}
-                  </button>
-                </span>
-              ))}
-            </div>
+            {breadcrumbs.map((bc, i) => (
+              <span key={bc.level} className="flex items-center gap-1">
+                {i > 0 && <span className="text-zinc-700">/</span>}
+                <button
+                  onClick={() => handleZoom(focusDate, bc.level)}
+                  className={
+                    i === breadcrumbs.length - 1
+                      ? "text-zinc-300"
+                      : "text-zinc-500 hover:text-zinc-300"
+                  }
+                >
+                  {bc.label}
+                </button>
+              </span>
+            ))}
+          </div>
 
             {/* Navigation */}
-            <div className="flex items-center gap-4 mb-6">
+            <div className="flex items-center gap-2 sm:gap-3 mb-6">
+              <div className="flex items-center">
+                <button
+                  onClick={() => navigate(-1)}
+                  className="px-3 py-2 rounded-l bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-400 text-sm min-h-[44px] min-w-[44px] flex items-center justify-center"
+                >
+                  ◀
+                </button>
+                <button
+                  onClick={() => navigate(1)}
+                  className="px-3 py-2 rounded-r bg-zinc-900 border border-l-0 border-zinc-800 hover:border-zinc-700 text-zinc-400 text-sm min-h-[44px] min-w-[44px] flex items-center justify-center"
+                >
+                  ▶
+                </button>
+              </div>
+              <h1 className="text-lg sm:text-xl font-semibold flex-1 truncate">{title}</h1>
               <button
-                onClick={() => navigate(-1)}
-                className="px-3 py-1.5 rounded bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-400 text-sm"
-              >
-                &#9668;
-              </button>
-              <h1 className="text-xl font-semibold flex-1">{title}</h1>
-              <button
-                onClick={() => navigate(1)}
-                className="px-3 py-1.5 rounded bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-400 text-sm"
-              >
-                &#9658;
-              </button>
-              <button
-                onClick={() => handleZoom(new Date(), "week")}
-                className="px-3 py-1.5 rounded bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-400 text-sm"
+                onClick={() => handleZoom(new Date(), "day")}
+                className="px-3 py-2 rounded bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-400 text-sm min-h-[44px]"
               >
                 Today
               </button>
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="px-3 py-1.5 rounded bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-400 text-sm relative"
+                className="px-3 py-2 rounded bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-400 text-sm relative min-h-[44px]"
               >
                 Todos
                 {incompleteCount > 0 && (
@@ -314,7 +297,7 @@ export default function PlanPage() {
             onClick={() => setSidebarOpen(false)}
             className="text-zinc-500 hover:text-zinc-300 text-sm"
           >
-            x
+            ✕
           </button>
         </div>
         <div className="flex-1 overflow-hidden">

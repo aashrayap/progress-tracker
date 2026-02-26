@@ -5,6 +5,7 @@ import { DragDropProvider } from "@dnd-kit/react";
 import Timeline from "./Timeline";
 import TodoPool from "./TodoPool";
 import { config } from "../lib/config";
+import type { Todo } from "../lib/types";
 
 interface PlanItem {
   start: number;
@@ -12,13 +13,6 @@ interface PlanItem {
   item: string;
   done: string;
   notes: string;
-}
-
-interface Todo {
-  id: number;
-  item: string;
-  done: number;
-  created: string;
 }
 
 interface Props {
@@ -31,6 +25,7 @@ interface Props {
 export default function SchedulerModal({ initialPlan, initialTodos, onClose, onTodosChange }: Props) {
   const [plan, setPlan] = useState<PlanItem[]>(initialPlan);
   const [todos, setTodos] = useState<Todo[]>(initialTodos);
+  const [todoPoolOpen, setTodoPoolOpen] = useState(false);
   const today = new Date().toISOString().split("T")[0];
 
   useEffect(() => {
@@ -56,11 +51,12 @@ export default function SchedulerModal({ initialPlan, initialTodos, onClose, onT
     async (item: string, hour: number, duration = 1, notes = "") => {
       const entry: PlanItem = { start: hour, end: hour + duration, item, done: "", notes };
       setPlan((prev) => [...prev.filter((p) => p.item !== item), entry]);
-      await fetch("/api/plan", {
+      const res = await fetch("/api/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ date: today, ...entry }),
       });
+      if (!res.ok) console.error("Failed to add plan item");
     },
     [today]
   );
@@ -69,11 +65,12 @@ export default function SchedulerModal({ initialPlan, initialTodos, onClose, onT
     async (item: string, newHour: number, duration: number, notes = "") => {
       const entry: PlanItem = { start: newHour, end: newHour + duration, item, done: "", notes };
       setPlan((prev) => prev.map((p) => (p.item === item ? entry : p)));
-      await fetch("/api/plan", {
+      const res = await fetch("/api/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ date: today, ...entry }),
       });
+      if (!res.ok) console.error("Failed to move plan item");
     },
     [today]
   );
@@ -81,11 +78,12 @@ export default function SchedulerModal({ initialPlan, initialTodos, onClose, onT
   const deletePlanItem = useCallback(
     async (item: string) => {
       setPlan((prev) => prev.filter((p) => p.item !== item));
-      await fetch("/api/plan", {
+      const res = await fetch("/api/plan", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ date: today, item }),
       });
+      if (!res.ok) console.error("Failed to delete plan item");
     },
     [today]
   );
@@ -96,26 +94,29 @@ export default function SchedulerModal({ initialPlan, initialTodos, onClose, onT
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ item }),
     });
+    if (!res.ok) throw new Error("Failed to create todo");
     const entry = await res.json();
     setTodos((prev) => [...prev, entry]);
   }, []);
 
   const toggleTodo = useCallback(async (id: number, done: boolean) => {
     setTodos((prev) => prev.map((t) => (t.id === id ? { ...t, done: done ? 1 : 0 } : t)));
-    await fetch("/api/todos", {
+    const res = await fetch("/api/todos", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, done: done ? 1 : 0 }),
     });
+    if (!res.ok) console.error("Failed to update todo");
   }, []);
 
   const deleteTodo = useCallback(async (id: number) => {
     setTodos((prev) => prev.filter((t) => t.id !== id));
-    await fetch("/api/todos", {
+    const res = await fetch("/api/todos", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id }),
     });
+    if (!res.ok) console.error("Failed to delete todo");
   }, []);
 
   const handleDragEnd = useCallback(
@@ -157,16 +158,28 @@ export default function SchedulerModal({ initialPlan, initialTodos, onClose, onT
       </div>
 
       <DragDropProvider onDragEnd={handleDragEnd}>
-        <div className="flex flex-1 overflow-hidden">
-          <Timeline plan={plan} onDeleteItem={deletePlanItem} />
-          <TodoPool
-            todos={todos}
-            dailyTasks={config.dailyTasks}
-            scheduledItems={scheduledItems}
-            onAdd={addTodo}
-            onToggle={toggleTodo}
-            onDelete={deleteTodo}
-          />
+        <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto">
+            <Timeline plan={plan} onDeleteItem={deletePlanItem} />
+          </div>
+          {/* Mobile: collapsible toggle */}
+          <button
+            onClick={() => setTodoPoolOpen(!todoPoolOpen)}
+            className="lg:hidden flex items-center justify-center gap-2 px-4 py-3 bg-zinc-900 border-t border-zinc-800 text-sm text-zinc-400"
+          >
+            <span>{todoPoolOpen ? "Hide" : "Show"} Todos</span>
+            <span className="text-xs text-zinc-600">{todos.filter(t => t.done === 0).length} pending</span>
+          </button>
+          <div className={`${todoPoolOpen ? "block" : "hidden"} lg:block`}>
+            <TodoPool
+              todos={todos}
+              dailyTasks={config.dailyTasks}
+              scheduledItems={scheduledItems}
+              onAdd={addTodo}
+              onToggle={toggleTodo}
+              onDelete={deleteTodo}
+            />
+          </div>
         </div>
       </DragDropProvider>
     </div>

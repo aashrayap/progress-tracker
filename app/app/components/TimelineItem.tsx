@@ -1,6 +1,7 @@
 "use client";
 
 import { useDraggable } from "@dnd-kit/react";
+import { formatTime } from "../lib/utils";
 
 interface Props {
   item: string;
@@ -12,14 +13,6 @@ interface Props {
 }
 
 const HOUR_HEIGHT = 60;
-
-function formatTime(t: number): string {
-  const hour = Math.floor(t);
-  const min = t % 1 === 0.5 ? "30" : "00";
-  const ampm = hour >= 12 ? "pm" : "am";
-  const h = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
-  return `${h}${min === "00" ? "" : ":" + min}${ampm}`;
-}
 
 export default function TimelineItem({ item, start, end, done, notes, onDelete }: Props) {
   const duration = Math.max(end - start, 0.5);

@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { config } from "./lib/config";
-import Link from "next/link";
 import DailyInsight, { InsightData } from "./components/DailyInsight";
 
 interface WeightData {
@@ -26,14 +25,6 @@ interface DopamineDay {
   ateClean: boolean;
 }
 
-interface PlanItem {
-  start: number;
-  end: number;
-  item: string;
-  done: string;
-  notes: string;
-}
-
 interface AppData {
   gymToday: boolean;
   nextWorkout: string;
@@ -46,7 +37,7 @@ interface AppData {
     streaks: { lol: number; weed: number; poker: number };
     triggers: { date: string; trigger: string; result: string }[];
   };
-  todaysPlan: PlanItem[];
+  todaysPlan: { done: string }[];
 }
 
 export default function Home() {
@@ -56,8 +47,14 @@ export default function Home() {
 
   const fetchData = useCallback(() => {
     Promise.all([
-      fetch("/api/log").then((res) => res.json()),
-      fetch("/api/insight").then((res) => res.json()),
+      fetch("/api/log").then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch log");
+        return res.json();
+      }),
+      fetch("/api/insight").then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch insight");
+        return res.json();
+      }),
     ])
       .then(([logData, insightData]) => {
         setData(logData);
@@ -95,10 +92,6 @@ export default function Home() {
   const templateKey = data.nextWorkout;
   const gymDone = data.gymToday;
 
-  // Plan summary
-  const planTotal = data.todaysPlan.length;
-  const planDone = data.todaysPlan.filter((p) => p.done === "1").length;
-
   // Recent weight trend (last 3 entries)
   const recentWeights = weight.log.slice(-3);
   const weightTrend = recentWeights.length >= 2
@@ -110,28 +103,12 @@ export default function Home() {
       <div className="p-4 sm:p-6">
         <div className="max-w-lg mx-auto">
 
-          {/* ==================== HEADER + NAV ==================== */}
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-lg font-bold">Hub</h1>
-              <span className="text-xs text-zinc-500">
-                {new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
-              </span>
-            </div>
-            <div className="flex gap-2">
-              <Link
-                href="/plan"
-                className="px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/30 hover:border-blue-400/50 transition-colors text-sm text-blue-400"
-              >
-                Plan
-              </Link>
-              <Link
-                href="/health"
-                className="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 hover:border-emerald-400/50 transition-colors text-sm text-emerald-400"
-              >
-                Health
-              </Link>
-            </div>
+          {/* ==================== HEADER ==================== */}
+          <div className="mb-4">
+            <h1 className="text-lg font-bold">Hub</h1>
+            <span className="text-xs text-zinc-500">
+              {new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+            </span>
           </div>
 
           {/* ==================== STATUS ROW ==================== */}
@@ -181,7 +158,7 @@ export default function Home() {
                 {dopamineReset.streaks.weed}d weed · {dopamineReset.streaks.lol}d lol · {dopamineReset.streaks.poker}d poker
               </span>
             </div>
-            <div className="flex gap-1 flex-wrap">
+            <div className="flex flex-wrap -m-0.5">
               {Array.from({ length: 90 }, (_, i) => {
                 const dayNum = i + 1;
                 const [year, month, day] = dopamineReset.startDate.split("-").map(Number);
@@ -221,8 +198,11 @@ export default function Home() {
                 return (
                   <div
                     key={dayNum}
-                    className={`group relative w-4 h-7 rounded-sm ${color} ${isToday ? "ring-2 ring-white" : ""} cursor-pointer`}
+                    className="group relative p-0.5 cursor-pointer"
                   >
+                    <div
+                      className={`w-4 h-7 rounded-sm ${color} ${isToday ? "ring-2 ring-white" : ""}`}
+                    />
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
                       <div className="flex items-center justify-between gap-3 mb-1">
                         <span className="font-medium">{dayOfWeek}, {dateLabel}</span>
@@ -296,64 +276,6 @@ export default function Home() {
                 <span className="w-3 h-3 bg-zinc-800 rounded-sm ring-2 ring-white" /> Today
               </span>
             </div>
-          </section>
-
-          {/* ==================== NAV CARDS ==================== */}
-          <section className="grid grid-cols-2 gap-3">
-            {/* Plan Card */}
-            <Link
-              href="/plan"
-              className="block p-4 bg-zinc-900 border border-zinc-800 rounded-lg hover:border-zinc-700 transition-colors"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs text-zinc-500 uppercase tracking-wide">Plan</span>
-                <span className="text-zinc-600">&#8250;</span>
-              </div>
-              {planTotal === 0 ? (
-                <p className="text-sm text-zinc-600">No plan today</p>
-              ) : (
-                <>
-                  <p className="text-2xl font-bold">
-                    {planDone}<span className="text-zinc-600 text-base font-normal">/{planTotal}</span>
-                  </p>
-                  <div className="mt-2 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-blue-500 rounded-full transition-all"
-                      style={{ width: `${planTotal > 0 ? (planDone / planTotal) * 100 : 0}%` }}
-                    />
-                  </div>
-                  <p className="text-[10px] text-zinc-600 mt-1">
-                    {planDone === planTotal ? "all done" : `${planTotal - planDone} remaining`}
-                  </p>
-                </>
-              )}
-            </Link>
-
-            {/* Health Card */}
-            <Link
-              href="/health"
-              className="block p-4 bg-zinc-900 border border-zinc-800 rounded-lg hover:border-zinc-700 transition-colors"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs text-zinc-500 uppercase tracking-wide">Health</span>
-                <span className="text-zinc-600">&#8250;</span>
-              </div>
-              <p className="text-2xl font-bold">
-                {weight.current}<span className="text-zinc-600 text-base font-normal"> lbs</span>
-              </p>
-              <div className="mt-2 flex items-center gap-2">
-                <span className={`text-xs px-1.5 py-0.5 rounded ${
-                  gymDone
-                    ? "bg-emerald-500/20 text-emerald-400"
-                    : "bg-zinc-800 text-zinc-500"
-                }`}>
-                  {gymDone ? "Gym done" : `Day ${templateKey} next`}
-                </span>
-              </div>
-              <p className="text-[10px] text-zinc-600 mt-1">
-                {weight.goal} lbs goal
-              </p>
-            </Link>
           </section>
 
           {/* WHY — collapsible footer */}

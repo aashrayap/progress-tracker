@@ -11,6 +11,7 @@ REPO="aashrayap/progress-tracker"
 PROJECT_DIR="$HOME/Documents/tracker"
 LOCK_FILE="/tmp/voice-inbox.lock"
 LOG_FILE="$HOME/.local/log/voice-inbox.log"
+NTFY_TOPIC="ash-9f2k7x3m"
 
 mkdir -p "$(dirname "$LOG_FILE")"
 
@@ -57,6 +58,9 @@ echo "$issues" | jq -c '.[]' | while read -r issue; do
   # Read the prompt template
   system_prompt=$(cat "$PROJECT_DIR/.claude/prompts/voice-inbox.md")
 
+  # Clean up previous notification
+  rm -f /tmp/voice-inbox-ntfy.txt
+
   # Run Claude Code with the voice-inbox prompt
   claude --print \
     --append-system-prompt "$system_prompt" \
@@ -67,13 +71,25 @@ Voice note content:
 $body
 
 Steps:
-1. Read log.csv and notes.csv to understand current format
-2. Determine if this is a log entry, a note, or both
+1. Read log.csv and reflections.csv to understand current format
+2. Determine if this is a log entry, a reflection, a workout, or a note
 3. Append to the appropriate CSV file(s)
-4. Run: git add log.csv notes.csv workouts.csv && git commit -m 'voice: process issue #$number'
+4. Run: git add log.csv workouts.csv reflections.csv && git commit -m 'voice: process issue #$number'
 5. Run: gh issue comment $number --repo $REPO --body '<your summary>'
-6. Run: gh issue close $number --repo $REPO" \
+6. Run: gh issue close $number --repo $REPO
+7. Write push notification to /tmp/voice-inbox-ntfy.txt (see prompt for format rules)" \
     2>> "$LOG_FILE" || log "ERROR processing issue #$number"
+
+  # Send push notification from temp file
+  if [ -f /tmp/voice-inbox-ntfy.txt ]; then
+    ntfy_msg=$(cat /tmp/voice-inbox-ntfy.txt)
+    if [ -n "$ntfy_msg" ]; then
+      curl -s -d "$ntfy_msg" "ntfy.sh/$NTFY_TOPIC" > /dev/null 2>&1 || log "ntfy push failed"
+    fi
+    rm -f /tmp/voice-inbox-ntfy.txt
+  else
+    log "No notification file generated for issue #$number"
+  fi
 
   log "Done with issue #$number"
 done

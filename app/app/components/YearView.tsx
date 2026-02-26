@@ -1,6 +1,6 @@
 "use client";
 
-import type { ZoomLevel, PlanEvent, HabitMap } from "../plan/page";
+import type { ZoomLevel, PlanEvent, HabitMap } from "../lib/types";
 
 interface Props {
   events: PlanEvent[];

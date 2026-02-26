@@ -1,15 +1,14 @@
 import { NextResponse } from "next/server";
 import {
   readLog,
-  appendLog,
   getMetricHistory,
   getLatestValue,
   getStreak,
   readWorkouts,
-  LogEntry,
   WorkoutSetEntry,
 } from "../../lib/csv";
 import { config } from "../../lib/config";
+import { getNextWorkout } from "../../lib/utils";
 
 interface GroupedExercise {
   name: string;
@@ -105,95 +104,77 @@ function getExerciseProgress(
 }
 
 export async function GET() {
-  const log = readLog();
-  const workoutSets = readWorkouts();
+  try {
+    const log = readLog();
+    const workoutSets = readWorkouts();
 
-  // Weight data
-  const weightHistory = getMetricHistory(log, "weight").map((w) => ({
-    date: w.date,
-    value: parseFloat(w.value),
-  }));
-  const currentWeight = parseFloat(getLatestValue(log, "weight") || "0");
-  const weightEntries = getMetricHistory(log, "weight");
-  const startWeight =
-    weightEntries.length > 0
-      ? parseFloat(weightEntries[0].value)
-      : config.weight.start;
+    const weightHistory = getMetricHistory(log, "weight").map((w) => ({
+      date: w.date,
+      value: parseFloat(w.value),
+    }));
+    const currentWeight = parseFloat(getLatestValue(log, "weight") || "0");
+    const weightEntries = getMetricHistory(log, "weight");
+    const startWeight =
+      weightEntries.length > 0
+        ? parseFloat(weightEntries[0].value)
+        : config.weight.start;
 
-  // Workout data
-  const workoutDays = groupWorkoutsByDay(workoutSets);
-  const todayStr = new Date().toISOString().split("T")[0];
-  const todayWorkout = workoutDays.find((w) => w.date === todayStr) || null;
+    const workoutDays = groupWorkoutsByDay(workoutSets);
+    const todayStr = new Date().toISOString().split("T")[0];
+    const todayWorkout = workoutDays.find((w) => w.date === todayStr) || null;
 
-  // Gym streak and weekly count
-  const gymStreak = getStreak(log, "gym");
-  const now = new Date();
-  const dayOfWeek = now.getDay(); // 0=Sun
-  const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-  const monday = new Date(now);
-  monday.setDate(now.getDate() - mondayOffset);
-  const mondayStr = monday.toISOString().split("T")[0];
-  const gymThisWeek = log.filter(
-    (e) =>
-      e.metric === "gym" && e.value === "1" && e.date >= mondayStr && e.date <= todayStr
-  ).length;
+    const gymStreak = getStreak(log, "gym");
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - mondayOffset);
+    const mondayStr = monday.toISOString().split("T")[0];
+    const gymThisWeek = log.filter(
+      (e) =>
+        e.metric === "gym" && e.value === "1" && e.date >= mondayStr && e.date <= todayStr
+    ).length;
 
-  // Next workout rotation (completion-based)
-  const cycle = Object.keys(config.workoutTemplates);
-  const lastGym = [...log]
-    .reverse()
-    .find((e) => e.metric === "gym" && e.value === "1" && e.notes);
-  const lastTemplate = lastGym?.notes?.replace(/^Day\s*/i, "").trim() || "";
-  const lastIdx = cycle.indexOf(lastTemplate);
-  const nextWorkout = cycle[(lastIdx + 1) % cycle.length];
+    const cycle = Object.keys(config.workoutTemplates);
+    const nextWorkout = getNextWorkout(log, cycle);
 
-  const gymToday = log.some(
-    (e) => e.date === todayStr && e.metric === "gym" && e.value === "1"
-  );
+    const gymToday = log.some(
+      (e) => e.date === todayStr && e.metric === "gym" && e.value === "1"
+    );
 
-  // Ate clean history (last 14 days)
-  const twoWeeksAgo = new Date(now);
-  twoWeeksAgo.setDate(now.getDate() - 14);
-  const twoWeeksStr = twoWeeksAgo.toISOString().split("T")[0];
-  const ateCleanHistory = log
-    .filter(
-      (e) => e.metric === "ate_clean" && e.date >= twoWeeksStr
-    )
-    .map((e) => ({ date: e.date, clean: e.value === "1" }));
+    const twoWeeksAgo = new Date(now);
+    twoWeeksAgo.setDate(now.getDate() - 14);
+    const twoWeeksStr = twoWeeksAgo.toISOString().split("T")[0];
+    const ateCleanHistory = log
+      .filter(
+        (e) => e.metric === "ate_clean" && e.date >= twoWeeksStr
+      )
+      .map((e) => ({ date: e.date, clean: e.value === "1" }));
 
-  // Exercise progress
-  const exerciseProgress = getExerciseProgress(workoutDays);
+    const exerciseProgress = getExerciseProgress(workoutDays);
 
-  return NextResponse.json({
-    weight: {
-      current: currentWeight,
-      start: startWeight,
-      goal: config.weight.goal,
-      deadline: config.weight.deadline,
-      checkpoints: config.weight.checkpoints,
-      history: weightHistory,
-    },
-    workouts: {
-      today: todayWorkout,
-      history: workoutDays.slice(0, 20),
-      nextWorkout,
-    },
-    gymToday,
-    gymStreak,
-    gymThisWeek,
-    ateCleanHistory,
-    exerciseProgress,
-  });
-}
-
-export async function POST(request: Request) {
-  const body = await request.json();
-  const entries: LogEntry[] = body.entries || [];
-
-  if (entries.length === 0) {
-    return NextResponse.json({ error: "No entries provided" }, { status: 400 });
+    return NextResponse.json({
+      weight: {
+        current: currentWeight,
+        start: startWeight,
+        goal: config.weight.goal,
+        deadline: config.weight.deadline,
+        checkpoints: config.weight.checkpoints,
+        history: weightHistory,
+      },
+      workouts: {
+        today: todayWorkout,
+        history: workoutDays.slice(0, 20),
+        nextWorkout,
+      },
+      gymToday,
+      gymStreak,
+      gymThisWeek,
+      ateCleanHistory,
+      exerciseProgress,
+    });
+  } catch (e) {
+    console.error("GET /api/health error:", e);
+    return NextResponse.json({ error: "Failed to read health data" }, { status: 500 });
   }
-
-  appendLog(entries);
-  return NextResponse.json({ success: true, added: entries.length });
 }

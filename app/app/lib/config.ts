@@ -6,8 +6,6 @@ export const config = {
 
   why: "Trade escape for building systems and habits where I can operate at a level to change the world for the better.",
 
-  priorities: ["Weight", "Sleep", "Meditate", "Deep Work"],
-
   weight: {
     start: 240,
     goal: 200,

@@ -1,16 +1,13 @@
 "use client";
 
-import type { ZoomLevel, PlanEvent, HabitMap } from "../plan/page";
+import type { ZoomLevel, PlanEvent, HabitMap } from "../lib/types";
+import { toDateStr } from "../lib/utils";
 
 interface Props {
   events: PlanEvent[];
   habits: HabitMap;
   focusDate: Date;
   onNavigate: (date: Date, zoom: ZoomLevel) => void;
-}
-
-function toDateStr(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];

@@ -20,7 +20,7 @@ export default function TodoItem({ id, item, done, onToggle, onDelete }: Props) 
   return (
     <div
       ref={ref}
-      className={`group flex items-center gap-2 p-2 rounded-lg border transition-colors ${
+      className={`group flex items-center gap-2 p-2 rounded-lg border transition-colors min-h-[44px] ${
         done
           ? "bg-zinc-800/30 border-zinc-800"
           : "bg-zinc-800 border-zinc-700 cursor-grab active:cursor-grabbing"
@@ -28,7 +28,7 @@ export default function TodoItem({ id, item, done, onToggle, onDelete }: Props) 
     >
       <button
         onClick={() => onToggle(id, !done)}
-        className={`w-5 h-5 rounded border flex items-center justify-center text-xs shrink-0 ${
+        className={`w-6 h-6 rounded border flex items-center justify-center text-xs shrink-0 ${
           done ? "border-green-600 text-green-400" : "border-zinc-600 text-zinc-600 hover:border-zinc-500"
         }`}
       >
@@ -39,7 +39,7 @@ export default function TodoItem({ id, item, done, onToggle, onDelete }: Props) 
       </span>
       <button
         onClick={() => onDelete(id)}
-        className="text-zinc-600 hover:text-red-400 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+        className="text-zinc-600 hover:text-red-400 text-sm p-1 opacity-0 group-hover:opacity-100 transition-opacity min-w-[28px] min-h-[28px] flex items-center justify-center"
       >
         ✕
       </button>

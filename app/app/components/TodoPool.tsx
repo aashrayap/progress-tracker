@@ -3,13 +3,7 @@
 import { useState } from "react";
 import TodoItem from "./TodoItem";
 import DailyTaskItem from "./DailyTaskItem";
-
-interface Todo {
-  id: number;
-  item: string;
-  done: number;
-  created: string;
-}
+import type { Todo } from "../lib/types";
 
 interface DailyTask {
   id: string;
@@ -41,7 +35,7 @@ export default function TodoPool({ todos, dailyTasks, scheduledItems, onAdd, onT
   };
 
   return (
-    <div className="w-80 border-l border-zinc-800 flex flex-col bg-zinc-900/50">
+    <div className="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-zinc-800 flex flex-col bg-zinc-900/50 max-h-[50vh] lg:max-h-none overflow-y-auto">
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* Daily Tasks */}
         <div>

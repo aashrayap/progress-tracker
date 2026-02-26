@@ -3,6 +3,7 @@
 import { useRef, useEffect } from "react";
 import { useDroppable } from "@dnd-kit/react";
 import TimelineItem from "./TimelineItem";
+import { formatTime } from "../lib/utils";
 
 interface PlanItem {
   start: number;
@@ -26,12 +27,6 @@ const SLOTS = Array.from(
   (_, i) => START_HOUR + i * 0.5
 );
 
-function formatHour(h: number): string {
-  const ampm = h >= 12 ? "pm" : "am";
-  const hour = h > 12 ? h - 12 : h === 0 ? 12 : h;
-  return `${hour}${ampm}`;
-}
-
 function TimeSlot({ time }: { time: number }) {
   const isFullHour = time % 1 === 0;
   const { ref, isDropTarget } = useDroppable({
@@ -49,7 +44,7 @@ function TimeSlot({ time }: { time: number }) {
     >
       {isFullHour && (
         <span className="absolute -top-3 left-0 text-xs text-zinc-600 w-14 text-right pr-3">
-          {formatHour(time)}
+          {formatTime(time)}
         </span>
       )}
     </div>

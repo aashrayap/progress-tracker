@@ -1,5 +1,14 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Personal OS Docs
+
+For system context before making product or data-model changes:
+
+1. `../docs/personal-os-principles.md`
+2. `../docs/personal-os-architecture.md`
+3. `../docs/personal-os-operator-view.md`
+4. `../docs/personal-os-e2e-blueprint.md`
+
 ## Getting Started
 
 First, run the development server:

@@ -2,18 +2,28 @@
 
 Personal life system: weight, addiction recovery, fitness, money, travel.
 
+## Personal OS Docs
+
+Read these first when starting new work:
+
+1. `docs/personal-os-principles.md` - core problem, principles, and definition of done
+2. `docs/personal-os-architecture.md` - visual system map and architecture anchors
+3. `docs/personal-os-operator-view.md` - one-screen operating model and daily checklist
+4. `docs/personal-os-e2e-blueprint.md` - full app audit and phased implementation plan
+
 ## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                     DATA LAYER (CSVs)                       │
 ├─────────────┬──────────────┬──────────────┬────────────────┤
-│  log.csv    │  plan.csv    │  todos.csv   │  notes.csv     │
-│  daily      │  scheduled   │  task        │  freeform      │
-│  habits +   │  time blocks │  backlog     │  notes         │
-│  metrics    │              │              │                │
+│  log.csv    │  plan.csv    │  todos.csv   │ reflections.csv│
+│  daily      │  scheduled   │  task        │  daily micro-  │
+│  habits +   │  time blocks │  backlog     │  AAR: win/     │
+│  metrics +  │              │              │  lesson/change │
+│  notes      │              │              │                │
 ├─────────────┴──────────────┴──────────────┴────────────────┤
-│  workouts.csv (planned — set-level gym data)               │
+│  workouts.csv (set-level gym data)                         │
 └────────────────────────┬────────────────────────────────────┘
                          │
          ┌───────────────┼───────────────┐
@@ -47,13 +57,26 @@ Claude CLI (--print, bypassPermissions)
   │  reads .claude/prompts/voice-inbox.md for instructions
   │  parses voice note → determines log entry vs note
   ▼
-CSV write (log.csv, notes.csv, workouts.csv)
+CSV write (log.csv, workouts.csv, reflections.csv)
   │  git commit + push
   ▼
 GitHub Issue closed with summary comment
 ```
 
 This same pipeline handles workout logging at the gym — voice dictate sets/reps between exercises, each creates an issue, voice-inbox processes them.
+
+#### Launchd Setup
+
+```
+Plist: ~/Library/LaunchAgents/com.ash.voice-inbox.plist
+Interval: 300s (5 min)
+Logs:
+  ~/.local/log/voice-inbox.log       (app log)
+  ~/.local/log/voice-inbox-stdout.log (Claude CLI output)
+  ~/.local/log/voice-inbox-stderr.log (errors)
+```
+
+Reload after changes: `launchctl unload ~/Library/LaunchAgents/com.ash.voice-inbox.plist && launchctl load ~/Library/LaunchAgents/com.ash.voice-inbox.plist`
 
 ### Next.js App
 
@@ -109,11 +132,19 @@ date,start,end,item,done,notes
 id,item,done,created
 ```
 
-### notes.csv — Freeform notes
+### reflections.csv — Daily micro-reflections
 
 ```
-date,note
+date,domain,win,lesson,change
 ```
+
+| domain | meaning |
+|--------|---------|
+| gym | workout reflection |
+| addiction | recovery reflection |
+| deep_work | focused work reflection |
+| eating | nutrition reflection |
+| sleep | sleep quality reflection |
 
 ---
 
@@ -210,13 +241,15 @@ date,note
 
 **Gym 5x/week** (habit > optimization)
 
-| Day | Workout |
-|-----|---------|
-| Mon | Day A |
-| Tue | Day B |
-| Wed | Day C |
-| Thu | Day A |
-| Fri | Day B |
+Rotation: A → B → C → A → ... (completion-based, not calendar-based)
+
+| Workout | Exercises |
+|---------|-----------|
+| Day A | squat / bench / lat_pulldown |
+| Day B | squat / incline_bench / cable_row |
+| Day C | squat / ohp / barbell_row |
+
+Next workout determined by last `gym,1,Day X` in log.csv → API: `/api/gym`
 
 Each session: 30-35 min compound lifts, 3 exercises x 3 sets
 
@@ -247,6 +280,7 @@ Each session: 30-35 min compound lifts, 3 exercises x 3 sets
 | Skill | Purpose | Triggers |
 |-------|---------|----------|
 | /log | Data entry → log.csv | log weight, log day, log trigger, log relapse |
+| /reflect | Daily micro-AAR → reflections.csv | reflect, what did I learn, end of day review |
 | /weekly-review | Accountability, metrics check | plan the week, weekly review, how did I do |
 | /review-notes | Review notes/activity across all CSVs | review notes, what happened, show notes |
 
@@ -254,7 +288,7 @@ Each session: 30-35 min compound lifts, 3 exercises x 3 sets
 
 # Rules
 
-- **CSVs are truth** — log.csv (habits), plan.csv (schedule), todos.csv (tasks), workouts.csv (gym), notes.csv (freeform)
+- **CSVs are truth** — log.csv (habits+notes), plan.csv (schedule), todos.csv (tasks), workouts.csv (gym), reflections.csv (win/lesson/change)
 - **CLAUDE.md is context** — always loaded
 - **docs/ is reference** — read when needed
 - **Minimal by default** — no bloat

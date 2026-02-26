@@ -2,7 +2,8 @@
 
 import { useState, useCallback } from "react";
 import SchedulerModal from "./SchedulerModal";
-import type { PlanEvent, HabitMap, Todo } from "../plan/page";
+import type { PlanEvent, HabitMap, Todo } from "../lib/types";
+import { toDateStr, formatTime } from "../lib/utils";
 
 interface Props {
   events: PlanEvent[];
@@ -11,18 +12,6 @@ interface Props {
   onRefresh: () => void;
   todos?: Todo[];
   onTodosChange?: (todos: Todo[]) => void;
-}
-
-function toDateStr(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
-function formatTime(t: number): string {
-  const hour = Math.floor(t);
-  const min = t % 1 === 0.5 ? ":30" : "";
-  const ampm = hour >= 12 ? "pm" : "am";
-  const h = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
-  return `${h}${min}${ampm}`;
 }
 
 const HABIT_DISPLAY: Record<string, string> = {
@@ -54,6 +43,7 @@ export default function DayView({ events, habits, focusDate, onRefresh, todos: e
   const handleEdit = useCallback(async () => {
     if (!externalTodos) {
       const res = await fetch("/api/todos");
+      if (!res.ok) throw new Error("Failed to fetch todos");
       const data = await res.json();
       setLocalTodos(data);
     }
@@ -72,7 +62,7 @@ export default function DayView({ events, habits, focusDate, onRefresh, todos: e
         {isToday && (
           <button
             onClick={handleEdit}
-            className="px-4 py-2 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-400 text-sm hover:border-blue-400/50 transition-colors"
+            className="px-4 py-3 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-400 text-sm hover:border-blue-400/50 transition-colors min-h-[44px]"
           >
             Edit Plan
           </button>
@@ -84,14 +74,14 @@ export default function DayView({ events, habits, focusDate, onRefresh, todos: e
             <h3 className="text-xs text-zinc-500 uppercase tracking-wide mb-3">
               Habits
             </h3>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {Object.entries(HABIT_DISPLAY).map(([key, label]) => {
                 if (dayHabits[key] === undefined) return null;
                 const isGood = dayHabits[key];
                 return (
                   <div
                     key={key}
-                    className={`flex items-center gap-2 text-sm px-2 py-1 rounded ${
+                    className={`flex items-center gap-2 text-sm px-3 py-2 rounded min-h-[44px] ${
                       isGood ? "text-emerald-400" : "text-red-400"
                     }`}
                   >
@@ -141,10 +131,10 @@ export default function DayView({ events, habits, focusDate, onRefresh, todos: e
                 return (
                   <div
                     key={e.item}
-                    className="flex items-center gap-3 py-2 border-b border-zinc-800 last:border-0"
+                    className="flex items-center gap-3 py-2 border-b border-zinc-800 last:border-0 min-h-[44px]"
                   >
                     <span
-                      className={`w-5 h-5 rounded border flex items-center justify-center text-xs ${
+                      className={`w-6 h-6 rounded border flex items-center justify-center text-xs ${
                         isDone
                           ? "border-green-600 text-green-400"
                           : isSkipped
