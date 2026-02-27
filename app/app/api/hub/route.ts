@@ -3,6 +3,7 @@ import { todayStr as todayLocal, daysAgoStr } from "../../lib/utils";
 import {
   readDailySignals,
   getDaysSince,
+  getHabitsForDate,
   getLatestValue,
   getMetricHistory,
   getNextWorkout,
@@ -117,6 +118,13 @@ export async function GET() {
       ateClean: getBool(todayEntries, "ate_clean"),
     };
 
+    // 14-day habit tracker: today - 13 days → today
+    const habitDates = Array.from({ length: 14 }, (_, i) => daysAgoStr(13 - i));
+    const habitTracker = {
+      dates: habitDates,
+      days: habitDates.map((date) => getHabitsForDate(signals, date)),
+    };
+
     const reviewBacklog = {
       new: inbox.filter((i) => i.status === "new").length,
       needsReview: inbox.filter((i) => i.status === "needs_review").length,
@@ -199,6 +207,7 @@ export async function GET() {
       yesterdayChanges,
       insight,
       todayHabits,
+      habitTracker,
       reviewBacklog: { ...reviewBacklog, total: reviewTotal },
       nextAction,
     });

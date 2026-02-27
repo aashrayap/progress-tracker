@@ -21,9 +21,6 @@ const STATUSES: IdeaStatus[] = ["inbox", "reviewed", "building", "archived"];
 export default function IdeasPage() {
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newTitle, setNewTitle] = useState("");
-  const [newDetails, setNewDetails] = useState("");
-  const [newDomain, setNewDomain] = useState<IdeaDomain>("system");
 
   const fetchIdeas = useCallback(() => {
     fetch("/api/ideas")
@@ -56,37 +53,6 @@ export default function IdeasPage() {
     return result;
   }, [ideas]);
 
-  const moveIdea = async (id: number, status: IdeaStatus) => {
-    const res = await fetch("/api/ideas", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, status }),
-    });
-    if (!res.ok) return;
-    fetchIdeas();
-  };
-
-  const createIdea = async () => {
-    const title = newTitle.trim();
-    if (!title) return;
-    const res = await fetch("/api/ideas", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title,
-        details: newDetails.trim(),
-        domain: newDomain,
-        status: "inbox",
-        source: "manual",
-      }),
-    });
-    if (!res.ok) return;
-    setNewTitle("");
-    setNewDetails("");
-    setNewDomain("system");
-    fetchIdeas();
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center">
@@ -101,45 +67,10 @@ export default function IdeasPage() {
         <div className="max-w-5xl mx-auto">
           <header className="mb-5">
             <h1 className="text-xl font-semibold">Ideas</h1>
-            <p className="text-sm text-zinc-500">Triage and move ideas through the pipeline.</p>
+            <p className="text-sm text-zinc-500">
+              Read-only idea board. Capture through voice/CLI and resolve routing in Review.
+            </p>
           </header>
-
-          <section className="mb-5 p-4 rounded-lg bg-zinc-900 border border-zinc-800">
-            <p className="text-xs text-zinc-500 uppercase mb-2">Add Idea</p>
-            <div className="space-y-2">
-              <input
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-                placeholder="Title"
-                className="w-full px-3 py-2 rounded bg-zinc-800 border border-zinc-700 text-sm"
-              />
-              <textarea
-                value={newDetails}
-                onChange={(e) => setNewDetails(e.target.value)}
-                placeholder="Details"
-                rows={3}
-                className="w-full px-3 py-2 rounded bg-zinc-800 border border-zinc-700 text-sm"
-              />
-              <div className="flex items-center gap-2">
-                <select
-                  value={newDomain}
-                  onChange={(e) => setNewDomain(e.target.value as IdeaDomain)}
-                  className="px-3 py-2 rounded bg-zinc-800 border border-zinc-700 text-sm"
-                >
-                  <option value="system">system</option>
-                  <option value="app">app</option>
-                  <option value="health">health</option>
-                  <option value="life">life</option>
-                </select>
-                <button
-                  onClick={createIdea}
-                  className="px-4 py-2 rounded bg-blue-500/20 border border-blue-500/40 text-blue-300 text-sm"
-                >
-                  Save
-                </button>
-              </div>
-            </div>
-          </section>
 
           <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
             {STATUSES.map((status) => (
@@ -155,19 +86,12 @@ export default function IdeasPage() {
                       <p className="text-[11px] text-zinc-500 mt-2">
                         {idea.domain} · {new Date(idea.createdAt).toLocaleDateString()}
                       </p>
-                      <div className="flex flex-wrap gap-1.5 mt-2">
-                        {STATUSES.filter((s) => s !== idea.status).map((next) => (
-                          <button
-                            key={next}
-                            onClick={() => moveIdea(idea.id, next)}
-                            className="px-2 py-1 text-[11px] rounded bg-zinc-700/60 border border-zinc-600 text-zinc-300"
-                          >
-                            {next}
-                          </button>
-                        ))}
-                      </div>
+                      <p className="text-[11px] text-zinc-600 mt-2">source: {idea.source || "unknown"}</p>
                     </article>
                   ))}
+                  {byStatus[status].length === 0 && (
+                    <p className="text-xs text-zinc-600">No ideas in this state.</p>
+                  )}
                 </div>
               </div>
             ))}
@@ -177,4 +101,3 @@ export default function IdeasPage() {
     </div>
   );
 }
-

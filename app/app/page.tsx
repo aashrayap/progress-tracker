@@ -52,6 +52,10 @@ interface AppData {
     deepWork: boolean | null;
     ateClean: boolean | null;
   };
+  habitTracker: {
+    dates: string[];
+    days: Record<string, boolean>[];
+  };
   reviewBacklog: {
     total: number;
     new: number;
