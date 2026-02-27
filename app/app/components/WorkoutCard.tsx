@@ -30,6 +30,7 @@ interface WorkoutCardProps {
   totalSets: number;
   prescribedExercises: PrescribedExercise[];
   todayWorkout: WorkoutDay | null;
+  cardioFinisherMin?: number;
   onMarkDone: () => void;
 }
 
@@ -39,8 +40,20 @@ export default function WorkoutCard({
   totalSets,
   prescribedExercises,
   todayWorkout,
+  cardioFinisherMin = 0,
   onMarkDone,
 }: WorkoutCardProps) {
+  const formatSet = (set: WorkoutSet) => {
+    const hasWeight = set.weight > 0;
+    const hasReps = set.reps > 0;
+
+    if (hasWeight && hasReps) return `${set.weight}lbs x ${set.reps}`;
+    if (hasWeight) return `${set.weight}lbs`;
+    if (hasReps) return `${set.reps} reps`;
+    if (set.notes) return "logged";
+    return "pending";
+  };
+
   return (
     <section className="mb-6 p-5 bg-zinc-900 rounded-xl border border-zinc-800">
       <div className="flex justify-between items-center mb-4">
@@ -50,6 +63,7 @@ export default function WorkoutCard({
           </h2>
           <p className="text-sm text-zinc-500">
             Day {templateKey} · {totalSets} sets · ~30 min
+            {cardioFinisherMin > 0 ? ` + ${cardioFinisherMin} min cardio` : ""}
           </p>
         </div>
         {gymToday ? (
@@ -98,7 +112,7 @@ export default function WorkoutCard({
                         Set {s.set}
                       </span>
                       <span className="font-mono text-emerald-400">
-                        {s.weight}lbs x {s.reps}
+                        {formatSet(s)}
                       </span>
                       {s.notes && (
                         <span className="text-xs text-zinc-500">

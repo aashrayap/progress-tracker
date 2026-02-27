@@ -5,6 +5,7 @@ import { DragDropProvider } from "@dnd-kit/react";
 import Timeline from "./Timeline";
 import TodoPool from "./TodoPool";
 import { config } from "../lib/config";
+import { toDateStr } from "../lib/utils";
 import type { Todo } from "../lib/types";
 
 interface PlanItem {
@@ -22,11 +23,19 @@ interface Props {
   onTodosChange?: (todos: Todo[]) => void;
 }
 
+interface DragEndEvent {
+  canceled: boolean;
+  operation: {
+    source: { data?: Record<string, unknown> } | null;
+    target: { data?: Record<string, unknown> } | null;
+  };
+}
+
 export default function SchedulerModal({ initialPlan, initialTodos, onClose, onTodosChange }: Props) {
   const [plan, setPlan] = useState<PlanItem[]>(initialPlan);
   const [todos, setTodos] = useState<Todo[]>(initialTodos);
   const [todoPoolOpen, setTodoPoolOpen] = useState(false);
-  const today = new Date().toISOString().split("T")[0];
+  const today = toDateStr(new Date());
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -120,22 +129,25 @@ export default function SchedulerModal({ initialPlan, initialTodos, onClose, onT
   }, []);
 
   const handleDragEnd = useCallback(
-    (event: any) => {
+    (event: DragEndEvent) => {
       if (event.canceled) return;
       const { source, target } = event.operation;
       if (!target) return;
 
-      const targetData = target.data;
+      const targetData = target.data as { type?: string; hour?: number } | undefined;
       if (targetData?.type !== "hour") return;
 
-      const hour: number = targetData.hour;
-      const sourceData = source.data;
+      const hour = typeof targetData.hour === "number" ? targetData.hour : 0;
+      const sourceData = source?.data as { type?: string; item?: string; notes?: string; duration?: number } | undefined;
 
       if (sourceData?.type === "todo") {
+        if (!sourceData.item) return;
         addPlanItem(sourceData.item, hour);
       } else if (sourceData?.type === "daily") {
+        if (!sourceData.item) return;
         addPlanItem(sourceData.item, hour, 1, sourceData.notes || "");
       } else if (sourceData?.type === "plan") {
+        if (!sourceData.item) return;
         movePlanItem(sourceData.item, hour, sourceData.duration || 1, sourceData.notes || "");
       }
     },

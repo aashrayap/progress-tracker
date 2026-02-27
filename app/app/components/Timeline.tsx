@@ -82,9 +82,9 @@ export default function Timeline({ plan, onDeleteItem }: Props) {
           <span className="text-[10px] text-indigo-400/50 ml-2">10pm — fixed</span>
         </div>
 
-        {plan.map((item) => (
+        {plan.map((item, idx) => (
           <TimelineItem
-            key={item.item}
+            key={`${item.start}-${item.end}-${item.item}-${idx}`}
             item={item.item}
             start={item.start}
             end={item.end}

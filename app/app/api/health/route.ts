@@ -1,14 +1,16 @@
 import { NextResponse } from "next/server";
+import { todayStr as todayLocal, toDateStr } from "../../lib/utils";
 import {
-  readLog,
+  readDailySignals,
   getMetricHistory,
   getLatestValue,
   getStreak,
   readWorkouts,
+  getNextWorkout,
+  readReflections,
   WorkoutSetEntry,
 } from "../../lib/csv";
 import { config } from "../../lib/config";
-import { getNextWorkout } from "../../lib/utils";
 
 interface GroupedExercise {
   name: string;
@@ -23,6 +25,8 @@ interface WorkoutDay {
 }
 
 function groupWorkoutsByDay(entries: WorkoutSetEntry[]): WorkoutDay[] {
+  const allExercises = Object.values(config.exercises).flat();
+
   const byDate: Record<string, WorkoutSetEntry[]> = {};
   for (const e of entries) {
     if (!byDate[e.date]) byDate[e.date] = [];
@@ -37,13 +41,6 @@ function groupWorkoutsByDay(entries: WorkoutSetEntry[]): WorkoutDay[] {
         if (!byExercise[s.exercise]) byExercise[s.exercise] = [];
         byExercise[s.exercise].push(s);
       }
-
-      const allExercises = [
-        ...config.exercises.push,
-        ...config.exercises.pull,
-        ...config.exercises.legs,
-        ...config.exercises.core,
-      ];
 
       const exercises: GroupedExercise[] = Object.entries(byExercise).map(
         ([exerciseId, exerciseSets]) => {
@@ -105,51 +102,64 @@ function getExerciseProgress(
 
 export async function GET() {
   try {
-    const log = readLog();
+    const signals = readDailySignals();
     const workoutSets = readWorkouts();
+    const reflections = readReflections();
 
-    const weightHistory = getMetricHistory(log, "weight").map((w) => ({
+    const weightHistory = getMetricHistory(signals, "weight").map((w) => ({
       date: w.date,
       value: parseFloat(w.value),
     }));
-    const currentWeight = parseFloat(getLatestValue(log, "weight") || "0");
-    const weightEntries = getMetricHistory(log, "weight");
+    const currentWeight = parseFloat(getLatestValue(signals, "weight") || "0");
+    const weightEntries = getMetricHistory(signals, "weight");
     const startWeight =
       weightEntries.length > 0
         ? parseFloat(weightEntries[0].value)
         : config.weight.start;
 
     const workoutDays = groupWorkoutsByDay(workoutSets);
-    const todayStr = new Date().toISOString().split("T")[0];
+    const todayStr = todayLocal();
     const todayWorkout = workoutDays.find((w) => w.date === todayStr) || null;
 
-    const gymStreak = getStreak(log, "gym");
+    const gymStreak = getStreak(signals, "gym");
     const now = new Date();
     const dayOfWeek = now.getDay();
     const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
     const monday = new Date(now);
     monday.setDate(now.getDate() - mondayOffset);
-    const mondayStr = monday.toISOString().split("T")[0];
-    const gymThisWeek = log.filter(
+    const mondayStr = toDateStr(monday);
+    const gymThisWeek = signals.filter(
       (e) =>
-        e.metric === "gym" && e.value === "1" && e.date >= mondayStr && e.date <= todayStr
+        e.signal === "gym" && e.value === "1" && e.date >= mondayStr && e.date <= todayStr
     ).length;
 
     const cycle = Object.keys(config.workoutTemplates);
-    const nextWorkout = getNextWorkout(log, cycle);
+    const nextWorkout = getNextWorkout(signals, cycle);
 
-    const gymToday = log.some(
-      (e) => e.date === todayStr && e.metric === "gym" && e.value === "1"
+    const gymToday = signals.some(
+      (e) => e.date === todayStr && e.signal === "gym" && e.value === "1"
     );
 
     const twoWeeksAgo = new Date(now);
     twoWeeksAgo.setDate(now.getDate() - 14);
-    const twoWeeksStr = twoWeeksAgo.toISOString().split("T")[0];
-    const ateCleanHistory = log
+    const twoWeeksStr = toDateStr(twoWeeksAgo);
+    const ateCleanHistory = signals
       .filter(
-        (e) => e.metric === "ate_clean" && e.date >= twoWeeksStr
+        (e) => e.signal === "ate_clean" && e.date >= twoWeeksStr
       )
       .map((e) => ({ date: e.date, clean: e.value === "1" }));
+
+    const mealsToday = signals
+      .filter((e) => e.date === todayStr && e.signal === "ate_clean")
+      .map((e) => ({
+        slot: e.category?.trim() || "meal",
+        clean: e.value === "1",
+        notes: e.context || "",
+      }));
+
+    const latestGymReflection = reflections
+      .filter((r) => r.domain === "gym")
+      .sort((a, b) => b.date.localeCompare(a.date))[0] || null;
 
     const exerciseProgress = getExerciseProgress(workoutDays);
 
@@ -171,6 +181,8 @@ export async function GET() {
       gymStreak,
       gymThisWeek,
       ateCleanHistory,
+      mealsToday,
+      gymReflection: latestGymReflection,
       exerciseProgress,
     });
   } catch (e) {

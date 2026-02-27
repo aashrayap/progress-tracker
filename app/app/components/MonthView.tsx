@@ -101,9 +101,9 @@ export default function MonthView({ events, habits, focusDate, onNavigate }: Pro
                 )}
               </div>
               <div className="space-y-0.5">
-                {dayEvents.slice(0, 3).map((e) => (
+                {dayEvents.slice(0, 3).map((e, idx) => (
                   <div
-                    key={e.item}
+                    key={`${e.date}-${e.start}-${e.end}-${e.item}-${idx}`}
                     className={`text-[10px] truncate px-1 rounded ${
                       e.start === 0 && e.end === 0
                         ? "bg-purple-500/10 text-purple-300"

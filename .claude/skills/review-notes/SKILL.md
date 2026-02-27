@@ -11,7 +11,8 @@ Surface everything that happened in a time period across all tracking files.
 
 | File | What to pull | Path |
 |------|-------------|------|
-| log.csv | Rows with non-empty `notes` column + all `trigger`, `relapse`, `note` metric rows | `~/Documents/tracker/log.csv` |
+| daily_signals.csv | Rows with non-empty `context` + all `trigger`/`relapse` signals | `~/Documents/tracker/daily_signals.csv` |
+| inbox.csv | Raw captures in review flow (`new`, `needs_review`, `routed`) | `~/Documents/tracker/inbox.csv` |
 | reflections.csv | All reflections (win/lesson/change per domain) | `~/Documents/tracker/reflections.csv` |
 | plan.csv | Scheduled items (show done status) | `~/Documents/tracker/plan.csv` |
 | todos.csv | Tasks created in the period | `~/Documents/tracker/todos.csv` |
@@ -20,7 +21,8 @@ Surface everything that happened in a time period across all tracking files.
 ## Schemas
 
 ```
-log.csv:          date,metric,value,notes
+daily_signals.csv: date,signal,value,unit,context,source,capture_id,category
+inbox.csv:         capture_id,captured_at,source,raw_text,status,suggested_destination,normalized_text,error
 reflections.csv:  date,domain,win,lesson,change
 plan.csv:         date,start,end,item,done,notes
 todos.csv:        id,item,done,created
@@ -52,11 +54,11 @@ workouts.csv:     date,workout,exercise,set,weight,reps,notes
 📋 NOTES REVIEW — [period label] ([start date] → [end date])
 
 📅 [DATE]
-├─ 📝 [note from log.csv metric=note]
+├─ 📨 [inbox capture] [status]: [raw_text]
 ├─ 🪞 [domain]: ✓ [win] | 💡 [lesson] | → [change]  (from reflections.csv)
-├─ ⚠ trigger: [value] — [notes from log.csv]
-├─ 🔴 relapse: [value] — [notes from log.csv]
-├─ 📊 [metric]: [notes from log.csv]  (only rows with non-empty notes)
+├─ ⚠ trigger: [value] — [context from daily_signals]
+├─ 🔴 relapse: [value] — [context from daily_signals]
+├─ 📊 [signal]: [context from daily_signals]  (only rows with non-empty context)
 ├─ 🏋 [exercise]: [weight]×[reps] ×[sets]  (from workouts.csv)
 ├─ 📅 [start]-[end] [item] [✓/✗]  (from plan.csv)
 └─ ☐/☑ [todo item]  (from todos.csv, by created date)
@@ -66,7 +68,8 @@ workouts.csv:     date,workout,exercise,set,weight,reps,notes
 
 ───────────────────
 SUMMARY
-├─ Notes logged: X
+├─ Inbox captures: X
+├─ Contextual signals: X
 ├─ Reflections: X
 ├─ Triggers: X
 ├─ Relapses: X
@@ -78,7 +81,8 @@ SUMMARY
 
 - Skip dates with no entries
 - Triggers and relapses always shown (even if notes column empty)
-- For log.csv rows: only show if notes column is non-empty OR metric is trigger/relapse/note
+- For daily_signals rows: only show if context is non-empty OR signal is trigger/relapse
+- Include inbox captures for the period regardless of whether they were routed
 - plan.csv: show ✓ if done column has any value, ✗ if empty
 - todos.csv: ☑ if done=1, ☐ if done=0
 - If no data found for the period, say so plainly

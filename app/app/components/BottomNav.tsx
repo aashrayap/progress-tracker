@@ -5,9 +5,11 @@ import { usePathname } from "next/navigation";
 
 const tabs = [
   { href: "/", label: "Hub" },
+  { href: "/review", label: "Review" },
   { href: "/plan", label: "Plan" },
-  { href: "/work", label: "Work" },
+  { href: "/reflect", label: "Reflect" },
   { href: "/health", label: "Health" },
+  { href: "/ideas", label: "Ideas" },
 ] as const;
 
 export default function TopNav() {
@@ -15,14 +17,14 @@ export default function TopNav() {
 
   return (
     <nav className="sticky top-0 z-50 bg-zinc-950/90 backdrop-blur-sm border-b border-zinc-800/50">
-      <div className="flex items-center justify-center gap-1 py-2">
+      <div className="flex items-center gap-1 py-2 px-2 overflow-x-auto">
         {tabs.map((tab) => {
           const active = tab.href === "/" ? pathname === "/" : pathname.startsWith(tab.href);
           return (
             <Link
               key={tab.href}
               href={tab.href}
-              className={`px-4 py-1.5 rounded-full text-sm transition-colors ${
+              className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors ${
                 active
                   ? "bg-zinc-800 text-zinc-100"
                   : "text-zinc-500 hover:text-zinc-300"

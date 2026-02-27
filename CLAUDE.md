@@ -15,13 +15,11 @@ Read these first when starting new work:
 ┌─────────────────────────────────────────────────────────────┐
 │                     DATA LAYER (CSVs)                       │
 ├─────────────┬──────────────┬──────────────┬────────────────┤
-│  log.csv    │  plan.csv    │  todos.csv   │ reflections.csv│
-│  daily      │  scheduled   │  task        │  daily micro-  │
-│  habits +   │  time blocks │  backlog     │  AAR: win/     │
-│  metrics +  │              │              │  lesson/change │
-│  notes      │              │              │                │
+│ inbox.csv   │daily_signals │  plan.csv    │ reflections.csv│
+│ raw capture │  daily facts │  schedule    │  win/lesson/   │
+│ queue       │  + execution │  blocks      │  change        │
 ├─────────────┴──────────────┴──────────────┴────────────────┤
-│  workouts.csv (set-level gym data)                         │
+│ workouts.csv (lift benchmarks) + ideas.csv (triage)        │
 └────────────────────────┬────────────────────────────────────┘
                          │
          ┌───────────────┼───────────────┐
@@ -48,14 +46,14 @@ Phone (iOS Shortcut)
 GitHub Issue (title: "Voice: ...")
   │  created on aashrayap/progress-tracker
   ▼
-voice-inbox.sh (scripts/, runs via launchd every 5 min)
+voice-inbox.sh (scripts/, runs via launchd every 5s)
   │  polls open issues, filters "Voice" titles
   ▼
 Claude CLI (--print, bypassPermissions)
   │  reads .claude/prompts/voice-inbox.md for instructions
-  │  parses voice note → determines log entry vs note
+  │  parses voice note → writes inbox + routed CSVs
   ▼
-CSV write (log.csv, workouts.csv, reflections.csv)
+CSV write (daily_signals.csv, workouts.csv, reflections.csv, ideas.csv)
   │  git commit + push
   ▼
 GitHub Issue closed with summary comment
@@ -67,7 +65,7 @@ This same pipeline handles workout logging at the gym — voice dictate sets/rep
 
 ```
 Plist: ~/Library/LaunchAgents/com.ash.voice-inbox.plist
-Interval: 300s (5 min)
+Interval: 5s
 Logs:
   ~/.local/log/voice-inbox.log       (app log)
   ~/.local/log/voice-inbox-stdout.log (Claude CLI output)
@@ -84,7 +82,12 @@ app/
 │   ├── page.tsx          ← / (Hub)
 │   ├── plan/page.tsx     ← /plan (Calendar planner)
 │   ├── api/
-│   │   ├── log/route.ts  ← reads log.csv, computes dashboard data
+│   │   ├── hub/route.ts  ← hub + next-action payload
+│   │   ├── daily-signals/← canonical daily facts API
+│   │   ├── inbox/route.ts← review queue API
+│   │   ├── ideas/route.ts← idea triage API
+│   │   ├── health/route.ts← health dashboard API
+│   │   ├── reflections/  ← reflection + deep-work APIs
 │   │   ├── plan/         ← CRUD for plan.csv
 │   │   └── todos/        ← CRUD for todos.csv
 │   ├── components/       ← YearView, MonthView, WeekView, DayView, etc.
@@ -95,13 +98,13 @@ app/
 
 ## Data
 
-### log.csv — Daily habits and metrics
+### daily_signals.csv — Canonical daily signals
 
 ```
-date,metric,value,notes
+date,signal,value,unit,context,source,capture_id,category
 ```
 
-| metric | values | meaning |
+| signal | values | meaning |
 |--------|--------|---------|
 | weight | number | lbs |
 | lol, weed, poker | 0/1 | 0=relapse, 1=clean |
@@ -109,7 +112,6 @@ date,metric,value,notes
 | calories | number | daily total |
 | trigger | text | what caused craving |
 | relapse | text | what was relapsed on |
-| note | text | freeform note |
 | reset | 1 | marks a reset day |
 
 ### workouts.csv — Set-level gym data (planned)
@@ -247,7 +249,7 @@ Rotation: A → B → C → A → ... (completion-based, not calendar-based)
 | Day B | squat / incline_bench / cable_row |
 | Day C | squat / ohp / barbell_row |
 
-Next workout determined by last `gym,1,Day X` in log.csv → API: `/api/gym`
+Next workout determined by last `gym=1` completion in `daily_signals.csv` (via shared CSV layer and surfaced in `/api/health`)
 
 Each session: 30-35 min compound lifts, 3 exercises x 3 sets
 
@@ -277,7 +279,7 @@ Each session: 30-35 min compound lifts, 3 exercises x 3 sets
 
 | Skill | Purpose | Triggers |
 |-------|---------|----------|
-| /log | Data entry → log.csv | log weight, log day, log trigger, log relapse |
+| /log | Data entry → daily_signals.csv (+ inbox/workouts as needed) | log weight, log day, log trigger, log relapse |
 | /reflect | Daily micro-AAR → reflections.csv | reflect, what did I learn, end of day review |
 | /weekly-review | Accountability, metrics check | plan the week, weekly review, how did I do |
 | /review-notes | Review notes/activity across all CSVs | review notes, what happened, show notes |
@@ -286,7 +288,7 @@ Each session: 30-35 min compound lifts, 3 exercises x 3 sets
 
 # Rules
 
-- **CSVs are truth** — log.csv (habits+notes), plan.csv (schedule), todos.csv (tasks), workouts.csv (gym), reflections.csv (win/lesson/change)
+- **CSVs are truth** — inbox.csv (capture), daily_signals.csv (daily facts), plan.csv (schedule), todos.csv (tasks), workouts.csv (benchmarks), reflections.csv (win/lesson/change), ideas.csv (triage)
 - **CLAUDE.md is context** — always loaded
 - **docs/ is reference** — read when needed
 - **Minimal by default** — no bloat

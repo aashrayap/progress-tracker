@@ -1,15 +1,16 @@
 ---
 name: log
-description: Data entry for progress tracking. Use when user says "log weight", "log day", "log trigger", "log relapse", or wants to record metrics to log.csv.
+description: Data entry for progress tracking. Use when user says "log weight", "log day", "log trigger", "log relapse", or wants to record structured daily signals.
 ---
 
 # Log
 
-Data entry skill for progress tracking. Single source of truth: `~/Documents/tracker/log.csv`
+Data entry skill for progress tracking.
+Canonical daily facts: `~/Documents/tracker/daily_signals.csv`
 
-## CSV Schema
+## Daily Signals Schema
 ```
-date,metric,value,notes
+date,signal,value,unit,context,source,capture_id,category
 ```
 
 | metric | value | meaning |
@@ -28,7 +29,6 @@ date,metric,value,notes
 | trigger | text | trigger description |
 | relapse | text | what was relapsed on |
 | reset | 1 | marks a reset day |
-| note | text | freeform note |
 
 ## Commands
 
@@ -54,10 +54,10 @@ Log a trigger event.
 ```
 
 ### /log note "<text>"
-Add a freeform note.
+Add an unstructured capture to inbox (not daily signals).
 ```
 /log note "feeling strong today"
-→ 2025-02-01,note,feeling strong today,
+→ inbox.csv entry (needs_review)
 ```
 
 ### /log relapse <substances>
@@ -77,7 +77,7 @@ Mark today as a reset day (day 0).
 ```
 
 ### /log workout <exercise> <weight>x<reps>x<sets> [...]
-Log workout sets. Auto-logs gym:1 to log.csv.
+Log workout sets. Auto-logs gym completion to daily_signals.csv.
 ```
 /log workout squat 225x5x3, bench 185x6x3
 → workouts.csv:
@@ -87,7 +87,7 @@ Log workout sets. Auto-logs gym:1 to log.csv.
   2026-02-25,A,bench,1,185,6,
   2026-02-25,A,bench,2,185,6,
   2026-02-25,A,bench,3,185,6,
-→ log.csv: 2026-02-25,gym,1,Day A
+→ daily_signals.csv: 2026-02-25,gym,1,bool,Day A,chat,<capture_id>,A
 ```
 
 Format: `exercise weight×reps×sets` or `exercise weight×rep1,rep2,rep3`
@@ -103,14 +103,14 @@ Infer workout letter from exercises:
 
 1. Parse the command
 2. Get today's date in YYYY-MM-DD format
-3. For workout: append to workouts.csv + gym:1 to log.csv
-4. For all others: append row(s) to log.csv
+3. For workout: append to workouts.csv + gym completion signal to daily_signals.csv
+4. For all others: append row(s) to daily_signals.csv
 5. Confirm what was logged
 6. If relapse logged, offer to run /craving-support
 
 ## File Locations
 ```
-~/Documents/tracker/log.csv        (daily habits/metrics)
+~/Documents/tracker/daily_signals.csv (daily habits/metrics)
 ~/Documents/tracker/workouts.csv   (set-level gym data)
 ```
 

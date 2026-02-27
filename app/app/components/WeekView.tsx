@@ -108,9 +108,9 @@ export default function WeekView({ events, habits, focusDate, onNavigate }: Prop
             </div>
 
             {/* All-day events */}
-            {allDayEvents.map((e) => (
+            {allDayEvents.map((e, idx) => (
               <div
-                key={e.item}
+                key={`${e.date}-${e.start}-${e.end}-${e.item}-${idx}`}
                 className="text-[11px] px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20 mb-1 truncate"
               >
                 {e.item}
@@ -119,8 +119,8 @@ export default function WeekView({ events, habits, focusDate, onNavigate }: Prop
 
             {/* Timed events — hidden on mobile, shown on desktop */}
             <div className="hidden sm:block space-y-0.5 flex-1">
-              {timedEvents.map((e) => (
-                <div key={e.item} className="text-[11px] leading-tight">
+              {timedEvents.map((e, idx) => (
+                <div key={`${e.date}-${e.start}-${e.end}-${e.item}-${idx}`} className="text-[11px] leading-tight">
                   <span className="text-zinc-600">{formatTime(e.start)}</span>
                   <span
                     className={`ml-1 ${

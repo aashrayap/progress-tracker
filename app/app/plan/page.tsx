@@ -58,7 +58,6 @@ export default function PlanPage() {
   const range = useMemo(() => getDateRange(zoom, focusDate), [zoom, focusDate]);
 
   const fetchData = useCallback(() => {
-    setLoading(true);
     fetch(`/api/plan/range?start=${range.start}&end=${range.end}`)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch plan");

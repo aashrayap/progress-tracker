@@ -1,6 +1,6 @@
 #!/bin/bash
 # voice-inbox.sh — polls GitHub Issues for voice notes, processes with Claude Code
-# Runs via launchd every 5 minutes
+# Runs via launchd every 5 seconds
 
 set -euo pipefail
 
@@ -71,10 +71,10 @@ Voice note content:
 $body
 
 Steps:
-1. Read log.csv and reflections.csv to understand current format
-2. Determine if this is a log entry, a reflection, a workout, or a note
+1. Read daily_signals.csv, inbox.csv, ideas.csv, and reflections.csv to understand current format
+2. Determine if this is a daily signal, workout, reflection, idea, or unresolved inbox item
 3. Append to the appropriate CSV file(s)
-4. Run: git add log.csv workouts.csv reflections.csv && git commit -m 'voice: process issue #$number'
+4. Run: git add daily_signals.csv inbox.csv ideas.csv workouts.csv reflections.csv && git commit -m 'voice: process issue #$number'
 5. Run: gh issue comment $number --repo $REPO --body '<your summary>'
 6. Run: gh issue close $number --repo $REPO
 7. Write push notification to /tmp/voice-inbox-ntfy.txt (see prompt for format rules)" \

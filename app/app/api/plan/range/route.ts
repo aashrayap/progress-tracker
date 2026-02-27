@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readPlan, readLog, getPlanForDateRange, getHabitsForDate } from "../../../lib/csv";
+import {
+  readPlan,
+  readDailySignals,
+  getPlanForDateRange,
+  getHabitsForDate,
+} from "../../../lib/csv";
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,17 +16,17 @@ export async function GET(request: NextRequest) {
     }
 
     const plan = readPlan();
-    const log = readLog();
+    const signals = readDailySignals();
 
     const events = getPlanForDateRange(plan, start, end);
 
     const dates = new Set(
-      log.filter((e) => e.date >= start && e.date <= end).map((e) => e.date)
+      signals.filter((e) => e.date >= start && e.date <= end).map((e) => e.date)
     );
 
     const habits: Record<string, Record<string, boolean>> = {};
     for (const date of dates) {
-      const h = getHabitsForDate(log, date);
+      const h = getHabitsForDate(signals, date);
       if (Object.keys(h).length > 0) habits[date] = h;
     }
 

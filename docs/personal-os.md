@@ -2,6 +2,8 @@
 
 Single source of truth for product principles, architecture framing, and build plan.
 
+Canonical runtime model: `inbox.csv + daily_signals.csv + plan.csv + todos.csv + reflections.csv + workouts.csv + ideas.csv`.
+
 ## Core Problem
 
 The system captures life data well, but does not yet consistently convert that data into better next decisions.
@@ -48,7 +50,7 @@ A feature ships only if it:
 └─────┬─────┴──────┬───────┴────┬──────┴─────┬─────┴─────┬─────┴──┬──┘
       │            │            │            │           │        │
       ▼            ▼            ▼            ▼           ▼        ▼
-  log/workouts  API/domain    Hub/Pages   plan/todos   reflections next-day
+  inbox+signals API/domain    Hub/Pages   plan/todos   reflections next-day
   voice/manual  logic         prompts     workouts      win/lesson behavior
 ```
 
@@ -71,11 +73,13 @@ Command-center questions:
 ### Data contracts
 
 ```
-log.csv          date,metric,value,notes
-reflections.csv  date,domain,win,lesson,change
-plan.csv         date,start,end,item,done,notes
-todos.csv        id,item,done,created
-workouts.csv     date,workout,exercise,set,weight,reps,notes
+inbox.csv         capture_id,captured_at,source,raw_text,status,suggested_destination,normalized_text,error
+daily_signals.csv date,signal,value,unit,context,source,capture_id,category
+ideas.csv         id,created_at,title,details,domain,status,source,capture_id
+reflections.csv   date,domain,win,lesson,change
+plan.csv          date,start,end,item,done,notes
+todos.csv         id,item,done,created
+workouts.csv      date,workout,exercise,set,weight,reps,notes
 ```
 
 ### Structural breaks
@@ -84,7 +88,7 @@ workouts.csv     date,workout,exercise,set,weight,reps,notes
 2. Key semantics (topic/category/context) are trapped in free text
 3. Domain logic is fragmented across overlapping API routes
 4. Execute loop is weakly closed in UI (limited completion flow)
-5. IA mismatch (`/work` serves reflections but naming is stale)
+5. Capture review routing still needs higher precision on ambiguous voice notes
 
 ## Target Operating Model
 
@@ -97,17 +101,15 @@ Each input should produce:
 ### Normalized semantics
 
 - Keep CSVs minimal
-- Keep `metric` as top-level event type
+- Keep `signal` as top-level event type
 - Add `category` for machine-readable subtypes
-- Keep `notes` for human context
+- Keep `context` for human context
 
-Target `log.csv` shape:
+Target `daily_signals.csv` shape:
 
 ```
-date,metric,value,notes,category
+date,signal,value,unit,context,source,capture_id,category
 ```
-
-Backwards compatibility: `category` optional for old rows.
 
 ## Build Roadmap
 
@@ -119,26 +121,27 @@ Backwards compatibility: `category` optional for old rows.
 
 ### Phase 1 - Data Normalization
 
-1. Extend `LogEntry` with optional `category`
-2. Update CSV read/write to handle 4 or 5 columns
-3. Migrate log header to include `category`
+1. Lock canonical schemas (`inbox`, `daily_signals`, `ideas`, `workouts`, `reflections`, `plan`, `todos`)
+2. Validate CSV read/write paths against canonical headers only
+3. Remove compatibility wrappers once no callers remain
 
 ### Phase 2 - API Consolidation
 
 1. Add canonical routes:
    - `/api/hub`
+   - `/api/daily-signals`
+   - `/api/inbox`
+   - `/api/ideas`
    - `/api/reflections`
    - `/api/deep-work`
-2. Merge/deprecate overlap:
-   - fold `/api/insight` into `/api/hub`
-   - deprecate `/api/work` after migration
+2. Keep `/api/hub` focused on decision payload (no write side effects)
 
 ### Phase 3 - UI Flow Rewrite
 
 1. Hub becomes time-aware decision surface
-2. Rename `/work` -> `/reflect`
-3. Add inline reflection capture (evening) + morning recall card
-4. Improve planner completion actions
+2. Keep reflection UI analysis-first (`/reflect`)
+3. Improve planner completion actions
+4. Tighten health and review tab workflows
 
 ### Phase 4 - Domain Enrichment
 
@@ -149,7 +152,7 @@ Backwards compatibility: `category` optional for old rows.
 ### Phase 5 - Voice + Skills Alignment
 
 1. Update voice parser and skills to write/read `category`
-2. Keep migration backward-compatible
+2. Enforce inbox-first routing and deterministic destination rules
 
 ## Success Metrics
 
@@ -170,3 +173,15 @@ Wave E: Phase 5 voice/skills + cleanup
 ```
 
 No wave starts until prior contracts are stable.
+
+## Implementation Status
+
+Completed now:
+
+- Canonical CSV layer in place (`inbox`, `daily_signals`, `ideas`, `workouts`, `reflections`, `plan`, `todos`)
+- Canonical gym rotation helper in shared data layer
+- New APIs: `/api/hub`, `/api/daily-signals`, `/api/inbox`, `/api/ideas`, `/api/reflections`, `/api/deep-work`
+- Hub migrated to `/api/hub` with morning priming and evening reflection capture
+- Reflection surface on `/reflect` (analysis-first)
+- Day view supports quick schedule completion and skip actions
+- Health now surfaces meal entries and latest gym reflection

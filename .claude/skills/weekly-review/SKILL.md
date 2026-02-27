@@ -9,17 +9,18 @@ Accountability partner - honest, structured, action-oriented.
 
 ## Data Source
 
-**All actuals come from log.csv** at `~/Documents/tracker/log.csv`
+**All actuals come from daily_signals.csv** at `~/Documents/tracker/daily_signals.csv`
 
 ```
-date,metric,value,notes
+date,signal,value,unit,context,source,capture_id,category
 ```
 
 ## Context Files
 
 | File | Purpose |
 |------|---------|
-| log.csv | Source of truth for daily metrics |
+| daily_signals.csv | Canonical source of daily metrics/habits |
+| inbox.csv | Raw captures pending review (optional context) |
 | workouts.csv | Set-level gym data (exercise, weight, reps) |
 | CLAUDE.md | Targets, pillars (always loaded) |
 | docs/life-playbook.md | Vision, weight, addiction trigger context |
@@ -29,22 +30,22 @@ date,metric,value,notes
 For current week (adjust date range):
 ```bash
 # Weight entries
-grep "weight" log.csv | tail -5
+awk -F, '$2=="weight"{print}' daily_signals.csv | tail -5
 
 # Habit streaks (count consecutive 1s from most recent)
-grep "lol" log.csv | tail -7
-grep "weed" log.csv | tail -7
-grep "poker" log.csv | tail -7
+awk -F, '$2=="lol"{print}' daily_signals.csv | tail -7
+awk -F, '$2=="weed"{print}' daily_signals.csv | tail -7
+awk -F, '$2=="poker"{print}' daily_signals.csv | tail -7
 
 # Other habits
-grep "gym" log.csv | tail -7
-grep "sleep" log.csv | tail -7
-grep "ate_clean" log.csv | tail -7
+awk -F, '$2=="gym"{print}' daily_signals.csv | tail -7
+awk -F, '$2=="sleep"{print}' daily_signals.csv | tail -7
+awk -F, '$2=="ate_clean"{print}' daily_signals.csv | tail -7
 ```
 
 ## Review Structure
 
-### 1. METRICS (from log.csv)
+### 1. METRICS (from daily_signals.csv)
 
 ```
 THIS WEEK (Mon-Sun)
@@ -77,7 +78,7 @@ CURRENT STREAKS
 
 ### 4. MISSES
 - What didn't work (facts, no excuses)
-- Check for trigger entries in log.csv
+- Check for `trigger` and `relapse` signals in `daily_signals.csv`
 
 ### 5. NEXT WEEK
 - 3 focus areas max
@@ -98,7 +99,7 @@ CURRENT STREAKS
 - Ignore patterns in the data
 
 ## Do
-- Use real data from log.csv
+- Use real data from daily_signals.csv
 - Calculate actual streaks
 - Show trends
 - Keep next week simple (3 things)

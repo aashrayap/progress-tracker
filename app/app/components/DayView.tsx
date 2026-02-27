@@ -39,6 +39,15 @@ export default function DayView({ events, habits, focusDate, onRefresh, todos: e
   const allDayEvents = dayEvents.filter((e) => e.start === 0 && e.end === 0);
 
   const todosForModal = externalTodos ?? localTodos;
+  const plannedGym = dayEvents.some((e) => /gym/i.test(e.item));
+  const gymDone = dayHabits.gym === true;
+  const gymReconciliation = gymDone
+    ? plannedGym
+      ? "planned_done"
+      : "unplanned_done"
+    : plannedGym
+      ? "planned_missed"
+      : "not_planned";
 
   const handleEdit = useCallback(async () => {
     if (!externalTodos) {
@@ -54,6 +63,26 @@ export default function DayView({ events, habits, focusDate, onRefresh, todos: e
     setEditing(false);
     onRefresh();
   }, [onRefresh]);
+
+  const setPlanDone = useCallback(
+    async (event: PlanEvent, done: "1" | "0" | "") => {
+      const res = await fetch("/api/plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date: event.date,
+          start: event.start,
+          end: event.end,
+          item: event.item,
+          done,
+          notes: event.notes,
+        }),
+      });
+      if (!res.ok) return;
+      onRefresh();
+    },
+    [onRefresh]
+  );
 
   return (
     <>
@@ -94,6 +123,28 @@ export default function DayView({ events, habits, focusDate, onRefresh, todos: e
           </div>
         )}
 
+        {/* Plan vs Actual (gym) */}
+        {(plannedGym || gymDone) && (
+          <div className="p-4 bg-zinc-900 rounded-lg border border-zinc-800">
+            <h3 className="text-xs text-zinc-500 uppercase tracking-wide mb-2">
+              Plan vs Actual
+            </h3>
+            <p
+              className={`text-sm ${
+                gymReconciliation === "planned_done"
+                  ? "text-emerald-400"
+                  : gymReconciliation === "planned_missed"
+                    ? "text-red-400"
+                    : "text-amber-400"
+              }`}
+            >
+              {gymReconciliation === "planned_done" && "Gym: planned + done"}
+              {gymReconciliation === "planned_missed" && "Gym: planned + missed"}
+              {gymReconciliation === "unplanned_done" && "Gym: unplanned + done"}
+            </p>
+          </div>
+        )}
+
         {/* All-day events */}
         {allDayEvents.length > 0 && (
           <div className="p-4 bg-zinc-900 rounded-lg border border-zinc-800">
@@ -101,9 +152,9 @@ export default function DayView({ events, habits, focusDate, onRefresh, todos: e
               All Day
             </h3>
             <div className="space-y-2">
-              {allDayEvents.map((e) => (
+              {allDayEvents.map((e, idx) => (
                 <div
-                  key={e.item}
+                  key={`${e.date}-${e.start}-${e.end}-${e.item}-${idx}`}
                   className="flex items-center gap-3 p-2 rounded bg-purple-500/10 border border-purple-500/20"
                 >
                   <span className="text-sm text-purple-300">{e.item}</span>
@@ -125,15 +176,16 @@ export default function DayView({ events, habits, focusDate, onRefresh, todos: e
             <p className="text-sm text-zinc-600">No scheduled events</p>
           ) : (
             <div className="space-y-2">
-              {timedEvents.map((e) => {
+              {timedEvents.map((e, idx) => {
                 const isDone = e.done === "1";
                 const isSkipped = e.done === "0";
                 return (
                   <div
-                    key={e.item}
+                    key={`${e.date}-${e.start}-${e.end}-${e.item}-${idx}`}
                     className="flex items-center gap-3 py-2 border-b border-zinc-800 last:border-0 min-h-[44px]"
                   >
-                    <span
+                    <button
+                      onClick={() => setPlanDone(e, isDone ? "" : "1")}
                       className={`w-6 h-6 rounded border flex items-center justify-center text-xs ${
                         isDone
                           ? "border-green-600 text-green-400"
@@ -143,7 +195,7 @@ export default function DayView({ events, habits, focusDate, onRefresh, todos: e
                       }`}
                     >
                       {isDone ? "✓" : isSkipped ? "✗" : "○"}
-                    </span>
+                    </button>
                     <span className="text-xs text-zinc-500 w-24">
                       {formatTime(e.start)}–{formatTime(e.end)}
                     </span>
@@ -160,6 +212,14 @@ export default function DayView({ events, habits, focusDate, onRefresh, todos: e
                       <span className="text-xs text-zinc-500">
                         — {e.notes}
                       </span>
+                    )}
+                    {!isDone && (
+                      <button
+                        onClick={() => setPlanDone(e, "0")}
+                        className="ml-auto text-[10px] text-zinc-500 hover:text-red-400"
+                      >
+                        skip
+                      </button>
                     )}
                   </div>
                 );

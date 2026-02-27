@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { config } from "./lib/config";
+import Link from "next/link";
+import { config, getSplitForDate } from "./lib/config";
 import DailyInsight, { InsightData } from "./components/DailyInsight";
 
 interface WeightData {
@@ -15,17 +16,18 @@ interface WeightData {
 
 interface DopamineDay {
   date: string;
-  weed: boolean;
-  lol: boolean;
-  poker: boolean;
-  gym: boolean;
-  sleep: boolean;
-  meditate: boolean;
-  deepWork: boolean;
-  ateClean: boolean;
+  weed: boolean | null;
+  lol: boolean | null;
+  poker: boolean | null;
+  gym: boolean | null;
+  sleep: boolean | null;
+  meditate: boolean | null;
+  deepWork: boolean | null;
+  ateClean: boolean | null;
 }
 
 interface AppData {
+  nowWindow: "morning" | "day" | "evening";
   gymToday: boolean;
   nextWorkout: string;
   weight: WeightData;
@@ -38,27 +40,53 @@ interface AppData {
     triggers: { date: string; trigger: string; result: string }[];
   };
   todaysPlan: { done: string }[];
+  yesterdayChanges: { domain: string; change: string }[];
+  insight: InsightData;
+  todayHabits: {
+    weed: boolean | null;
+    lol: boolean | null;
+    poker: boolean | null;
+    gym: boolean | null;
+    sleep: boolean | null;
+    meditate: boolean | null;
+    deepWork: boolean | null;
+    ateClean: boolean | null;
+  };
+  reviewBacklog: {
+    total: number;
+    new: number;
+    needsReview: number;
+    failed: number;
+  };
+  nextAction: {
+    label: string;
+    reason: string;
+    href: string;
+    cta: string;
+  };
+}
+
+function domainLabel(domain: string): string {
+  if (domain === "deep_work") return "Deep Work";
+  if (domain === "gym") return "Gym";
+  if (domain === "eating") return "Eating";
+  if (domain === "sleep") return "Sleep";
+  if (domain === "addiction") return "Recovery";
+  return domain;
 }
 
 export default function Home() {
   const [data, setData] = useState<AppData | null>(null);
-  const [insight, setInsight] = useState<InsightData | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(() => {
-    Promise.all([
-      fetch("/api/log").then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch log");
+    fetch("/api/hub")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch hub");
         return res.json();
-      }),
-      fetch("/api/insight").then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch insight");
-        return res.json();
-      }),
-    ])
-      .then(([logData, insightData]) => {
-        setData(logData);
-        setInsight(insightData);
+      })
+      .then((hubData) => {
+        setData(hubData);
         setLoading(false);
       })
       .catch((err) => {
@@ -87,6 +115,14 @@ export default function Home() {
 
   const { weight, dopamineReset } = data;
   const resetDay = dopamineReset.dayNumber;
+  const todaySplit = getSplitForDate(new Date());
+  const allExercises = Object.values(config.exercises).flat();
+  const exerciseById = new Map(allExercises.map((exercise) => [exercise.id, exercise]));
+  const todayLiftSummary = todaySplit.workoutKey
+    ? (config.workoutTemplates[todaySplit.workoutKey] || [])
+        .map((exerciseId) => exerciseById.get(exerciseId)?.name || exerciseId)
+        .join(" / ")
+    : "";
 
   // Status row data
   const templateKey = data.nextWorkout;
@@ -103,6 +139,17 @@ export default function Home() {
       <div className="p-4 sm:p-6">
         <div className="max-w-lg mx-auto">
 
+          {/* ==================== NORTH STAR ==================== */}
+          <div className="mb-5 p-4 rounded-lg border border-zinc-800 bg-gradient-to-b from-zinc-900 to-zinc-950">
+            <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-2">North Star</p>
+            <p className="text-sm text-zinc-300 leading-relaxed">
+              A calm mind, a fit body, and a house full of love.
+            </p>
+            <p className="text-xs text-zinc-500 mt-2">
+              Meaningful relationships · Mental clarity · Time spent on what I love
+            </p>
+          </div>
+
           {/* ==================== HEADER ==================== */}
           <div className="mb-4">
             <h1 className="text-lg font-bold">Hub</h1>
@@ -110,6 +157,43 @@ export default function Home() {
               {new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
             </span>
           </div>
+
+          {/* ==================== HABITS VISUAL ==================== */}
+          <section className="mb-5">
+            <p className="text-xs text-zinc-500 uppercase mb-2">Daily Habits</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {[
+                { key: "sleep", label: "Sleep (Last Night)", value: data.todayHabits.sleep },
+                { key: "gym", label: "Gym", value: data.todayHabits.gym },
+                { key: "weed", label: "No Weed", value: data.todayHabits.weed },
+                { key: "ateClean", label: "Eat Clean", value: data.todayHabits.ateClean },
+                { key: "deepWork", label: "Deep Work", value: data.todayHabits.deepWork },
+                { key: "meditate", label: "Meditate", value: data.todayHabits.meditate },
+                { key: "lol", label: "No LoL", value: data.todayHabits.lol },
+                { key: "poker", label: "No Poker", value: data.todayHabits.poker },
+              ].map((h) => (
+                <div
+                  key={h.key}
+                  className={`p-3 rounded-lg border ${
+                    h.value === null
+                      ? "bg-zinc-900 border-zinc-800"
+                      : h.value
+                        ? "bg-emerald-500/10 border-emerald-500/30"
+                        : "bg-red-500/10 border-red-500/30"
+                  }`}
+                >
+                  <p className="text-xs text-zinc-500 mb-1">{h.label}</p>
+                  <p
+                    className={`text-sm font-semibold ${
+                      h.value === null ? "text-zinc-500" : h.value ? "text-emerald-400" : "text-red-400"
+                    }`}
+                  >
+                    {h.value === null ? "--" : h.value ? "Done" : "Missed"}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
 
           {/* ==================== STATUS ROW ==================== */}
           <section className="mb-5">
@@ -147,8 +231,64 @@ export default function Home() {
             </div>
           </section>
 
+          <section className="mb-5 p-4 bg-zinc-900 border border-zinc-800 rounded-lg">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs text-zinc-500 uppercase">Today&apos;s Training</p>
+              <Link href="/health" className="text-xs text-blue-300 hover:text-blue-200">
+                Open Health
+              </Link>
+            </div>
+            <p className="mt-2 text-sm font-medium text-zinc-100">
+              {todaySplit.label}
+              {todaySplit.workoutKey ? ` (${todaySplit.workoutKey})` : ""}
+            </p>
+            <p className="mt-1 text-xs text-zinc-500">
+              {todaySplit.workoutKey
+                ? `${todayLiftSummary} + ${config.trainingPlan.liftSessionCardioFinisherMin}m cardio`
+                : `${todaySplit.detail} · ${todaySplit.minutes || 0} min`}
+            </p>
+            <p className="mt-3 text-xs text-zinc-400">
+              Home dose: {config.trainingPlan.homeDose.pullupsPerDay} pull-ups + {config.trainingPlan.homeDose.pushupsPerDay} push-ups
+            </p>
+          </section>
+
+          {/* ==================== MORNING PRIMING ==================== */}
+          {data.nowWindow === "morning" && data.yesterdayChanges.length > 0 && (
+            <section className="mb-5 p-4 bg-zinc-900 border border-amber-500/30 rounded-lg">
+              <p className="text-xs text-zinc-500 uppercase mb-2">Morning Priming</p>
+              <div className="space-y-1.5">
+                {data.yesterdayChanges.map((item, i) => (
+                  <p key={`${item.domain}-${i}`} className="text-sm text-zinc-300">
+                    - {item.change} <span className="text-zinc-500">({domainLabel(item.domain)})</span>
+                  </p>
+                ))}
+              </div>
+            </section>
+          )}
+
           {/* ==================== DAILY INSIGHT ==================== */}
-          {insight && <DailyInsight data={insight} />}
+          {data.insight && <DailyInsight data={data.insight} />}
+
+          {/* ==================== NEXT ACTION ==================== */}
+          <section className="mb-5 p-4 bg-zinc-900 border border-blue-500/30 rounded-lg">
+            <p className="text-xs text-zinc-500 uppercase mb-2">Next Action</p>
+            <p className="text-sm text-zinc-200 font-medium">{data.nextAction.label}</p>
+            <p className="text-xs text-zinc-500 mt-1">{data.nextAction.reason}</p>
+            <div className="mt-3 flex items-center gap-2">
+              <Link
+                href={data.nextAction.href}
+                className="px-3 py-1.5 rounded bg-blue-500/20 border border-blue-500/40 text-blue-300 text-sm"
+              >
+                {data.nextAction.cta}
+              </Link>
+              <Link
+                href="/review"
+                className="text-xs text-zinc-400 hover:text-zinc-200"
+              >
+                Review queue: {data.reviewBacklog.total}
+              </Link>
+            </div>
+          </section>
 
           {/* ==================== 90-DAY DOPAMINE GRID ==================== */}
           <section className="mb-5">
@@ -172,13 +312,19 @@ export default function Home() {
                 let color = "bg-zinc-800";
                 let status = "";
                 if (logEntry) {
-                  const coreClean = logEntry.weed && logEntry.lol;
+                  const weedLogged = logEntry.weed !== null;
+                  const lolLogged = logEntry.lol !== null;
+                  const coreLogged = weedLogged || lolLogged;
+                  const coreClean = (logEntry.weed ?? true) && (logEntry.lol ?? true);
                   const habits = [logEntry.gym, logEntry.sleep, logEntry.meditate, logEntry.deepWork, logEntry.ateClean];
                   const habitsDone = habits.filter(Boolean).length;
 
-                  if (!coreClean) {
+                  if (coreLogged && !coreClean) {
                     color = "bg-red-500";
                     status = "RELAPSE";
+                  } else if (!coreLogged) {
+                    color = habitsDone > 0 ? "bg-zinc-600" : "bg-zinc-800";
+                    status = habitsDone > 0 ? "PARTIAL" : "";
                   } else if (habitsDone <= 2) {
                     color = "bg-yellow-500";
                     status = "CLEAN";
@@ -219,11 +365,11 @@ export default function Home() {
                       {logEntry && (
                         <>
                           <div className="pt-1 border-t border-zinc-700 space-y-0.5">
-                            <div className={logEntry.weed ? "text-green-400" : "text-red-400"}>
-                              {logEntry.weed ? "✓ No weed" : "✗ Smoked"}
+                            <div className={logEntry.weed === null ? "text-zinc-500" : logEntry.weed ? "text-green-400" : "text-red-400"}>
+                              {logEntry.weed === null ? "○ Weed (not logged)" : logEntry.weed ? "✓ No weed" : "✗ Smoked"}
                             </div>
-                            <div className={logEntry.lol ? "text-green-400" : "text-red-400"}>
-                              {logEntry.lol ? "✓ No LoL" : "✗ Played LoL"}
+                            <div className={logEntry.lol === null ? "text-zinc-500" : logEntry.lol ? "text-green-400" : "text-red-400"}>
+                              {logEntry.lol === null ? "○ LoL (not logged)" : logEntry.lol ? "✓ No LoL" : "✗ Played LoL"}
                             </div>
                           </div>
                           <div className="mt-1 pt-1 border-t border-zinc-700 space-y-0.5">

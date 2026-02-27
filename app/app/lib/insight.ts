@@ -1,6 +1,12 @@
-import { NextResponse } from "next/server";
-import { readLog, readPlan, getTodaysPlan, LogEntry } from "../../lib/csv";
-import { config } from "../../lib/config";
+import { todayStr as todayLocal, daysAgoStr } from "./utils";
+import { config } from "./config";
+
+interface InsightMetricEntry {
+  date: string;
+  metric: string;
+  value: string;
+  notes: string;
+}
 
 // ─── Types ───
 
@@ -55,23 +61,82 @@ interface InsightResponse {
   resetDay: number;
 }
 
+export function computeInsightResponse(
+  log: InsightMetricEntry[],
+  todaysPlan: { done: string }[]
+): InsightResponse {
+  const today = getToday();
+  const dayMap = buildDayMap(log);
+
+  const avoidMetrics = ["weed", "lol", "poker"];
+  const buildMetrics = ["gym", "ate_clean", "sleep"];
+  const allStreakMetrics = [...avoidMetrics, ...buildMetrics];
+
+  const flatStreaks: Record<string, StreakInfo> = {};
+  for (const m of allStreakMetrics) {
+    flatStreaks[m] = computeStreaks(log, m);
+  }
+
+  const streaks: GroupedStreaks = {
+    avoid: {},
+    build: {},
+  };
+  for (const m of avoidMetrics) streaks.avoid[m] = flatStreaks[m];
+  for (const m of buildMetrics) streaks.build[m] = flatStreaks[m];
+
+  const weight = computeWeight(log);
+  const habits = computeHabits(log, dayMap);
+
+  const patterns: Pattern[] = [
+    ...detectCascades(log, dayMap),
+    ...detectCorrelations(dayMap),
+    ...detectStreakPatterns(flatStreaks),
+    ...detectDayOfWeekPatterns(dayMap),
+    ...detectRecentDanger(log, dayMap),
+  ];
+
+  patterns.sort((a, b) => b.priority - a.priority);
+
+  const insight = buildStructuredInsight(flatStreaks, patterns, habits);
+
+  const todaysPlanSummary = {
+    itemCount: todaysPlan.length,
+    doneCount: todaysPlan.filter((p) => p.done === "1").length,
+  };
+
+  const resetDay = Math.floor(
+    (new Date().getTime() - new Date(config.dopamineReset.startDate).getTime()) / (1000 * 60 * 60 * 24)
+  ) + 1;
+
+  return {
+    date: today,
+    streaks,
+    weight,
+    habits,
+    patterns,
+    insight,
+    todaysPlan: todaysPlanSummary,
+    resetDay,
+  };
+}
+
 // ─── Helpers ───
 
 function getToday(): string {
-  return new Date().toISOString().split("T")[0];
+  return todayLocal();
 }
 
 function daysAgo(n: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return d.toISOString().split("T")[0];
+  return daysAgoStr(n);
 }
 
 function getDayOfWeek(dateStr: string): string {
-  return new Date(dateStr + "T12:00:00").toLocaleDateString("en-US", { weekday: "long" });
+  const parsed = new Date(dateStr + "T12:00:00");
+  if (Number.isNaN(parsed.getTime())) return "";
+  return parsed.toLocaleDateString("en-US", { weekday: "long" });
 }
 
-function buildDayMap(log: LogEntry[]): Map<string, Map<string, string>> {
+function buildDayMap(log: InsightMetricEntry[]): Map<string, Map<string, string>> {
   const map = new Map<string, Map<string, string>>();
   for (const e of log) {
     if (!map.has(e.date)) map.set(e.date, new Map());
@@ -82,7 +147,7 @@ function buildDayMap(log: LogEntry[]): Map<string, Map<string, string>> {
 
 // ─── Streak Calculator ───
 
-function computeStreaks(log: LogEntry[], metric: string): StreakInfo {
+function computeStreaks(log: InsightMetricEntry[], metric: string): StreakInfo {
   const entries = log
     .filter((e) => e.metric === metric)
     .sort((a, b) => a.date.localeCompare(b.date));
@@ -108,7 +173,7 @@ function computeStreaks(log: LogEntry[], metric: string): StreakInfo {
 
 // ─── Weight Insight ───
 
-function computeWeight(log: LogEntry[]): WeightInsight {
+function computeWeight(log: InsightMetricEntry[]): WeightInsight {
   const weights = log
     .filter((e) => e.metric === "weight")
     .map((e) => ({ date: e.date, value: parseFloat(e.value) }))
@@ -151,7 +216,10 @@ function computeWeight(log: LogEntry[]): WeightInsight {
 
 // ─── Habit Summary (last 7 days) ───
 
-function computeHabits(log: LogEntry[], dayMap: Map<string, Map<string, string>>): HabitSummary {
+function computeHabits(
+  log: InsightMetricEntry[],
+  dayMap: Map<string, Map<string, string>>
+): HabitSummary {
   const habitMetrics = ["gym", "sleep", "meditate", "deep_work", "ate_clean"];
   const sevenDaysAgo = daysAgo(7);
   const today = getToday();
@@ -181,7 +249,7 @@ function computeHabits(log: LogEntry[], dayMap: Map<string, Map<string, string>>
 
 // ─── Pattern Detectors ───
 
-function detectCascades(log: LogEntry[], dayMap: Map<string, Map<string, string>>): Pattern[] {
+function detectCascades(log: InsightMetricEntry[], dayMap: Map<string, Map<string, string>>): Pattern[] {
   const patterns: Pattern[] = [];
   const addictionMetrics = ["weed", "lol", "poker"];
   const habitMetrics = ["gym", "sleep", "meditate", "deep_work", "ate_clean"];
@@ -329,6 +397,7 @@ function detectDayOfWeekPatterns(dayMap: Map<string, Map<string, string>>): Patt
 
   for (const [dateStr, metrics] of dayMap) {
     const dow = getDayOfWeek(dateStr);
+    if (!dow || !dowCounts[dow]) continue;
     let hasAddictionData = false;
     let allClean = true;
 
@@ -371,6 +440,7 @@ function detectDayOfWeekPatterns(dayMap: Map<string, Map<string, string>>): Patt
 
   for (const [dateStr, metrics] of dayMap) {
     const dow = getDayOfWeek(dateStr);
+    if (!dow || !gymDow[dow]) continue;
     const gymVal = metrics.get("gym");
     if (gymVal !== undefined) {
       gymDow[dow].total++;
@@ -401,7 +471,10 @@ function detectDayOfWeekPatterns(dayMap: Map<string, Map<string, string>>): Patt
   return patterns;
 }
 
-function detectRecentDanger(log: LogEntry[], dayMap: Map<string, Map<string, string>>): Pattern[] {
+function detectRecentDanger(
+  log: InsightMetricEntry[],
+  dayMap: Map<string, Map<string, string>>
+): Pattern[] {
   const patterns: Pattern[] = [];
   const today = getToday();
   const threeDaysAgo = daysAgo(3);
@@ -513,73 +586,4 @@ function buildStructuredInsight(
     warning: warningMsg,
     momentum: momentumMsg,
   };
-}
-
-// ─── Main ───
-
-export async function GET() {
-  try {
-    const log = readLog();
-    const plan = readPlan();
-    const todaysPlan = getTodaysPlan(plan);
-    const today = getToday();
-
-    const dayMap = buildDayMap(log);
-
-    const avoidMetrics = ["weed", "lol", "poker"];
-    const buildMetrics = ["gym", "ate_clean", "sleep"];
-    const allStreakMetrics = [...avoidMetrics, ...buildMetrics];
-
-    const flatStreaks: Record<string, StreakInfo> = {};
-    for (const m of allStreakMetrics) {
-      flatStreaks[m] = computeStreaks(log, m);
-    }
-
-    const streaks: GroupedStreaks = {
-      avoid: {},
-      build: {},
-    };
-    for (const m of avoidMetrics) streaks.avoid[m] = flatStreaks[m];
-    for (const m of buildMetrics) streaks.build[m] = flatStreaks[m];
-
-    const weight = computeWeight(log);
-    const habits = computeHabits(log, dayMap);
-
-    const patterns: Pattern[] = [
-      ...detectCascades(log, dayMap),
-      ...detectCorrelations(dayMap),
-      ...detectStreakPatterns(flatStreaks),
-      ...detectDayOfWeekPatterns(dayMap),
-      ...detectRecentDanger(log, dayMap),
-    ];
-
-    patterns.sort((a, b) => b.priority - a.priority);
-
-    const insight = buildStructuredInsight(flatStreaks, patterns, habits);
-
-    const todaysPlanSummary = {
-      itemCount: todaysPlan.length,
-      doneCount: todaysPlan.filter((p) => p.done === "1").length,
-    };
-
-    const resetDay = Math.floor(
-      (new Date().getTime() - new Date(config.dopamineReset.startDate).getTime()) / (1000 * 60 * 60 * 24)
-    ) + 1;
-
-    const response: InsightResponse = {
-      date: today,
-      streaks,
-      weight,
-      habits,
-      patterns,
-      insight,
-      todaysPlan: todaysPlanSummary,
-      resetDay,
-    };
-
-    return NextResponse.json(response);
-  } catch (e) {
-    console.error("GET /api/insight error:", e);
-    return NextResponse.json({ error: "Failed to compute insights" }, { status: 500 });
-  }
 }

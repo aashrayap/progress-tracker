@@ -99,9 +99,9 @@ export default function YearView({ events, habits, focusDate, onNavigate }: Prop
             )}
 
             <div className="space-y-1">
-              {allDayEvents.slice(0, 3).map((e) => (
+              {allDayEvents.slice(0, 3).map((e, idx) => (
                 <div
-                  key={e.item}
+                  key={`${e.date}-${e.start}-${e.end}-${e.item}-${idx}`}
                   className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20 truncate"
                 >
                   {e.item}

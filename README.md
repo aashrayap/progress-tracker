@@ -8,9 +8,9 @@ Personal operating system for weight, addiction recovery, fitness, and deep work
 │                                                                     │
 │  Capture ──→ Interpret ──→ Decide ──→ Execute ──→ Reflect ──→ Adapt │
 │     │            │            │           │           │          │   │
-│  log.csv     API routes    Hub page    plan.csv   reflections  next  │
-│  voice       patterns      prompts     todos.csv  .csv         day  │
-│  workouts    insights      morning/    workouts   win/lesson/       │
+│ inbox.csv    API routes    Hub page    plan.csv   reflections  next  │
+│ daily_signals patterns     prompts     todos.csv  .csv         day   │
+│ workouts     insights      review      ideas.csv  win/lesson/       │
 │              streaks       evening                change             │
 └─────────────────────────────────────────────────────────────────────┘
 ```
@@ -19,12 +19,11 @@ Personal operating system for weight, addiction recovery, fitness, and deep work
 
 ```
 ┌──────────────┬───────────────┬──────────────┬─────────────────┐
-│  log.csv     │  plan.csv     │  todos.csv   │ reflections.csv │
-│  habits +    │  time blocks  │  backlog     │  win / lesson / │
-│  metrics +   │               │              │  change         │
-│  notes       │               │              │                 │
+│ inbox.csv    │ daily_signals │ plan.csv     │ reflections.csv │
+│ raw capture  │ habits +      │ time blocks  │ win / lesson /  │
+│ queue        │ execution     │ + events     │ change          │
 ├──────────────┴───────────────┴──────────────┴─────────────────┤
-│  workouts.csv (set-level gym data)                            │
+│ workouts.csv (lift benchmarks)  | ideas.csv (triage backlog)  │
 └───────────────────────────────────────────────────────────────┘
 ```
 
@@ -44,9 +43,11 @@ one key action  meal logging
 | Route | Purpose |
 |-------|---------|
 | `/` | Hub — status, streaks, insights, morning priming |
+| `/review` | Capture review queue (`inbox`) |
 | `/plan` | Calendar — year/month/week/day + todos |
-| `/work` | Deep work — sessions, categories, reflections |
+| `/reflect` | Reflection analysis + deep work patterns |
 | `/health` | Gym + weight + eating |
+| `/ideas` | Idea triage (`inbox/reviewed/building/archived`) |
 
 ## Input
 
@@ -59,7 +60,9 @@ App:     Next.js forms → API routes → CSV
 ## Setup
 
 ```bash
-cd app && npm install && npm run dev   # requires Node >= 20.9
+cd app
+nvm use   # uses .nvmrc (20.20.0)
+npm install && npm run dev   # requires Node >= 20.9
 ```
 
 ## Docs
@@ -69,3 +72,4 @@ cd app && npm install && npm run dev   # requires Node >= 20.9
 | `CLAUDE.md` | AI assistant context (always loaded) |
 | `docs/personal-os.md` | Principles + visual loop + operator flow + phased plan |
 | `docs/life-playbook.md` | Consolidated life protocols (vision, fitness, meals, addiction, finance, travel) |
+| `docs/TEMP-architecture-changes.md` | Current migration/architecture decisions |
