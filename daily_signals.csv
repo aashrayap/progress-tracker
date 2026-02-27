@@ -140,3 +140,5 @@ date,signal,value,unit,context,source,capture_id,category
 2026-02-26,poker,1,bool,clean,claude-cli,signal-139,
 2026-02-26,sleep,1,bool,bed 9pm woke 730am - slept great,chat,,habits
 2026-02-27,meditate,1,bool,15min warm water + backyard reading Perfume of Silence + EdVita meditation,chat,,habits
+2026-02-27,deep_work,1,bool,DVN + Rigby AG Grid + tracker repo - felt surface level due to context switching between projects - flat motivation from dopamine withdrawal but pulling through,chat,,coding
+2026-02-27,gym,1,bool,squat/bench/barbell_row,voice,voice-40,
