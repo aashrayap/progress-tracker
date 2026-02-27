@@ -1,22 +1,37 @@
 import { NextResponse } from "next/server";
 import { todayStr as todayLocal, daysAgoStr } from "../../lib/utils";
 import { appendReflection, readReflections } from "../../lib/csv";
+import { resolveTimeframeWindow } from "../../lib/timeframe";
 
 const VALID_DOMAINS = new Set(["gym", "addiction", "deep_work", "eating", "sleep"]);
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const reflections = readReflections();
+    const range = resolveTimeframeWindow(
+      new URL(req.url).searchParams.get("range")
+    );
     const today = todayLocal();
-    const weekAgo = daysAgoStr(7);
     const yesterday = daysAgoStr(1);
+    const inRange = reflections.filter(
+      (r) => r.date >= range.startDate && r.date <= range.endDate
+    );
 
-    const todayReflections = reflections.filter((r) => r.date === today);
-    const weekReflections = reflections.filter((r) => r.date >= weekAgo);
-    const yesterdayChanges = reflections.filter((r) => r.date === yesterday && r.change.trim());
+    const todayReflections = inRange.filter((r) => r.date === today);
+    const yesterdayChanges = inRange.filter(
+      (r) => r.date === yesterday && r.change.trim()
+    );
+
+    const byDomainCounts: Record<string, number> = {};
+    for (const r of inRange) {
+      byDomainCounts[r.domain] = (byDomainCounts[r.domain] || 0) + 1;
+    }
+    const byDomain = Object.entries(byDomainCounts)
+      .map(([domain, count]) => ({ domain, count }))
+      .sort((a, b) => b.count - a.count);
 
     const lessonCounts: Record<string, number> = {};
-    for (const r of reflections) {
+    for (const r of inRange) {
       if (!r.lesson.trim()) continue;
       const key = r.lesson.toLowerCase().trim();
       lessonCounts[key] = (lessonCounts[key] || 0) + 1;
@@ -28,10 +43,15 @@ export async function GET() {
       .map(([lesson, count]) => ({ lesson, count }));
 
     return NextResponse.json({
+      range,
+      total: inRange.length,
       today: todayReflections,
-      week: { count: weekReflections.length },
+      byDomain,
       yesterdayChanges,
-      recent: reflections.slice().reverse().slice(0, 30),
+      recent: inRange
+        .slice()
+        .sort((a, b) => b.date.localeCompare(a.date))
+        .slice(0, 40),
       patterns,
     });
   } catch (e) {

@@ -1,43 +1,77 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# App (Next.js)
 
-## Personal OS Docs
+Web interface for the Personal Assistant OS.
 
-For system context before making product or data-model changes:
+## Scope
 
-1. `../docs/personal-os.md`
-2. `../docs/life-playbook.md`
+This app is the decision and execution surface over canonical CSV data in the repo root.
 
-## Getting Started
+- Reads and writes through API routes in `app/app/api/*`.
+- Uses shared domain/data logic in `app/app/lib/*`.
+- Should keep UI focused on action, not raw data browsing.
 
-First, run the development server:
+## Main Routes
+
+| Route | Purpose |
+|------|---------|
+| `/` | Hub: next action, momentum, daily orientation |
+| `/review` | Capture triage and routing review |
+| `/plan` | Time blocks + todo execution |
+| `/reflect` | Insights/evidence/actions by timeframe |
+| `/health` | Training, weight, and workout progression |
+| `/ideas` | Backlog lifecycle view |
+
+## Core APIs
+
+| Endpoint | Role |
+|---------|------|
+| `/api/hub` | Aggregated decision payload for Hub |
+| `/api/daily-signals` | Canonical daily event read/write |
+| `/api/health` | Health/workout read model |
+| `/api/reflections` | Reflection read/write + patterns |
+| `/api/deep-work` | Deep-work analytics by timeframe |
+| `/api/reflect-insights` | Timeframe-aware insight synthesis |
+| `/api/inbox` | Capture queue and review status updates |
+| `/api/ideas` | Idea/action backlog read/write |
+| `/api/plan` + `/api/plan/range` | Plan CRUD + calendar range read model |
+| `/api/todos` | Todo CRUD |
+
+## Data Location
+
+Canonical CSVs live one directory up from this app:
+
+- `../inbox.csv`
+- `../daily_signals.csv`
+- `../workouts.csv`
+- `../reflections.csv`
+- `../ideas.csv`
+- `../plan.csv`
+- `../todos.csv`
+
+## Development
 
 ```bash
+nvm use
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Run checks before finishing changes:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run lint
+npm run build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Guardrails
 
-## Learn More
+1. Keep business logic in API/lib, not UI components.
+2. Reuse canonical helpers from `app/app/lib/csv.ts` and `app/app/lib/config.ts`.
+3. Maintain backwards-safe parsing for legacy data labels.
+4. Prefer timeframe-aware endpoints for Reflect/analysis features.
 
-To learn more about Next.js, take a look at the following resources:
+## References
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `../README.md`
+- `../docs/personal-os.md`
+- `../docs/life-playbook.md`

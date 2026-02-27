@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import type { DailySignalEntry, IdeaEntry, InboxEntry } from "./types";
 import { daysAgoStr, todayStr } from "./utils";
+import { normalizeWorkoutKey } from "./config";
 
 export type { DailySignalEntry, IdeaEntry, InboxEntry };
 
@@ -500,9 +501,11 @@ export function getNextWorkout(signals: DailySignalEntry[], cycle: string[] = [.
   const source = `${gymDays[0].context || ""} ${gymDays[0].category || ""}`;
   const dayMatch = source.match(/Day\s*([A-Za-z0-9_-]+)/i)?.[1];
   const fallback = gymDays[0].category || "";
-  const lastDay = (dayMatch || fallback).toUpperCase();
+  const lastDay = normalizeWorkoutKey(dayMatch || fallback, cycle);
+  if (!lastDay) return cycle[0] || "W1";
+
   const cycleUpper = cycle.map((item) => item.toUpperCase());
-  const lastIdx = cycleUpper.indexOf(lastDay);
+  const lastIdx = cycleUpper.indexOf(lastDay.toUpperCase());
   if (lastIdx === -1) return cycle[0] || "W1";
   return cycle[(lastIdx + 1) % cycle.length];
 }

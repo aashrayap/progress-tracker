@@ -10,7 +10,7 @@ import {
   readReflections,
   WorkoutSetEntry,
 } from "../../lib/csv";
-import { config } from "../../lib/config";
+import { config, normalizeWorkoutKey } from "../../lib/config";
 
 interface GroupedExercise {
   name: string;
@@ -26,6 +26,7 @@ interface WorkoutDay {
 
 function groupWorkoutsByDay(entries: WorkoutSetEntry[]): WorkoutDay[] {
   const allExercises = Object.values(config.exercises).flat();
+  const cycle = Object.keys(config.workoutTemplates);
 
   const byDate: Record<string, WorkoutSetEntry[]> = {};
   for (const e of entries) {
@@ -35,7 +36,8 @@ function groupWorkoutsByDay(entries: WorkoutSetEntry[]): WorkoutDay[] {
 
   return Object.entries(byDate)
     .map(([date, sets]) => {
-      const workout = sets[0]?.workout || "";
+      const rawWorkout = sets[0]?.workout || "";
+      const workout = normalizeWorkoutKey(rawWorkout, cycle) || rawWorkout;
       const byExercise: Record<string, WorkoutSetEntry[]> = {};
       for (const s of sets) {
         if (!byExercise[s.exercise]) byExercise[s.exercise] = [];

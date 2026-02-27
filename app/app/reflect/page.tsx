@@ -2,6 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+type TimeframeKey = "week" | "month";
+type IdeaStatus = "inbox" | "reviewed" | "building" | "archived";
+type IdeaDomain = "app" | "health" | "life" | "system";
+
 interface ReflectionEntry {
   date: string;
   domain: string;
@@ -10,21 +14,31 @@ interface ReflectionEntry {
   change: string;
 }
 
+interface TimeframeWindow {
+  key: TimeframeKey;
+  label: string;
+  startDate: string;
+  endDate: string;
+}
+
 interface ReflectionData {
+  range: TimeframeWindow;
+  total: number;
   today: ReflectionEntry[];
-  week: { count: number };
+  byDomain: { domain: string; count: number }[];
   yesterdayChanges: ReflectionEntry[];
   recent: ReflectionEntry[];
   patterns: { lesson: string; count: number }[];
 }
 
 interface DeepWorkData {
+  range: TimeframeWindow;
   stats: {
-    todayMinutes: number;
-    todaySessions: number;
-    weekMinutes: number;
-    weekSessions: number;
-    weekDays: number;
+    totalMinutes: number;
+    totalSessions: number;
+    activeDays: number;
+    avgSessionMin: number;
+    avgActiveDayMin: number;
   };
   categoryBreakdown: { category: string; minutes: number; pct: number }[];
   recent: {
@@ -36,7 +50,43 @@ interface DeepWorkData {
   }[];
 }
 
+interface ReflectInsightsData {
+  range: TimeframeWindow;
+  summary: {
+    trackedDays: number;
+    reflectionCount: number;
+    deepWorkMinutes: number;
+    deepWorkSessions: number;
+    gymDoneDays: number;
+    gymTrackedDays: number;
+    sleepDoneDays: number;
+    sleepTrackedDays: number;
+    topDomain: { domain: string; count: number } | null;
+  };
+  insights: {
+    type: "positive" | "warning" | "opportunity";
+    title: string;
+    message: string;
+  }[];
+}
+
+interface Idea {
+  id: number;
+  createdAt: string;
+  title: string;
+  details: string;
+  domain: IdeaDomain;
+  status: IdeaStatus;
+  source: string;
+  captureId: string;
+}
+
 const DOMAINS = ["deep_work", "gym", "eating", "sleep", "addiction"];
+const TIMEFRAMES: { key: TimeframeKey; label: string }[] = [
+  { key: "week", label: "This Week" },
+  { key: "month", label: "This Month" },
+];
+const IDEA_STATUSES: IdeaStatus[] = ["inbox", "reviewed", "building", "archived"];
 
 function domainLabel(domain: string): string {
   if (domain === "deep_work") return "Deep Work";
@@ -47,35 +97,198 @@ function domainLabel(domain: string): string {
   return domain;
 }
 
+function insightTone(type: "positive" | "warning" | "opportunity"): string {
+  if (type === "positive") return "border-emerald-500/30 bg-emerald-500/5";
+  if (type === "warning") return "border-amber-500/30 bg-amber-500/5";
+  return "border-blue-500/30 bg-blue-500/5";
+}
+
+function insightTextTone(type: "positive" | "warning" | "opportunity"): string {
+  if (type === "positive") return "text-emerald-300";
+  if (type === "warning") return "text-amber-300";
+  return "text-blue-300";
+}
+
+function mapReflectionDomainToIdeaDomain(domain: string): IdeaDomain {
+  if (["gym", "eating", "sleep", "addiction"].includes(domain)) return "health";
+  if (domain === "deep_work") return "life";
+  return "system";
+}
+
+function ideaTitleFromReflection(reflection: ReflectionEntry): string {
+  const raw = reflection.change || reflection.lesson || reflection.win;
+  if (!raw.trim()) return `Follow-up: ${domainLabel(reflection.domain)}`;
+  const trimmed = raw.trim();
+  return trimmed.length <= 90 ? trimmed : `${trimmed.slice(0, 87)}...`;
+}
+
+async function fetchJson<T>(url: string): Promise<T> {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Request failed: ${url}`);
+  }
+  return res.json();
+}
+
 export default function ReflectPage() {
+  const [timeframe, setTimeframe] = useState<TimeframeKey>("week");
   const [reflectionData, setReflectionData] = useState<ReflectionData | null>(null);
   const [deepWorkData, setDeepWorkData] = useState<DeepWorkData | null>(null);
+  const [insightsData, setInsightsData] = useState<ReflectInsightsData | null>(null);
+  const [ideas, setIdeas] = useState<Idea[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<"reflections" | "deep_work">("reflections");
+  const [error, setError] = useState<string | null>(null);
+  const [actionBusyKey, setActionBusyKey] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [promotedKeys, setPromotedKeys] = useState<Set<string>>(new Set());
 
-  const load = () => {
+  const handleTimeframeChange = (next: TimeframeKey) => {
+    if (next === timeframe) return;
     setLoading(true);
-    Promise.all([
-      fetch("/api/reflections").then((r) => r.json()),
-      fetch("/api/deep-work").then((r) => r.json()),
-    ])
-      .then(([r, d]) => {
-        setReflectionData(r);
-        setDeepWorkData(d);
-      })
-      .finally(() => setLoading(false));
+    setError(null);
+    setActionError(null);
+    setPromotedKeys(new Set());
+    setTimeframe(next);
   };
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      load();
-    }, 0);
-    return () => window.clearTimeout(timer);
-  }, []);
+    let active = true;
+    const query = `?range=${timeframe}`;
+
+    Promise.all([
+      fetchJson<ReflectionData>(`/api/reflections${query}`),
+      fetchJson<DeepWorkData>(`/api/deep-work${query}`),
+      fetchJson<ReflectInsightsData>(`/api/reflect-insights${query}`),
+      fetchJson<Idea[]>(`/api/ideas${query}`),
+    ])
+      .then(([r, d, i, a]) => {
+        if (!active) return;
+        setReflectionData(r);
+        setDeepWorkData(d);
+        setInsightsData(i);
+        setIdeas(a);
+      })
+      .catch((e: unknown) => {
+        if (!active) return;
+        const message = e instanceof Error ? e.message : "Failed to load reflect data";
+        setError(message);
+      })
+      .finally(() => {
+        if (!active) return;
+        setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [timeframe]);
 
   const todaysDomainSet = useMemo(() => {
     return new Set((reflectionData?.today || []).map((r) => r.domain));
   }, [reflectionData]);
+
+  const domainCountMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const d of reflectionData?.byDomain || []) {
+      map.set(d.domain, d.count);
+    }
+    return map;
+  }, [reflectionData]);
+
+  const actionsByStatus = useMemo(() => {
+    const buckets: Record<IdeaStatus, Idea[]> = {
+      inbox: [],
+      reviewed: [],
+      building: [],
+      archived: [],
+    };
+    for (const idea of ideas) buckets[idea.status].push(idea);
+    return buckets;
+  }, [ideas]);
+
+  const backlogActions = useMemo(
+    () => ideas.filter((idea) => idea.status !== "archived"),
+    [ideas]
+  );
+
+  const handlePromoteReflection = async (
+    reflection: ReflectionEntry,
+    promoteKey: string
+  ) => {
+    setActionBusyKey(promoteKey);
+    setActionError(null);
+
+    try {
+      const title = ideaTitleFromReflection(reflection);
+      const details = [
+        `Source: reflection ${reflection.date} (${domainLabel(reflection.domain)})`,
+        reflection.win ? `Win: ${reflection.win}` : "",
+        reflection.lesson ? `Lesson: ${reflection.lesson}` : "",
+        reflection.change ? `Change: ${reflection.change}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n");
+
+      const res = await fetch("/api/ideas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          details,
+          domain: mapReflectionDomainToIdeaDomain(reflection.domain),
+          status: "inbox",
+          source: "reflect",
+          captureId: `${reflection.date}:${reflection.domain}`,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to promote reflection");
+      }
+
+      const createdIdea = (await res.json()) as Idea;
+      setIdeas((prev) => [createdIdea, ...prev]);
+      setPromotedKeys((prev) => {
+        const next = new Set(prev);
+        next.add(promoteKey);
+        return next;
+      });
+    } catch (e) {
+      console.error(e);
+      setActionError("Could not create action from reflection.");
+    } finally {
+      setActionBusyKey(null);
+    }
+  };
+
+  const handleIdeaStatusChange = async (idea: Idea, status: IdeaStatus) => {
+    if (idea.status === status) return;
+
+    const busyKey = `idea-${idea.id}`;
+    setActionBusyKey(busyKey);
+    setActionError(null);
+
+    try {
+      const res = await fetch("/api/ideas", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: idea.id, status }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to update action status");
+      }
+
+      setIdeas((prev) =>
+        prev.map((row) => (row.id === idea.id ? { ...row, status } : row))
+      );
+    } catch (e) {
+      console.error(e);
+      setActionError("Could not update action status.");
+    } finally {
+      setActionBusyKey(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -85,10 +298,10 @@ export default function ReflectPage() {
     );
   }
 
-  if (!reflectionData || !deepWorkData) {
+  if (error || !reflectionData || !deepWorkData || !insightsData) {
     return (
       <div className="min-h-screen bg-zinc-950 text-zinc-100 p-4">
-        <p className="text-zinc-500">Failed to load reflection dashboard.</p>
+        <p className="text-zinc-500">{error || "Failed to load reflection dashboard."}</p>
       </div>
     );
   }
@@ -96,132 +309,279 @@ export default function ReflectPage() {
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
       <div className="p-4 sm:p-6 pb-24">
-        <div className="max-w-lg mx-auto space-y-5">
-          <h1 className="text-2xl font-bold">Reflect</h1>
-
-          <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-1 grid grid-cols-2 gap-1">
-            <button
-              onClick={() => setView("reflections")}
-              className={`py-2 rounded text-sm transition-colors ${
-                view === "reflections"
-                  ? "bg-zinc-800 text-zinc-100"
-                  : "text-zinc-500 hover:text-zinc-300"
-              }`}
-            >
-              Reflections
-            </button>
-            <button
-              onClick={() => setView("deep_work")}
-              className={`py-2 rounded text-sm transition-colors ${
-                view === "deep_work"
-                  ? "bg-zinc-800 text-zinc-100"
-                  : "text-zinc-500 hover:text-zinc-300"
-              }`}
-            >
-              Deep Work
-            </button>
-          </section>
-
-          {view === "reflections" && reflectionData.yesterdayChanges.length > 0 && (
-            <section className="bg-zinc-900 border border-amber-500/30 rounded-lg p-3">
-              <p className="text-xs text-zinc-500 uppercase mb-2">Yesterday&apos;s Changes</p>
-              <div className="space-y-1 text-sm">
-                {reflectionData.yesterdayChanges.map((r, idx) => (
-                  <p key={`${r.domain}-${idx}`} className="text-zinc-300">
-                    - {r.change} <span className="text-zinc-500">({domainLabel(r.domain)})</span>
-                  </p>
+        <div className="max-w-3xl mx-auto space-y-5">
+          <header className="space-y-3">
+            <h1 className="text-2xl font-bold">Reflect</h1>
+            <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
+              <p className="text-xs text-zinc-500 uppercase mb-2">Timeline</p>
+              <div className="flex gap-2">
+                {TIMEFRAMES.map((t) => (
+                  <button
+                    key={t.key}
+                    onClick={() => handleTimeframeChange(t.key)}
+                    className={`px-3 py-1.5 rounded text-sm border transition-colors ${
+                      timeframe === t.key
+                        ? "bg-zinc-800 border-zinc-700 text-zinc-100"
+                        : "bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-zinc-300"
+                    }`}
+                  >
+                    {t.label}
+                  </button>
                 ))}
               </div>
+              <p className="mt-2 text-xs text-zinc-500">
+                {reflectionData.range.startDate} to {reflectionData.range.endDate}
+              </p>
             </section>
-          )}
+          </header>
 
-          {view === "deep_work" && (
-            <>
-              <section className="grid grid-cols-3 gap-2">
-                <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 text-center">
-                  <p className="text-xs text-zinc-500">Today</p>
-                  <p className="text-xl font-bold">{deepWorkData.stats.todayMinutes}m</p>
+          <section className="bg-zinc-900 border border-blue-500/30 rounded-lg p-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs text-zinc-500 uppercase">AI Timeframe Insight</p>
+              <span className="text-xs text-blue-300">{insightsData.range.label}</span>
+            </div>
+            <p className="mt-2 text-sm text-zinc-300">
+              {insightsData.summary.trackedDays} tracked days, {insightsData.summary.reflectionCount} reflections, {" "}
+              {insightsData.summary.deepWorkMinutes} deep-work minutes.
+            </p>
+            <div className="mt-3 space-y-2">
+              {insightsData.insights.map((insight, idx) => (
+                <div
+                  key={`${insight.title}-${idx}`}
+                  className={`rounded border p-2 ${insightTone(insight.type)}`}
+                >
+                  <p className={`text-sm font-medium ${insightTextTone(insight.type)}`}>
+                    {insight.title}
+                  </p>
+                  <p className="text-sm text-zinc-300">{insight.message}</p>
                 </div>
-                <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 text-center">
-                  <p className="text-xs text-zinc-500">Week</p>
-                  <p className="text-xl font-bold">{deepWorkData.stats.weekMinutes}m</p>
-                </div>
-                <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 text-center">
-                  <p className="text-xs text-zinc-500">Days</p>
-                  <p className="text-xl font-bold">{deepWorkData.stats.weekDays}/7</p>
-                </div>
-              </section>
+              ))}
+            </div>
+          </section>
 
-              <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
-                <p className="text-xs text-zinc-500 uppercase mb-2">Category Breakdown (Week)</p>
-                <div className="space-y-2">
-                  {deepWorkData.categoryBreakdown.length === 0 && <p className="text-sm text-zinc-600">No deep work yet.</p>}
-                  {deepWorkData.categoryBreakdown.map((c) => (
-                    <div key={c.category}>
-                      <div className="flex items-center justify-between text-xs mb-1">
-                        <span className="text-zinc-300">{c.category}</span>
-                        <span className="text-zinc-500">{c.minutes}m ({c.pct}%)</span>
-                      </div>
-                      <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
-                        <div className="h-full bg-indigo-500" style={{ width: `${c.pct}%` }} />
-                      </div>
-                    </div>
+          <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs text-zinc-500 uppercase">Reflections</p>
+              <span className="text-xs text-zinc-500">{reflectionData.total} entries</span>
+            </div>
+            <p className="mt-2 text-sm text-zinc-300">By Domain</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {DOMAINS.map((d) => {
+                const count = domainCountMap.get(d) || 0;
+                const isToday = todaysDomainSet.has(d);
+                return (
+                  <span
+                    key={d}
+                    className={`px-2 py-1 rounded text-xs border ${
+                      isToday
+                        ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                        : "bg-zinc-800 border-zinc-700 text-zinc-300"
+                    }`}
+                  >
+                    {domainLabel(d)}: {count}
+                  </span>
+                );
+              })}
+            </div>
+
+            {reflectionData.yesterdayChanges.length > 0 && (
+              <div className="mt-4 border border-amber-500/20 rounded p-2">
+                <p className="text-xs text-zinc-500 uppercase mb-1">Yesterday&apos;s Changes</p>
+                <div className="space-y-1">
+                  {reflectionData.yesterdayChanges.map((r, idx) => (
+                    <p key={`${r.domain}-${idx}`} className="text-sm text-zinc-300">
+                      - {r.change} <span className="text-zinc-500">({domainLabel(r.domain)})</span>
+                    </p>
                   ))}
                 </div>
-              </section>
+              </div>
+            )}
 
-              <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
-                <p className="text-xs text-zinc-500 uppercase mb-2">Recent Sessions</p>
-                <div className="space-y-2">
-                  {deepWorkData.recent.slice(0, 8).map((s, i) => (
-                    <div key={`${s.date}-${i}`} className="border border-zinc-800 rounded p-2">
-                      <p className="text-xs text-zinc-500 mb-1">{s.date} · {s.category} · {s.durationMin}m</p>
-                      <p className="text-sm text-zinc-300">{s.topic || "No topic"}</p>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            </>
-          )}
-
-          {view === "reflections" && (
-            <>
-              <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
-                <p className="text-xs text-zinc-500 uppercase mb-2">Today by Domain</p>
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {DOMAINS.map((d) => (
-                    <span
-                      key={d}
-                      className={`px-2 py-1 rounded text-xs border ${todaysDomainSet.has(d) ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300" : "bg-zinc-800 border-zinc-700 text-zinc-500"}`}
-                    >
-                      {domainLabel(d)}
-                    </span>
-                  ))}
-                </div>
-                <div className="space-y-2">
-                  {reflectionData.recent.slice(0, 8).map((r, i) => (
+            <div className="mt-4">
+              <p className="text-xs text-zinc-500 uppercase mb-2">Recent in Range</p>
+              <div className="space-y-2">
+                {reflectionData.recent.length === 0 && (
+                  <p className="text-sm text-zinc-600">No reflections in this timeframe.</p>
+                )}
+                {reflectionData.recent.slice(0, 10).map((r, i) => {
+                  const promoteKey = `${r.date}:${r.domain}:${i}`;
+                  const promoted = promotedKeys.has(promoteKey);
+                  const promoting = actionBusyKey === promoteKey;
+                  return (
                     <div key={`${r.date}-${i}`} className="border border-zinc-800 rounded p-2">
-                      <p className="text-xs text-zinc-500 mb-1">{r.date} · {domainLabel(r.domain)}</p>
+                      <p className="text-xs text-zinc-500 mb-1">
+                        {r.date} · {domainLabel(r.domain)}
+                      </p>
                       {r.win && <p className="text-sm text-zinc-300">Win: {r.win}</p>}
                       {r.lesson && <p className="text-sm text-zinc-300">Lesson: {r.lesson}</p>}
                       {r.change && <p className="text-sm text-zinc-300">Change: {r.change}</p>}
+                      <div className="mt-2">
+                        <button
+                          onClick={() => handlePromoteReflection(r, promoteKey)}
+                          disabled={promoting || promoted}
+                          className={`px-2 py-1 text-xs rounded border transition-colors ${
+                            promoted
+                              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                              : "bg-zinc-800 border-zinc-700 text-zinc-300 hover:text-zinc-100"
+                          } ${promoting ? "opacity-70" : ""}`}
+                        >
+                          {promoted
+                            ? "Added to Actions"
+                            : promoting
+                              ? "Adding..."
+                              : "Promote to Action"}
+                        </button>
+                      </div>
                     </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {reflectionData.patterns.length > 0 && (
+              <div className="mt-4">
+                <p className="text-xs text-zinc-500 uppercase mb-1">Recurring Lessons</p>
+                <div className="space-y-1">
+                  {reflectionData.patterns.slice(0, 8).map((p) => (
+                    <p key={p.lesson} className="text-sm text-zinc-300">
+                      {p.count}x - {p.lesson}
+                    </p>
                   ))}
                 </div>
-              </section>
+              </div>
+            )}
+          </section>
 
-              {reflectionData.patterns.length > 0 && (
-                <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
-                  <p className="text-xs text-zinc-500 uppercase mb-2">Recurring Lessons</p>
-                  <div className="space-y-1">
-                    {reflectionData.patterns.slice(0, 8).map((p) => (
-                      <p key={p.lesson} className="text-sm text-zinc-300">{p.count}x - {p.lesson}</p>
-                    ))}
-                  </div>
-                </section>
+          <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs text-zinc-500 uppercase">Actions</p>
+              <a href="/ideas" className="text-xs text-blue-300 hover:text-blue-200">
+                Open Backlog View
+              </a>
+            </div>
+
+            <div className="mt-2 flex flex-wrap gap-2">
+              {IDEA_STATUSES.map((status) => (
+                <span
+                  key={status}
+                  className="px-2 py-1 rounded text-xs border bg-zinc-800 border-zinc-700 text-zinc-300"
+                >
+                  {status}: {actionsByStatus[status].length}
+                </span>
+              ))}
+            </div>
+
+            {actionError && <p className="mt-2 text-xs text-red-400">{actionError}</p>}
+
+            <div className="mt-3 space-y-2">
+              {backlogActions.length === 0 && (
+                <p className="text-sm text-zinc-600">No active actions in this timeframe.</p>
               )}
-            </>
-          )}
+              {backlogActions.slice(0, 12).map((idea) => {
+                const busyKey = `idea-${idea.id}`;
+                const isBusy = actionBusyKey === busyKey;
+                return (
+                  <div key={idea.id} className="border border-zinc-800 rounded p-2">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm text-zinc-200 font-medium">{idea.title || "Untitled action"}</p>
+                        {idea.details && <p className="text-xs text-zinc-500 mt-1 line-clamp-3">{idea.details}</p>}
+                        <p className="text-xs text-zinc-500 mt-1">
+                          {idea.domain} · {new Date(idea.createdAt).toLocaleDateString()} · {idea.source || "unknown"}
+                        </p>
+                      </div>
+                      <label className="text-xs text-zinc-500">
+                        <span className="sr-only">Action status</span>
+                        <select
+                          value={idea.status}
+                          disabled={isBusy}
+                          onChange={(e) =>
+                            handleIdeaStatusChange(idea, e.target.value as IdeaStatus)
+                          }
+                          className="bg-zinc-800 border border-zinc-700 text-zinc-200 rounded px-2 py-1"
+                        >
+                          {IDEA_STATUSES.map((status) => (
+                            <option key={status} value={status}>
+                              {status}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
+            <p className="text-xs text-zinc-500 uppercase mb-2">Deep Work</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div className="bg-zinc-800/50 border border-zinc-800 rounded p-2 text-center">
+                <p className="text-[11px] text-zinc-500">Minutes</p>
+                <p className="text-lg font-semibold">{deepWorkData.stats.totalMinutes}</p>
+              </div>
+              <div className="bg-zinc-800/50 border border-zinc-800 rounded p-2 text-center">
+                <p className="text-[11px] text-zinc-500">Sessions</p>
+                <p className="text-lg font-semibold">{deepWorkData.stats.totalSessions}</p>
+              </div>
+              <div className="bg-zinc-800/50 border border-zinc-800 rounded p-2 text-center">
+                <p className="text-[11px] text-zinc-500">Active Days</p>
+                <p className="text-lg font-semibold">{deepWorkData.stats.activeDays}</p>
+              </div>
+              <div className="bg-zinc-800/50 border border-zinc-800 rounded p-2 text-center">
+                <p className="text-[11px] text-zinc-500">Avg / Session</p>
+                <p className="text-lg font-semibold">{deepWorkData.stats.avgSessionMin}m</p>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <p className="text-xs text-zinc-500 uppercase mb-2">Category Breakdown</p>
+              <div className="space-y-2">
+                {deepWorkData.categoryBreakdown.length === 0 && (
+                  <p className="text-sm text-zinc-600">No deep work sessions in this timeframe.</p>
+                )}
+                {deepWorkData.categoryBreakdown.map((c) => (
+                  <div key={c.category}>
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className="text-zinc-300">{c.category}</span>
+                      <span className="text-zinc-500">
+                        {c.minutes}m ({c.pct}%)
+                      </span>
+                    </div>
+                    <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-blue-500"
+                        style={{ width: `${c.pct}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <p className="text-xs text-zinc-500 uppercase mb-2">Recent Sessions</p>
+              <div className="space-y-2">
+                {deepWorkData.recent.length === 0 && (
+                  <p className="text-sm text-zinc-600">No sessions to show in this timeframe.</p>
+                )}
+                {deepWorkData.recent.slice(0, 10).map((s, i) => (
+                  <div key={`${s.date}-${i}`} className="border border-zinc-800 rounded p-2">
+                    <p className="text-xs text-zinc-500 mb-1">
+                      {s.date} · {s.category} · {s.durationMin}m
+                    </p>
+                    <p className="text-sm text-zinc-300">{s.topic || "No topic"}</p>
+                    {s.reflection?.lesson && (
+                      <p className="text-xs text-zinc-500 mt-1">
+                        Reflection: {s.reflection.lesson}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
         </div>
       </div>
     </div>

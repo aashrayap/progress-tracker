@@ -1,187 +1,157 @@
-# Personal OS
+# Personal Assistant OS Blueprint
 
-Single source of truth for product principles, architecture framing, and build plan.
+This document defines how the repo should operate as a personal assistant, not just a tracker.
 
-Canonical runtime model: `inbox.csv + daily_signals.csv + plan.csv + todos.csv + reflections.csv + workouts.csv + ideas.csv`.
+## Mission
 
-## Core Problem
+Convert your lived data into reliable decisions and proactive support with minimal repeated instruction.
 
-The system captures life data well, but does not yet consistently convert that data into better next decisions.
+## What "Assistant OS" Means
 
-- Data entry is strong; behavioral guidance is inconsistent.
-- The repo still behaves like separate trackers, not one compounding operating system.
+The system is successful only when it can do all three consistently:
 
-## North Star Loop
+1. Remember: keep durable context across days and weeks.
+2. Reason: detect patterns and risks from current timeframe data.
+3. Recommend: produce a clear next action with evidence.
+
+## North Star Outcomes
+
+1. You rarely need to re-explain goals, constraints, or patterns.
+2. Daily startup cost is low: one glance gives the next best action.
+3. Weekly reviews produce concrete rule updates, not vague notes.
+4. Behavior improves over time because reflection changes planning.
+
+## Runtime Loop
 
 ```
-Capture -> Interpret -> Decide -> Execute -> Reflect -> Adapt
+Capture -> Normalize -> Interpret -> Decide -> Execute -> Reflect -> Adapt
 ```
 
-If any handoff is weak, compounding breaks.
+### 1) Capture
 
-## Product Principles
+- Inputs: web app, voice notes, CLI logs.
+- Rule: capture should be fast and low-friction.
 
-1. Decision-first, not dashboard-first
-2. One truth model per concept
-3. Reflection drives planning
-4. Structure over prose drift
-5. Time-contextual interface
-6. Compounding memory
-7. Low-friction capture, high-quality synthesis
-8. Graceful under failure
+### 2) Normalize
 
-## Definition of Done (feature gate)
+- Convert raw text to canonical schema fields.
+- Resolve aliases and legacy values (example: workout labels).
+
+### 3) Interpret
+
+- Build read models by timeframe and domain.
+- Detect trend shifts, misses, and recurring lessons.
+
+### 4) Decide
+
+- Generate one priority next action and optional supporting actions.
+- Link each recommendation to concrete evidence.
+
+### 5) Execute
+
+- Present action in the right surface (Hub, Plan, Health, Reflect).
+- Make completion logging one click where possible.
+
+### 6) Reflect
+
+- Capture `win`, `lesson`, `change` for each meaningful day.
+- Promote repeated lessons to explicit operating rules.
+
+### 7) Adapt
+
+- Update plan templates, triggers, and action backlog.
+- Improve future prompts and priorities automatically.
+
+## Memory Model
+
+To avoid repeated explanations, memory must be explicit.
+
+1. Event Memory
+   - Source: `daily_signals.csv`, `workouts.csv`, `reflections.csv`.
+   - Role: what happened.
+2. State Memory
+   - Source: derived API read models.
+   - Role: where things stand right now.
+3. Rule Memory
+   - Source: recurring lessons and playbook constraints.
+   - Role: what to do when patterns repeat.
+4. Action Memory
+   - Source: `ideas.csv`, `plan.csv`, `todos.csv`.
+   - Role: what is being changed next.
+
+## System Contracts
+
+1. CSVs are canonical source of truth.
+2. Shared domain logic lives in `app/app/lib/`.
+3. API routes own interpretation and decision payloads.
+4. UI surfaces consume read models; they do not invent business logic.
+5. Every generated insight should map to at least one action path.
+
+## Product Surfaces and Roles
+
+| Surface | Primary Role |
+|---------|--------------|
+| `Hub` | Priority and next action now |
+| `Review` | Intake triage and routing confidence |
+| `Plan` | Time-block execution and completion |
+| `Reflect` | Evidence + insights + action promotion |
+| `Health` | Training and body-composition execution |
+| `Ideas` | Action backlog lifecycle |
+
+## Decision Quality Bar
+
+A recommendation is valid only if it is:
+
+1. Time-bounded (for this day/week/month).
+2. Evidence-backed (specific logs/patterns).
+3. Actionable (clear action verb).
+4. Comparable (can be reviewed later as done/not done).
+
+## 90-Day Build Program
+
+### Phase 1: Contract Stability
+
+1. Freeze canonical headers and parsing behavior.
+2. Eliminate semantic drift across endpoints.
+3. Add explicit normalization utilities where needed.
+
+### Phase 2: Shared Interpretation
+
+1. Ensure all major read routes support timeframe filtering.
+2. Align domain labels and category semantics.
+3. Remove duplicate interpretation logic in pages.
+
+### Phase 3: Proactive Decisions
+
+1. Strengthen `/api/hub` next-action prioritization.
+2. Add deterministic heuristics for risk and momentum.
+3. Ensure recommendations include supporting evidence snippets.
+
+### Phase 4: Action Closure
+
+1. Tighten reflection-to-action flow.
+2. Ensure promoted ideas can become plan blocks quickly.
+3. Track whether recommended actions were actually completed.
+
+### Phase 5: Compounding Memory
+
+1. Promote recurring lessons into explicit rules.
+2. Feed those rules into future decision ranking.
+3. Improve "bad day" behavior with fallback plans.
+
+## Weekly Review Questions
+
+1. Which recommendations produced real behavior change?
+2. Which repeated lessons are not yet encoded as rules?
+3. Where is data quality too weak for reliable decisions?
+4. What should be automated next to reduce manual overhead?
+
+## Definition of Done for New Features
 
 A feature ships only if it:
 
-1. Strengthens at least one loop stage
-2. Uses canonical schema/domain meaning
-3. Appears at the moment a user can act
-4. Compounds with repeated usage
-5. Works on bad days (misses/relapse/low energy)
-
-## Visual System Map
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                          PERSONAL OS LOOP                           │
-├───────────┬──────────────┬───────────┬───────────┬───────────┬─────┤
-│  Capture  │  Interpret   │  Decide   │  Execute  │  Reflect  │Adapt│
-└─────┬─────┴──────┬───────┴────┬──────┴─────┬─────┴─────┬─────┴──┬──┘
-      │            │            │            │           │        │
-      ▼            ▼            ▼            ▼           ▼        ▼
-  inbox+signals API/domain    Hub/Pages   plan/todos   reflections next-day
-  voice/manual  logic         prompts     workouts      win/lesson behavior
-```
-
-## Operator View
-
-```
-Morning (prime): yesterday change + top risk + one key action
-Day (execute):   current plan block + habits + quick capture
-Evening (close): reflection (win/lesson/change) + carry-forward
-```
-
-Command-center questions:
-
-1. What matters now?
-2. What pattern is forming?
-3. What one action changes trajectory today?
-
-## Current-State Audit (snapshot)
-
-### Data contracts
-
-```
-inbox.csv         capture_id,captured_at,source,raw_text,status,suggested_destination,normalized_text,error
-daily_signals.csv date,signal,value,unit,context,source,capture_id,category
-ideas.csv         id,created_at,title,details,domain,status,source,capture_id
-reflections.csv   date,domain,win,lesson,change
-plan.csv          date,start,end,item,done,notes
-todos.csv         id,item,done,created
-workouts.csv      date,workout,exercise,set,weight,reps,notes
-```
-
-### Structural breaks
-
-1. Reflection is not central in the daily decision loop
-2. Key semantics (topic/category/context) are trapped in free text
-3. Domain logic is fragmented across overlapping API routes
-4. Execute loop is weakly closed in UI (limited completion flow)
-5. Capture review routing still needs higher precision on ambiguous voice notes
-
-## Target Operating Model
-
-Each input should produce:
-
-1. Event row (capture)
-2. State update (interpret)
-3. Time-appropriate action prompt (decide)
-
-### Normalized semantics
-
-- Keep CSVs minimal
-- Keep `signal` as top-level event type
-- Add `category` for machine-readable subtypes
-- Keep `context` for human context
-
-Target `daily_signals.csv` shape:
-
-```
-date,signal,value,unit,context,source,capture_id,category
-```
-
-## Build Roadmap
-
-### Phase 0 - Safety Rails
-
-1. Consolidate shared domain helpers in `app/app/lib/csv.ts`
-2. Centralize types in `app/app/lib/types.ts`
-3. Remove duplicate helper contracts
-
-### Phase 1 - Data Normalization
-
-1. Lock canonical schemas (`inbox`, `daily_signals`, `ideas`, `workouts`, `reflections`, `plan`, `todos`)
-2. Validate CSV read/write paths against canonical headers only
-3. Remove compatibility wrappers once no callers remain
-
-### Phase 2 - API Consolidation
-
-1. Add canonical routes:
-   - `/api/hub`
-   - `/api/daily-signals`
-   - `/api/inbox`
-   - `/api/ideas`
-   - `/api/reflections`
-   - `/api/deep-work`
-2. Keep `/api/hub` focused on decision payload (no write side effects)
-
-### Phase 3 - UI Flow Rewrite
-
-1. Hub becomes time-aware decision surface
-2. Keep reflection UI analysis-first (`/reflect`)
-3. Improve planner completion actions
-4. Tighten health and review tab workflows
-
-### Phase 4 - Domain Enrichment
-
-1. Deep work categories + analytics
-2. Meal categories + context
-3. Trigger category analysis in risk view
-
-### Phase 5 - Voice + Skills Alignment
-
-1. Update voice parser and skills to write/read `category`
-2. Enforce inbox-first routing and deterministic destination rules
-
-## Success Metrics
-
-1. Reflection recall rate (morning carry-forward)
-2. Structured capture rate (% rows with non-empty `category`)
-3. Decision latency (time to one clear next action)
-4. Loop closure rate (execute + reflect same day)
-5. Bad-day resilience (useful next-day prompts after misses/relapse)
-
-## Launch Waves
-
-```
-Wave A: Phase 0 + 1
-Wave B: Phase 2 + hub migration
-Wave C: Phase 3 route/UI rewrite
-Wave D: Phase 4 enrichments
-Wave E: Phase 5 voice/skills + cleanup
-```
-
-No wave starts until prior contracts are stable.
-
-## Implementation Status
-
-Completed now:
-
-- Canonical CSV layer in place (`inbox`, `daily_signals`, `ideas`, `workouts`, `reflections`, `plan`, `todos`)
-- Canonical gym rotation helper in shared data layer
-- New APIs: `/api/hub`, `/api/daily-signals`, `/api/inbox`, `/api/ideas`, `/api/reflections`, `/api/deep-work`
-- Hub migrated to `/api/hub` with morning priming and evening reflection capture
-- Reflection surface on `/reflect` (analysis-first)
-- Day view supports quick schedule completion and skip actions
-- Health now surfaces meal entries and latest gym reflection
+1. Strengthens at least one stage of the runtime loop.
+2. Uses canonical data semantics.
+3. Reduces decision friction, not just adds UI.
+4. Improves compounding over repeated use.
+5. Keeps behavior useful on low-energy or relapse-risk days.

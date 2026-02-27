@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { todayStr as todayLocal, daysAgoStr } from "../../lib/utils";
 import { readDailySignals, readReflections } from "../../lib/csv";
+import { resolveTimeframeWindow } from "../../lib/timeframe";
 
 interface DeepWorkSession {
   date: string;
@@ -30,12 +30,13 @@ function inferCategory(topic: string): string {
   return "coding";
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const signals = readDailySignals();
     const reflections = readReflections();
-    const weekAgo = daysAgoStr(7);
-    const today = todayLocal();
+    const parsedRange = resolveTimeframeWindow(
+      new URL(req.url).searchParams.get("range")
+    );
 
     const sessions: DeepWorkSession[] = signals
       .filter((e) => e.signal === "deep_work" && e.value === "1")
@@ -52,14 +53,14 @@ export async function GET() {
       })
       .sort((a, b) => b.date.localeCompare(a.date));
 
-    const thisWeek = sessions.filter((s) => s.date >= weekAgo);
-    const todaySessions = sessions.filter((s) => s.date === today);
-    const weekMinutes = thisWeek.reduce((sum, s) => sum + s.durationMin, 0);
-    const todayMinutes = todaySessions.reduce((sum, s) => sum + s.durationMin, 0);
-    const weekDays = new Set(thisWeek.map((s) => s.date)).size;
+    const inRange = sessions.filter(
+      (s) => s.date >= parsedRange.startDate && s.date <= parsedRange.endDate
+    );
+    const totalMinutes = inRange.reduce((sum, s) => sum + s.durationMin, 0);
+    const activeDays = new Set(inRange.map((s) => s.date)).size;
 
     const byCategory: Record<string, number> = {};
-    for (const s of thisWeek) {
+    for (const s of inRange) {
       byCategory[s.category] = (byCategory[s.category] || 0) + s.durationMin;
     }
 
@@ -67,23 +68,26 @@ export async function GET() {
       .map(([category, minutes]) => ({
         category,
         minutes,
-        pct: weekMinutes > 0 ? Math.round((minutes / weekMinutes) * 100) : 0,
+        pct: totalMinutes > 0 ? Math.round((minutes / totalMinutes) * 100) : 0,
       }))
       .sort((a, b) => b.minutes - a.minutes);
 
     const reflectionByDate = new Map(reflections.filter((r) => r.domain === "deep_work").map((r) => [r.date, r]));
-    const recent = sessions.slice(0, 20).map((s) => ({
+    const recent = inRange.slice(0, 20).map((s) => ({
       ...s,
       reflection: reflectionByDate.get(s.date) || null,
     }));
 
     return NextResponse.json({
+      range: parsedRange,
       stats: {
-        todayMinutes,
-        todaySessions: todaySessions.length,
-        weekMinutes,
-        weekSessions: thisWeek.length,
-        weekDays,
+        totalMinutes,
+        totalSessions: inRange.length,
+        activeDays,
+        avgSessionMin:
+          inRange.length > 0 ? Math.round(totalMinutes / inRange.length) : 0,
+        avgActiveDayMin:
+          activeDays > 0 ? Math.round(totalMinutes / activeDays) : 0,
       },
       categoryBreakdown,
       recent,

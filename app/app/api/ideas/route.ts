@@ -1,13 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { appendIdea, readIdeas, updateIdea } from "../../lib/csv";
+import { resolveTimeframeWindow } from "../../lib/timeframe";
+import { toDateStr } from "../../lib/utils";
 
 export async function GET(request: NextRequest) {
   try {
     const status = request.nextUrl.searchParams.get("status");
     const domain = request.nextUrl.searchParams.get("domain");
+    const rangeKey = request.nextUrl.searchParams.get("range");
     let rows = readIdeas().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     if (status) rows = rows.filter((r) => r.status === status);
     if (domain) rows = rows.filter((r) => r.domain === domain);
+    if (rangeKey) {
+      const range = resolveTimeframeWindow(rangeKey);
+      rows = rows.filter((r) => {
+        const createdDate = toDateStr(new Date(r.createdAt));
+        return createdDate >= range.startDate && createdDate <= range.endDate;
+      });
+    }
     return NextResponse.json(rows);
   } catch (e) {
     console.error("GET /api/ideas error:", e);
@@ -59,4 +69,3 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Failed to update idea" }, { status: 500 });
   }
 }
-

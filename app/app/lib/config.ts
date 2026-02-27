@@ -20,6 +20,49 @@ export function getSplitForDate(date: Date): WeeklySplitDay {
   return config.trainingPlan.weeklySplit[date.getDay()] || config.trainingPlan.weeklySplit[0];
 }
 
+const LEGACY_WORKOUT_ALIASES: Record<string, string> = {
+  A: "W1",
+  B: "W2",
+  C: "W3",
+  D: "W4",
+  E: "W5",
+};
+
+function extractWorkoutToken(value: string): string {
+  const normalized = value.trim().toUpperCase();
+  if (!normalized) return "";
+
+  const dayMatch = normalized.match(/DAY\s*([A-Z0-9_-]+)/i);
+  if (dayMatch?.[1]) return dayMatch[1].toUpperCase();
+
+  const weekMatch = normalized.match(/\bW[0-9]+\b/i);
+  if (weekMatch?.[0]) return weekMatch[0].toUpperCase();
+
+  return normalized;
+}
+
+export function normalizeWorkoutKey(
+  rawValue: string | null | undefined,
+  cycle?: string[]
+): string | null {
+  if (!rawValue) return null;
+
+  const activeCycle =
+    cycle && cycle.length > 0 ? cycle : [...config.workoutCycle];
+  const cycleUpper = activeCycle.map((item) => item.toUpperCase());
+  const token = extractWorkoutToken(rawValue);
+  if (!token) return null;
+
+  const exactIdx = cycleUpper.indexOf(token);
+  if (exactIdx !== -1) return activeCycle[exactIdx];
+
+  const mapped = LEGACY_WORKOUT_ALIASES[token];
+  if (!mapped) return null;
+
+  const mappedIdx = cycleUpper.indexOf(mapped.toUpperCase());
+  return mappedIdx !== -1 ? activeCycle[mappedIdx] : null;
+}
+
 export const config = {
   profile: {
     age: 30,

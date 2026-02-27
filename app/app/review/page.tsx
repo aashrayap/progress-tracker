@@ -26,6 +26,9 @@ interface InboxResponse {
 export default function ReviewPage() {
   const [data, setData] = useState<InboxResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [destinationById, setDestinationById] = useState<Record<string, string>>({});
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [busyCaptureId, setBusyCaptureId] = useState<string | null>(null);
 
   const fetchData = useCallback(() => {
     fetch("/api/inbox")
@@ -52,13 +55,23 @@ export default function ReviewPage() {
     status: InboxItem["status"],
     suggestedDestination?: string
   ) => {
-    const res = await fetch("/api/inbox", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ captureId, status, suggestedDestination }),
-    });
-    if (!res.ok) return;
-    fetchData();
+    setBusyCaptureId(captureId);
+    setActionError(null);
+    try {
+      const res = await fetch("/api/inbox", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ captureId, status, suggestedDestination }),
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        setActionError(payload.error || "Failed to update review item");
+        return;
+      }
+      fetchData();
+    } finally {
+      setBusyCaptureId(null);
+    }
   };
 
   if (loading) {
@@ -78,6 +91,8 @@ export default function ReviewPage() {
   }
 
   const active = data.rows.filter((r) => ["new", "needs_review", "failed"].includes(r.status));
+  const getDestination = (item: InboxItem): string =>
+    destinationById[item.captureId] || item.suggestedDestination || "ideas";
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -108,6 +123,12 @@ export default function ReviewPage() {
               <p className="text-lg font-semibold text-red-400">{data.counts.failed}</p>
             </div>
           </section>
+
+          {actionError && (
+            <section className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 p-3">
+              <p className="text-sm text-red-300">{actionError}</p>
+            </section>
+          )}
 
           {active.length === 0 ? (
             <div className="p-4 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-500 text-sm">
@@ -140,21 +161,50 @@ export default function ReviewPage() {
                     </p>
                   )}
                   {item.error && <p className="text-xs text-red-400 mt-2">{item.error}</p>}
+                  <div className="mt-3">
+                    <label className="text-xs text-zinc-500">Route To</label>
+                    <select
+                      value={getDestination(item)}
+                      onChange={(e) =>
+                        setDestinationById((prev) => ({
+                          ...prev,
+                          [item.captureId]: e.target.value,
+                        }))
+                      }
+                      disabled={busyCaptureId === item.captureId}
+                      className="mt-1 block w-full rounded border border-zinc-700 bg-zinc-800 px-2 py-1.5 text-sm text-zinc-200"
+                    >
+                      <option value="ideas">ideas</option>
+                      <option value="todos">todos</option>
+                      <option value="reflections">reflections</option>
+                      <option value="daily_signals">daily_signals</option>
+                      <option value="manual">manual</option>
+                    </select>
+                  </div>
                   <div className="flex flex-wrap gap-2 mt-3">
                     <button
-                      onClick={() => updateStatus(item.captureId, "accepted", item.suggestedDestination)}
+                      disabled={busyCaptureId === item.captureId}
+                      onClick={() =>
+                        updateStatus(item.captureId, "accepted", getDestination(item))
+                      }
                       className="px-3 py-1.5 text-xs rounded bg-emerald-500/15 border border-emerald-500/40 text-emerald-300"
                     >
-                      Accept
+                      Route + Accept
                     </button>
                     <button
-                      onClick={() => updateStatus(item.captureId, "needs_review", "manual")}
+                      disabled={busyCaptureId === item.captureId}
+                      onClick={() =>
+                        updateStatus(item.captureId, "needs_review", getDestination(item))
+                      }
                       className="px-3 py-1.5 text-xs rounded bg-amber-500/15 border border-amber-500/40 text-amber-300"
                     >
                       Needs Review
                     </button>
                     <button
-                      onClick={() => updateStatus(item.captureId, "archived", item.suggestedDestination)}
+                      disabled={busyCaptureId === item.captureId}
+                      onClick={() =>
+                        updateStatus(item.captureId, "archived", getDestination(item))
+                      }
                       className="px-3 py-1.5 text-xs rounded bg-zinc-700/40 border border-zinc-600 text-zinc-300"
                     >
                       Archive
@@ -169,4 +219,3 @@ export default function ReviewPage() {
     </div>
   );
 }
-

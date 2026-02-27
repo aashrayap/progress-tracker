@@ -1,143 +1,467 @@
-# Progress Tracker
+# Personal Assistant OS
 
-Personal operating system for weight, addiction recovery, fitness, and deep work.
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  A local-first operating system that turns life data            │
+│  into decisions and actions.                                    │
+│                                                                 │
+│  "Trade escape for building systems and habits where I can      │
+│   operate at a level to change the world for the better."       │
+└─────────────────────────────────────────────────────────────────┘
+```
 
-## Architecture (Visual First)
+Given your logs and plans, the system always answers:
+```
+1. What matters now?     →  Hub (/)
+2. What pattern is forming?  →  Reflect (/reflect)
+3. What should I do next?    →  Hub next-action
+```
+
+---
+
+## Life Pillars
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ UI LAYER (read + decision surfaces)                                        │
-├─────────────────────────────────────────────────────────────────────────────┤
-│ Hub | Review | Plan | Reflect | Health | Ideas (read-only board)          │
-│ Main in-app triage input: /review                                          │
-└─────────────────────────────────┬───────────────────────────────────────────┘
-                                  │
-                                  ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ INTELLIGENCE LAYER (shared logic)                                          │
-├─────────────────────────────────────────────────────────────────────────────┤
-│ API routes + shared CSV/domain helpers                                     │
-│ Responsibilities: validate, route, sync, side effects, read models         │
-└─────────────────────────────────┬───────────────────────────────────────────┘
-                                  │
-                                  ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ DATA LAYER (source of truth)                                               │
-├─────────────────────────────────────────────────────────────────────────────┤
-│ inbox.csv | daily_signals.csv | workouts.csv | reflections.csv             │
-│ ideas.csv | plan.csv | todos.csv                                           │
-└─────────────────────────────────────────────────────────────────────────────┘
+│                              LIFE PILLARS                                    │
+├────────────┬────────────┬────────────┬────────────┬──────────┬─────────────┤
+│   WEIGHT   │ ADDICTION  │  FITNESS   │   MEALS    │  MONEY   │   TRAVEL    │
+│  245→200   │  90-Day    │  Gym 5x/wk │ Elk Bowl   │ 500k→1M │  Poland x3  │
+│  by Jun 30 │  Reset     │  W1-W5     │ 1400 cal   │ by 37   │  in 2026    │
+└────────────┴────────────┴────────────┴────────────┴──────────┴─────────────┘
 ```
 
-## Three Layers
+### Weight — 245 → 200 lbs by Jun 30
 
-1. `UI`
-   Visual surfaces for context and decisions. Keep write interactions minimal and intentional.
-2. `Intelligence`
-   Single decision/routing layer that all write paths should use.
-3. `Data`
-   Canonical CSVs, append/update semantics, no business logic in raw writers.
+```
+Current ████████████████████████░░░░░░░░░░░░░░░░░░ 245 lbs
+Goal    ████████████████████░░░░░░░░░░░░░░░░░░░░░░ 200 lbs
 
-## Layer Details (As Built)
+Feb 232 ─── Mar 224 ─── Apr 216 ─── May 208 ─── Jun 200
+```
 
-### Data Layer
+```
+├─ Age / Height: 30 / 6'0"
+├─ BMR:    2,089 cal/day
+├─ TDEE:   2,872 cal/day (light activity)
+├─ Target: 1,900 cal/day · 180g protein · 8k steps
+└─ Rate:   ~2 lbs/week
+```
 
-| CSV | Canonical role | Current write paths |
-|-----|----------------|---------------------|
-| `inbox.csv` | Raw capture queue + review state (`new/needs_review/accepted/archived/failed`) | `POST/PATCH /api/inbox`, voice pipeline, CLI note capture |
-| `daily_signals.csv` | Daily facts (habits, metrics, events) | `POST /api/daily-signals`, `/health` mark done, voice pipeline, CLI `/log` |
-| `workouts.csv` | Set-level workout benchmarks | Voice pipeline, CLI workout logging |
-| `reflections.csv` | `win/lesson/change` by domain | `POST /api/reflections`, voice pipeline, CLI `/reflect` |
-| `ideas.csv` | Structured idea backlog | Voice pipeline, server `POST/PATCH /api/ideas` (UI is read-only) |
-| `plan.csv` | Time blocks + completion state | `POST/DELETE /api/plan` from planner UI |
-| `todos.csv` | Task pool + done state | `POST/PUT/DELETE /api/todos` from planner/todo UI |
+### Addiction Recovery — 90-Day Dopamine Reset
 
-### Intelligence Layer
+```
+Jan 30 ══════════════════════════════════════════ Apr 30
+       LoL: quit │ Weed: quit │ Poker: quit
+       (cold turkey, zero negotiation)
+```
 
-| Area | Responsibility |
-|------|----------------|
-| `app/app/lib/csv.ts` | Schema headers, CSV parsing/serialization, append/overwrite helpers, table-level read/write helpers |
-| `app/app/api/hub` | Composed dashboard read model + next-action priority |
-| `app/app/api/health` | Health/workout read model |
-| `app/app/api/deep-work` | Deep-work analytics read model |
-| `app/app/api/plan/range` | Calendar range read model (`events + habits`) |
-| `app/app/api/*` write routes | Mutations for inbox/signals/plan/todos/ideas/reflections |
+```
+Triggers:
+├─ ⚠ HIGH   Poker environment    Social pressure → impulse
+├─ ⚠ HIGH   Poker loss           Loss → dopamine crash → seeks hit
+├─ ⚠ HIGH   Late night + friends Social + late = cascade
+└─ ⚡ MED    Boredom, evening     Unstructured time
 
-### UI Layer
+Emergency: Recognize → Delay 10m → Move → Remind "dopamine is healing"
+```
 
-| Surface | Type |
-|---------|------|
-| `Hub`, `Reflect`, `Health` | Primarily read + focused action controls |
-| `Review` | Review queue + triage actions |
-| `Plan` | High-interaction execution UI (schedule/todos) |
-| `Ideas` | Read-only board |
+### Fitness — Gym 5x/week (Habit > Optimization)
 
-## Action Map (Current)
+```
+Rotation (completion-based, NOT calendar-based):
+W1 → W2 → W3 → W4 → W5 → W1 → ...
 
-### Review-Related Actions
+┌─────┬──────────────────────────────────────┐
+│ W1  │ squat / bench / lat_pulldown         │
+│ W2  │ ohp / lat_row / incline_bench        │
+│ W3  │ rdl / bench / pullup                 │
+│ W4  │ front_squat / incline_bench / lat_row│
+│ W5  │ lunges / ohp / pullup               │
+└─────┴──────────────────────────────────────┘
 
-1. `Hub` computes unresolved inbox counts and prioritizes opening `/review`.
-2. `/review` reads queue via `GET /api/inbox`.
-3. `/review` triage buttons call `PATCH /api/inbox` (`accepted`, `needs_review`, `archived`).
-4. `PATCH /api/inbox` updates only inbox row metadata (`status`, `suggestedDestination`, `normalizedText`, `error`).
+Rules: 3 exercises × 3 sets · RIR 2-3 · 30-35 min · +5 min cardio finisher
+Progression: top reps all sets → +5 lbs · miss 2 sessions → deload 10%
+```
 
-Important: review triage currently does not execute downstream routing/transforms into other CSVs.
+```
+Weekly Split (Option B):
+┌─────┬─────┬─────┬─────┬─────┬─────┬─────┐
+│ Sun │ Mon │ Tue │ Wed │ Thu │ Fri │ Sat │
+│Zone2│ W1  │ W2  │ W3  │Cardio│ W4 │ W5  │
+│45min│Lift │Lift │Lift │25min│Lift │Lift │
+└─────┴─────┴─────┴─────┴─────┴─────┴─────┘
 
-### Non-Review Web Actions (Still Writing Data)
+Daily home dose: 6 pull-ups + 20 push-ups (easy, never to failure)
+```
 
-1. `/health` has `Mark Done` which writes `gym=1` to `daily_signals.csv` via `POST /api/daily-signals`.
-2. `/plan` day view toggles plan completion/skip via `POST /api/plan`.
-3. `/plan` scheduler modal adds/moves/deletes plan blocks via `POST/DELETE /api/plan`.
-4. `/plan` todo controls create/update/delete tasks via `POST/PUT/DELETE /api/todos`.
-5. `/ideas` is now read-only and does not call mutation endpoints.
+### Meals — Elk Bowl Protocol
 
-### Non-Web Actions (Still Writing Data)
+```
+┌──────────┬─────────────────────────────┬──────────┐
+│ Lunch    │ 8oz elk + 1c rice + 1c veg  │ ~700 cal │
+│ Dinner   │ 8oz elk + 1c rice + 1c veg  │ ~700 cal │
+│ Snacks   │ carrots, beets              │ ~100 cal │
+├──────────┼─────────────────────────────┼──────────┤
+│ TOTAL    │                             │~1400 cal │
+│          │                             │ 115g pro │
+└──────────┴─────────────────────────────┴──────────┘
+```
 
-1. Voice pipeline (`scripts/voice-inbox.sh`) processes GitHub voice issues and appends directly to CSVs per prompt rules.
-2. CLI skills write directly through operational flows:
-   - `/log` -> daily signals, workout sets, inbox note capture.
-   - `/reflect` -> reflections.
+### Money — $500k → $1M by Age 37
 
-## Read/Write Intent (Before Next Changes)
+```
+Strategy: hold S&P broad index · 10% annual return · no contributions
 
-- Keep UI visual-first and decision-focused.
-- Keep `/review` as the explicit in-app triage gate.
-- Treat other write paths above as current-state exceptions to be consolidated in a later migration.
+2026 (31) $550k ──── 2028 (33) $665k ──── 2030 (35) $805k ──── 2032 (37) $1M
+```
 
-## Pages
+### Travel — Poland x3 in 2026
 
-| Route | Purpose |
-|-------|---------|
-| `/` | Hub — status, streaks, insights, morning priming |
-| `/review` | Capture review queue (`inbox`) + triage actions |
-| `/plan` | Calendar — year/month/week/day + todos |
-| `/reflect` | Reflection analysis + deep work patterns |
-| `/health` | Gym + weight + eating |
-| `/ideas` | Read-only idea pipeline view (`inbox/reviewed/building/archived`) |
+```
+├─ Spring  Apr-May   ~$1,300
+├─ Summer  Jul-Aug   ~$1,300
+└─ Winter  Dec       ~$1,300
+```
+
+---
+
+## Architecture
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│ UI LAYER (decision + execution surfaces)                                 │
+├──────────────────────────────────────────────────────────────────────────┤
+│ Hub │ Review │ Plan │ Reflect │ Health │ Ideas                            │
+│ Each surface has ONE job. No surface invents its own semantics.           │
+└───────────────────────────────┬──────────────────────────────────────────┘
+                                │ consumes read models
+                                ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│ INTELLIGENCE LAYER (shared logic + decision engine)                       │
+├──────────────────────────────────────────────────────────────────────────┤
+│ API routes (app/app/api/*)  +  domain helpers (app/app/lib/*)            │
+│ Normalization · read models · next-action · insights · routing           │
+└───────────────────────────────┬──────────────────────────────────────────┘
+                                │ reads/writes
+                                ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│ DATA LAYER (canonical source of truth — flat CSVs in repo root)          │
+├──────────────────────────────────────────────────────────────────────────┤
+│ inbox.csv │ daily_signals.csv │ workouts.csv │ reflections.csv            │
+│ ideas.csv │ plan.csv │ todos.csv                                         │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+```
+Three rules:
+├─ UI:           consumes read models, never invents business logic
+├─ Intelligence: single decision/routing layer for all interpretation + mutation
+└─ Data:         canonical CSVs, shared access via app/app/lib/csv.ts
+```
+
+---
+
+## Data Contracts
+
+```
+inbox.csv
+├─ capture_id, captured_at, source, raw_text
+├─ status (new │ needs_review │ accepted │ archived │ failed)
+├─ suggested_destination, normalized_text, error
+└─ Purpose: capture queue + review state
+
+daily_signals.csv
+├─ date, signal, value, unit, context, source, capture_id, category
+└─ Purpose: daily facts (habits, metrics, events)
+
+workouts.csv
+├─ date, workout, exercise, set, weight, reps, notes
+└─ Purpose: set-level lift history
+
+reflections.csv
+├─ date, domain, win, lesson, change
+├─ Domains: gym │ addiction │ deep_work │ eating │ sleep
+└─ Purpose: win/lesson/change memory
+
+ideas.csv
+├─ id, created_at, title, details, domain, status, source, capture_id
+├─ Domains: app │ health │ life │ system
+├─ Statuses: inbox │ reviewed │ building │ archived
+└─ Purpose: action/idea backlog
+
+plan.csv
+├─ date, start, end, item, done, notes
+└─ Purpose: time blocks + completion state
+
+todos.csv
+├─ id, item, done, created
+└─ Purpose: task backlog
+```
+
+### Signal Types
+
+```
+daily_signals.csv signal values:
+├─ weight         number (lbs)
+├─ lol/weed/poker 0=relapse, 1=clean
+├─ gym/sleep/meditate/deep_work/ate_clean  0=missed, 1=done
+├─ calories       number (daily total)
+├─ trigger        text (craving trigger)
+├─ relapse        text (substance)
+└─ reset          1 (marks counter reset day)
+```
+
+---
+
+## Workflow Pipeline
+
+```
+┌────────────┐     ┌────────────┐     ┌──────────────────┐     ┌────────────┐
+│  CAPTURE   │────▶│  REVIEW    │────▶│  MATERIALIZE     │────▶│  CLOSED    │
+│  inbox.csv │     │  /review   │     │  → ideas.csv     │     │  inbox row │
+│  status:   │     │  pick dest │     │  → todos.csv     │     │  status:   │
+│  new       │     │  Route +   │     │  → reflections   │     │  archived  │
+│            │     │  Accept    │     │  (dedupe check)  │     │            │
+└────────────┘     └────────────┘     └──────────────────┘     └────────────┘
+                         │ fail
+                         ▼
+                   ┌─────────────┐
+                   │needs_review │
+                   │+ error msg  │
+                   └─────────────┘
+
+Pipeline rule:
+├─ Review    = ingestion quality control (is this clean? where does it go?)
+├─ Reflect   = interpretation (what patterns? what to change?)
+└─ Ideas     = execution backlog (what's next?)
+```
+
+Routing engine (`app/app/lib/inbox-pipeline.ts`):
+```
+routeInboxEntry(entry, destination)
+├─ ideas        → dedupe by captureId → appendIdea()
+├─ todos        → dedupe by text match → appendTodo()
+├─ reflections  → dedupe by date+domain+text → appendReflection()
+├─ daily_signals→ ✗ blocked (field mapping not yet defined)
+└─ manual/inbox → ✗ "pick a concrete destination first"
+```
+
+---
+
+## UI Surfaces
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  /  HUB                                                         │
+│  Priority + next action now                                     │
+│  ├─ north star · habit tiles · status metrics                   │
+│  ├─ reset day / weight trend / gym day                          │
+│  ├─ training card · daily insight · next action                 │
+│  └─ 90-day dopamine grid                                        │
+├─────────────────────────────────────────────────────────────────┤
+│  /review  REVIEW                                                │
+│  Capture triage + routing                                       │
+│  ├─ inbox counts (total/new/needs_review/failed)                │
+│  ├─ per-item destination selector (ideas/todos/reflections/...) │
+│  └─ Route+Accept / Needs Review / Archive                       │
+├─────────────────────────────────────────────────────────────────┤
+│  /plan  PLAN                                                    │
+│  Time-block execution                                           │
+│  ├─ year / month / week / day views                             │
+│  ├─ drag-to-schedule · completion / skip toggles                │
+│  └─ todo sidebar                                                │
+├─────────────────────────────────────────────────────────────────┤
+│  /reflect  REFLECT                                              │
+│  Evidence + insights + actions                                  │
+│  ├─ reflections by timeframe (week/month)                       │
+│  ├─ recurring lessons · deep work analytics                     │
+│  └─ promote reflection → action                                 │
+├─────────────────────────────────────────────────────────────────┤
+│  /health  HEALTH                                                │
+│  Training + body composition                                    │
+│  ├─ current / next workout · weekly split (Option B)            │
+│  ├─ compound master list · exercise progression                 │
+│  └─ weight progress + checkpoints · meal status                 │
+├─────────────────────────────────────────────────────────────────┤
+│  /ideas  IDEAS                                                  │
+│  Action backlog lifecycle                                       │
+│  └─ kanban: inbox → reviewed → building → archived              │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Hub Decision Priority
+
+```
+nextAction computed server-side:
+1. ⚡ Resolve review backlog    (if pending captures exist)
+2. 📋 Start next plan block     (if one is pending)
+3. 🏋 Trigger training/cardio   (if gym not yet logged)
+4. 💭 Push reflection review    (fallback)
+```
+
+---
+
+## API Surface
+
+```
+READ MODELS (aggregation):
+├─ GET /api/hub              → decision payload: habits, streaks, weight, plan, next action, insight
+├─ GET /api/health           → weight trend, workouts, gym streak, weekly count, meal status
+├─ GET /api/deep-work        → deep work sessions, week stats, category breakdown
+├─ GET /api/reflect-insights → timeframe-aware insight synthesis
+└─ GET /api/plan/range       → calendar range (events + habit map by date range)
+
+CRUD ENDPOINTS:
+├─ GET/POST     /api/daily-signals  → read (filterable) · append signals
+├─ GET/POST/PATCH /api/inbox        → capture queue · insert · status patch (routes on accept)
+├─ GET/POST/PATCH /api/ideas        → idea backlog read/create/update
+├─ GET/POST     /api/reflections    → reflection read/write + recurring lesson detection
+├─ GET/POST/DELETE /api/plan        → plan entry CRUD (upsert/delete by date+item)
+└─ GET/POST/PUT/DELETE /api/todos   → todo CRUD (ID-based)
+```
+
+---
 
 ## Input Channels
 
 ```
-Manual:  CLI skills (/log, /reflect, /weekly-review)
-Voice:   iPhone → GitHub Issue → voice-inbox.sh → CSV
-Web:     Review queue triage + read surfaces
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│   Web App    │     │    Voice     │     │  CLI Skills  │
+│   app/       │     │   Pipeline   │     │              │
+│              │     │              │     │  /log        │
+│  Review ───▶ │     │ iOS Shortcut │     │  /reflect    │
+│  Plan ────▶  │     │  ▼           │     │  /weekly     │
+│  Health ──▶  │     │ GH Issue     │     │              │
+│  (reads +    │     │  ▼           │     │  Writes      │
+│   actions)   │     │ voice-       │     │  directly    │
+│              │     │  inbox.sh    │     │  to CSVs     │
+│              │     │  ▼           │     │              │
+│              │     │ Claude CLI   │     │              │
+│              │     │  ▼           │     │              │
+│              │     │ CSV write +  │     │              │
+│              │     │ git push     │     │              │
+└──────────────┘     └──────────────┘     └──────────────┘
+
+Voice pipeline: phone → dictate → GH Issue ("Voice: ...") → voice-inbox.sh
+  (launchd, 5s poll) → Claude CLI → parse + write CSVs → commit + push → close issue
+
+Used at gym for workout logging (voice dictate sets/reps between exercises).
 ```
 
-Architecture direction: all capture channels converge through the Intelligence layer before touching CSVs.
+---
 
-## Setup
+## Shared Domain Logic
+
+```
+app/app/lib/
+├─ csv.ts             All CSV read/write, schema headers, analytics
+│                     (streaks, habits, metrics, next workout)
+├─ config.ts          Static config: profile, exercises, workout templates
+│                     (W1-W5), weekly split, triggers, daily tasks
+│                     Legacy normalization: A/B/C → W1/W2/W3
+├─ inbox-pipeline.ts  Routing engine: normalize dest, dedupe, materialize
+├─ timeframe.ts       Timeframe resolution (week/month) for Reflect
+├─ types.ts           Shared types (DailySignalEntry, IdeaEntry, InboxEntry)
+└─ utils.ts           Date helpers (todayStr, daysAgoStr, toDateStr)
+```
+
+---
+
+## Memory Model
+
+```
+┌──────────────────┬──────────────────────────────────┬───────────────────┐
+│ Event Memory     │ daily_signals, workouts,          │ What happened     │
+│                  │ reflections                       │                   │
+├──────────────────┼──────────────────────────────────┼───────────────────┤
+│ State Memory     │ Derived API read models           │ Where things      │
+│                  │ (/api/hub, /api/health)           │ stand now         │
+├──────────────────┼──────────────────────────────────┼───────────────────┤
+│ Rule Memory      │ Recurring lessons + playbook      │ What to do when   │
+│                  │ (docs/life-playbook.md)           │ patterns repeat   │
+├──────────────────┼──────────────────────────────────┼───────────────────┤
+│ Action Memory    │ ideas, plan, todos                │ What is changing  │
+│                  │                                   │ next              │
+└──────────────────┴──────────────────────────────────┴───────────────────┘
+```
+
+---
+
+## Operating Cadence
+
+```
+DAILY:
+├─ Morning prime:  carry-forward lesson + top risk + one key action
+├─ During day:     execute planned blocks + log fast
+└─ Evening close:  reflection (win/lesson/change) + plan adjustment
+
+WEEKLY:
+├─ Review trendlines, misses, relapse/gym/deep-work patterns
+├─ Promote repeated insights → explicit rules/actions
+└─ Update plan based on evidence, not mood
+```
+
+---
+
+## Non-Negotiable Rules
+
+```
+1. One concept, one canonical table.
+2. No UI surface invents its own semantics.
+3. Every insight must connect to an action.
+4. Every action should be traceable to evidence.
+5. Reflection must feed future decisions, not just history.
+6. Prefer deterministic logic over hidden prompt magic.
+7. CSVs are the single source of truth.
+8. Shared domain logic lives in app/app/lib/.
+```
+
+---
+
+## Known Gaps
+
+```
+├─ ⚠ MEDIUM  Data integrity     CSV read-modify-write without file locks
+├─ ⚠ MEDIUM  Plan identity      Keyed by date+item, not stable row ID
+├─ ⚡ LOW     Signal dedupe      No idempotency guard on daily_signals POST
+├─ ⚡ LOW     Routing            daily_signals destination not yet in pipeline
+└─ ⚡ LOW     Streak logic       Based on logged rows, not calendar-day continuity
+```
+
+---
+
+## Development Setup
 
 ```bash
 cd app
-nvm use   # uses .nvmrc (20.20.0)
-npm install && npm run dev   # requires Node >= 20.9
+nvm use          # .nvmrc → Node 22
+npm install
+npm run dev      # localhost:3000
 ```
 
-## Docs
+Node `>=20.9` required. Run `npm run lint && npm run build` before finishing changes.
 
-| File | Purpose |
-|------|---------|
-| `CLAUDE.md` | AI assistant context (always loaded) |
-| `docs/personal-os.md` | Principles + visual loop + operator flow + phased plan |
-| `docs/life-playbook.md` | Consolidated life protocols (vision, fitness, meals, addiction, finance, travel) |
-| `docs/TEMP-architecture-changes.md` | Current migration/architecture decisions |
+---
+
+## Documentation Map
+
+```
+├─ docs/personal-os.md                 OS blueprint: mission, runtime loop, memory, build phases
+├─ docs/life-playbook.md               Domain protocols: vision, fitness, meals, addiction, finance, travel
+├─ docs/TEMP-architecture-changes.md   As-built technical audit + gap analysis
+├─ CLAUDE.md                           Assistant context + operational guidance
+└─ app/README.md                       App routes, APIs, data location, guardrails
+```
+
+---
+
+## Near-Term Direction
+
+```
+1. Data integrity     → stable row IDs for plan, idempotency guards for signals
+2. Routing completion → expand inbox pipeline to support daily_signals
+3. Reflect center     → timeframe-aware insight synthesis → action promotion
+4. Hub command center → elevate nextAction as primary UI control
+5. Compounding memory → recurring lessons → explicit rules → future decision ranking
+```

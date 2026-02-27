@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { appendInbox, readInbox, updateInboxEntry, type InboxEntry } from "../../lib/csv";
+import { routeInboxEntry } from "../../lib/inbox-pipeline";
 
 function createCaptureId(): string {
   const ts = Date.now().toString(36);
@@ -61,10 +62,64 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "captureId required" }, { status: 400 });
     }
 
+    const current = readInbox().find((row) => row.captureId === captureId);
+    if (!current) {
+      return NextResponse.json({ error: "capture not found" }, { status: 404 });
+    }
+
+    const nextStatus = body.status as InboxEntry["status"] | undefined;
+    const nextDestination =
+      body.suggestedDestination !== undefined
+        ? String(body.suggestedDestination || "")
+        : current.suggestedDestination;
+    const nextNormalizedText =
+      body.normalizedText !== undefined
+        ? String(body.normalizedText || "")
+        : current.normalizedText;
+
+    // Accept means "materialize to destination and close inbox item".
+    if (nextStatus === "accepted") {
+      const candidate: InboxEntry = {
+        ...current,
+        status: "accepted",
+        suggestedDestination: nextDestination,
+        normalizedText: nextNormalizedText,
+      };
+      const routed = routeInboxEntry(candidate, nextDestination);
+
+      if (!routed.ok) {
+        updateInboxEntry(captureId, {
+          status: "needs_review",
+          suggestedDestination: nextDestination,
+          normalizedText: nextNormalizedText,
+          error: routed.reason || "Routing failed",
+        });
+        return NextResponse.json(
+          { error: routed.reason || "Routing failed", destination: routed.destination },
+          { status: 422 }
+        );
+      }
+
+      updateInboxEntry(captureId, {
+        status: "archived",
+        suggestedDestination: routed.destination,
+        normalizedText: nextNormalizedText,
+        error: "",
+      });
+
+      return NextResponse.json({
+        success: true,
+        routed: true,
+        destination: routed.destination,
+        created: routed.created,
+        note: routed.reason || "",
+      });
+    }
+
     const updates = {
-      status: body.status,
-      suggestedDestination: body.suggestedDestination,
-      normalizedText: body.normalizedText,
+      status: nextStatus,
+      suggestedDestination: nextDestination,
+      normalizedText: nextNormalizedText,
       error: body.error,
     };
     updateInboxEntry(captureId, updates);
@@ -74,4 +129,3 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Failed to update inbox entry" }, { status: 500 });
   }
 }
-

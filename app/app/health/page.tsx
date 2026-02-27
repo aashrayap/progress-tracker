@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { config, getSplitForDate } from "../lib/config";
+import { config, getSplitForDate, normalizeWorkoutKey } from "../lib/config";
 import { toDateStr } from "../lib/utils";
 import WorkoutCard from "../components/WorkoutCard";
 import WeightChart from "../components/WeightChart";
@@ -110,8 +110,30 @@ export default function HealthPage() {
   const today = new Date();
   const todayIndex = today.getDay();
   const todaySplit = getSplitForDate(today);
+  const cycle = Object.keys(config.workoutTemplates);
+  const scheduledTemplateKey = (() => {
+    if (todaySplit.kind === "lift" && todaySplit.workoutKey) {
+      return todaySplit.workoutKey;
+    }
+    for (let offset = 1; offset <= config.trainingPlan.weeklySplit.length; offset++) {
+      const idx = (todayIndex + offset) % config.trainingPlan.weeklySplit.length;
+      const entry = config.trainingPlan.weeklySplit[idx];
+      if (entry.kind === "lift" && entry.workoutKey) {
+        return entry.workoutKey;
+      }
+    }
+    return null;
+  })();
 
-  const templateKey = gymToday ? (workouts.today?.workout || workouts.nextWorkout) : workouts.nextWorkout;
+  const normalizedNextWorkout =
+    normalizeWorkoutKey(workouts.nextWorkout, cycle) || workouts.nextWorkout;
+  const normalizedTodayWorkout =
+    normalizeWorkoutKey(workouts.today?.workout, cycle) || workouts.today?.workout;
+  const templateKey = (
+    gymToday
+      ? (normalizedTodayWorkout || scheduledTemplateKey || normalizedNextWorkout)
+      : (scheduledTemplateKey || normalizedNextWorkout)
+  ) || cycle[0];
   const template = config.workoutTemplates[templateKey];
   const prescribedExercises = template
     ? template
