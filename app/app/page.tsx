@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { config, getSplitForDate } from "./lib/config";
+import { formatTime } from "./lib/utils";
 import DailyInsight, { InsightData } from "./components/DailyInsight";
 
 interface WeightData {
@@ -39,7 +40,9 @@ interface AppData {
     streaks: { lol: number; weed: number; poker: number };
     triggers: { date: string; trigger: string; result: string }[];
   };
-  todaysPlan: { done: string }[];
+  todaysPlan: { start: number; end: number; item: string; done: string; notes: string }[];
+  yesterdaysPlan: { start: number; end: number; item: string; done: string; notes: string }[];
+  todos: { id: number; item: string; done: number; created: string }[];
   yesterdayChanges: { domain: string; change: string }[];
   insight: InsightData;
   todayHabits: {
@@ -62,12 +65,6 @@ interface AppData {
     needsReview: number;
     failed: number;
   };
-  nextAction: {
-    label: string;
-    reason: string;
-    href: string;
-    cta: string;
-  };
 }
 
 function domainLabel(domain: string): string {
@@ -82,6 +79,7 @@ function domainLabel(domain: string): string {
 export default function Home() {
   const [data, setData] = useState<AppData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showYesterday, setShowYesterday] = useState(false);
 
   const fetchData = useCallback(() => {
     fetch("/api/hub")
@@ -117,7 +115,7 @@ export default function Home() {
     );
   }
 
-  const { weight, dopamineReset } = data;
+  const { dopamineReset } = data;
   const resetDay = dopamineReset.dayNumber;
   const todaySplit = getSplitForDate(new Date());
   const allExercises = Object.values(config.exercises).flat();
@@ -128,133 +126,208 @@ export default function Home() {
         .join(" / ")
     : "";
 
-  // Status row data
-  const templateKey = data.nextWorkout;
-  const gymDone = data.gymToday;
-
-  // Recent weight trend (last 3 entries)
-  const recentWeights = weight.log.slice(-3);
-  const weightTrend = recentWeights.length >= 2
-    ? recentWeights[recentWeights.length - 1].value - recentWeights[recentWeights.length - 2].value
-    : 0;
+  const undonePlan = data.todaysPlan.filter((p) => p.done !== "1");
+  const undoneTodos = (data.todos || []).filter((t) => !t.done).slice(0, 5);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
       <div className="p-4 sm:p-6">
-        <div className="max-w-lg mx-auto">
-
-          {/* ==================== NORTH STAR ==================== */}
-          <div className="mb-5 p-4 rounded-lg border border-zinc-800 bg-gradient-to-b from-zinc-900 to-zinc-950">
-            <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-2">North Star</p>
-            <p className="text-sm text-zinc-300 leading-relaxed">
-              A calm mind, a fit body, and a house full of love.
-            </p>
-            <p className="text-xs text-zinc-500 mt-2">
-              Meaningful relationships · Mental clarity · Time spent on what I love
-            </p>
-          </div>
+        <div className={`mx-auto transition-all ${showYesterday ? "max-w-4xl" : "max-w-xl"}`}>
 
           {/* ==================== HEADER ==================== */}
-          <div className="mb-4">
-            <h1 className="text-lg font-bold">Hub</h1>
-            <span className="text-xs text-zinc-500">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-sm text-zinc-400">
               {new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
             </span>
+            <h1 className="text-sm font-semibold text-zinc-500 uppercase tracking-wide">Hub</h1>
           </div>
 
-          {/* ==================== HABITS VISUAL ==================== */}
+          {/* ==================== NORTH STAR (subtle line) ==================== */}
+          <p className="text-xs text-zinc-600 mb-5">
+            A calm mind, a fit body, and a house full of love.
+          </p>
+
+          {/* ==================== 14-DAY HABIT TRACKER ==================== */}
           <section className="mb-5">
-            <p className="text-xs text-zinc-500 uppercase mb-2">Daily Habits</p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <p className="text-xs text-zinc-500 uppercase mb-2">Daily Habits — 14 Days</p>
+            <div className="space-y-2">
               {[
-                { key: "sleep", label: "Sleep (Last Night)", value: data.todayHabits.sleep },
-                { key: "gym", label: "Gym", value: data.todayHabits.gym },
-                { key: "weed", label: "No Weed", value: data.todayHabits.weed },
-                { key: "ateClean", label: "Eat Clean", value: data.todayHabits.ateClean },
-                { key: "deepWork", label: "Deep Work", value: data.todayHabits.deepWork },
-                { key: "meditate", label: "Meditate", value: data.todayHabits.meditate },
-                { key: "lol", label: "No LoL", value: data.todayHabits.lol },
-                { key: "poker", label: "No Poker", value: data.todayHabits.poker },
-              ].map((h) => (
-                <div
-                  key={h.key}
-                  className={`p-3 rounded-lg border ${
-                    h.value === null
-                      ? "bg-zinc-900 border-zinc-800"
-                      : h.value
-                        ? "bg-emerald-500/10 border-emerald-500/30"
-                        : "bg-red-500/10 border-red-500/30"
-                  }`}
-                >
-                  <p className="text-xs text-zinc-500 mb-1">{h.label}</p>
-                  <p
-                    className={`text-sm font-semibold ${
-                      h.value === null ? "text-zinc-500" : h.value ? "text-emerald-400" : "text-red-400"
-                    }`}
-                  >
-                    {h.value === null ? "--" : h.value ? "Done" : "Missed"}
-                  </p>
+                { key: "sleep", label: "Sleep" },
+                { key: "gym", label: "Gym" },
+                { key: "weed", label: "No Weed" },
+                { key: "ate_clean", label: "Eat Clean" },
+                { key: "deep_work", label: "Deep Work" },
+                { key: "meditate", label: "Meditate" },
+                { key: "lol", label: "No LoL" },
+                { key: "poker", label: "No Poker" },
+              ].map((habit) => (
+                <div key={habit.key} className="flex items-center gap-2.5">
+                  <span className="text-xs text-zinc-500 w-[4.5rem] shrink-0 text-right truncate">{habit.label}</span>
+                  <div className="flex gap-1">
+                    {data.habitTracker.days.map((day, i) => {
+                      const val = day[habit.key];
+                      const isToday = i === data.habitTracker.days.length - 1;
+                      return (
+                        <div
+                          key={data.habitTracker.dates[i]}
+                          className={`w-7 h-7 rounded ${
+                            val === true
+                              ? "bg-emerald-500"
+                              : val === false
+                                ? "bg-red-500"
+                                : "bg-zinc-800"
+                          } ${isToday ? "ring-2 ring-zinc-400 ring-offset-1 ring-offset-zinc-950" : ""}`}
+                          title={`${data.habitTracker.dates[i]}${val === true ? " ✓" : val === false ? " ✗" : ""}`}
+                        />
+                      );
+                    })}
+                  </div>
                 </div>
               ))}
             </div>
-          </section>
-
-          {/* ==================== STATUS ROW ==================== */}
-          <section className="mb-5">
-            <div className="grid grid-cols-4 gap-2">
-              <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 text-center">
-                <p className="text-xs text-zinc-500 mb-1">Day</p>
-                <p className="text-xl font-bold text-blue-400">{resetDay}</p>
-                <p className="text-[10px] text-zinc-600">of 90</p>
-              </div>
-              <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 text-center">
-                <p className="text-xs text-zinc-500 mb-1">Weight</p>
-                <p className="text-xl font-bold">{weight.current}</p>
-                <p className={`text-[10px] ${weightTrend < 0 ? "text-green-400" : weightTrend > 0 ? "text-red-400" : "text-zinc-600"}`}>
-                  {weightTrend < 0 ? `${weightTrend.toFixed(1)}` : weightTrend > 0 ? `+${weightTrend.toFixed(1)}` : "--"}
-                </p>
-              </div>
-              <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 text-center">
-                <p className="text-xs text-zinc-500 mb-1">Workout</p>
-                <p className="text-xl font-bold">Day {templateKey}</p>
-                <p className="text-[10px] text-zinc-600">
-                  {config.workoutTemplates[templateKey]?.length || 0} lifts
-                </p>
-              </div>
-              <div className={`border rounded-lg p-3 text-center ${
-                gymDone
-                  ? "bg-emerald-500/10 border-emerald-500/30"
-                  : "bg-zinc-900 border-zinc-800"
-              }`}>
-                <p className="text-xs text-zinc-500 mb-1">Gym</p>
-                <p className={`text-xl font-bold ${gymDone ? "text-emerald-400" : "text-zinc-500"}`}>
-                  {gymDone ? "Done" : "--"}
-                </p>
-                <p className="text-[10px] text-zinc-600">{gymDone ? "today" : "pending"}</p>
-              </div>
+            <div className="flex items-center gap-3 mt-2 pl-[72px] text-[10px] text-zinc-600">
+              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-emerald-500" /> Done</span>
+              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-red-500" /> Missed</span>
+              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-zinc-800" /> No data</span>
             </div>
           </section>
 
-          <section className="mb-5 p-4 bg-zinc-900 border border-zinc-800 rounded-lg">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-xs text-zinc-500 uppercase">Today&apos;s Training</p>
-              <Link href="/health" className="text-xs text-blue-300 hover:text-blue-200">
-                Open Health
-              </Link>
-            </div>
-            <p className="mt-2 text-sm font-medium text-zinc-100">
-              {todaySplit.label}
-              {todaySplit.workoutKey ? ` (${todaySplit.workoutKey})` : ""}
-            </p>
-            <p className="mt-1 text-xs text-zinc-500">
-              {todaySplit.workoutKey
-                ? `${todayLiftSummary} + ${config.trainingPlan.liftSessionCardioFinisherMin}m cardio`
-                : `${todaySplit.detail} · ${todaySplit.minutes || 0} min`}
-            </p>
-            <p className="mt-3 text-xs text-zinc-400">
-              Home dose: {config.trainingPlan.homeDose.pullupsPerDay} pull-ups + {config.trainingPlan.homeDose.pushupsPerDay} push-ups
-            </p>
-          </section>
+          {/* ==================== TODAY / YESTERDAY TOGGLE ==================== */}
+          <div className="inline-flex rounded-md border border-zinc-700 overflow-hidden mb-3">
+            <button
+              onClick={() => setShowYesterday(true)}
+              className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                showYesterday
+                  ? "bg-zinc-700 text-zinc-100"
+                  : "bg-zinc-900 text-zinc-500 hover:text-zinc-300"
+              }`}
+            >
+              Yesterday + Today
+            </button>
+            <button
+              onClick={() => setShowYesterday(false)}
+              className={`px-3 py-1.5 text-xs font-medium transition-colors border-l border-zinc-700 ${
+                !showYesterday
+                  ? "bg-zinc-700 text-zinc-100"
+                  : "bg-zinc-900 text-zinc-500 hover:text-zinc-300"
+              }`}
+            >
+              Today
+            </button>
+          </div>
+
+          {/* ==================== YESTERDAY + TODAY CARDS ==================== */}
+          <div className={`mb-5 ${showYesterday ? "grid grid-cols-1 md:grid-cols-2 gap-3" : ""}`}>
+
+            {/* YESTERDAY CARD (left) */}
+            {showYesterday && (
+              <section className="p-4 bg-zinc-900/60 border border-zinc-800/60 rounded-lg space-y-4">
+                <p className="text-xs text-zinc-500 uppercase tracking-wide">Yesterday</p>
+
+                {data.yesterdaysPlan.length > 0 ? (
+                  <div>
+                    <p className="text-[11px] text-zinc-500 uppercase mb-1">Schedule</p>
+                    <div className="space-y-1">
+                      {data.yesterdaysPlan.map((block, i) => {
+                        const done = block.done === "1";
+                        return (
+                          <p key={i} className={`text-sm ${done ? "text-zinc-500" : "text-zinc-300"}`}>
+                            <span className={`mr-1.5 ${done ? "text-emerald-500" : "text-red-400"}`}>
+                              {done ? "✓" : "✗"}
+                            </span>
+                            <span className="text-zinc-500 text-xs mr-2">{formatTime(block.start)}</span>
+                            {done ? <s>{block.item}</s> : block.item}
+                          </p>
+                        );
+                      })}
+                    </div>
+                    {(() => {
+                      const total = data.yesterdaysPlan.length;
+                      const completed = data.yesterdaysPlan.filter((b) => b.done === "1").length;
+                      const pct = Math.round((completed / total) * 100);
+                      return (
+                        <p className={`text-xs mt-2 ${pct >= 80 ? "text-emerald-500" : pct >= 50 ? "text-yellow-500" : "text-red-400"}`}>
+                          {completed}/{total} completed ({pct}%)
+                        </p>
+                      );
+                    })()}
+                  </div>
+                ) : (
+                  <p className="text-xs text-zinc-600">No plan logged yesterday.</p>
+                )}
+              </section>
+            )}
+
+            {/* TODAY CARD (right when side-by-side) */}
+            <section className="p-4 bg-zinc-900 border border-zinc-800 rounded-lg space-y-4">
+              <p className="text-xs text-zinc-500 uppercase tracking-wide">Today</p>
+
+              {/* Training */}
+              <div>
+                <p className="text-[11px] text-zinc-500 uppercase mb-1">Training</p>
+                <p className="text-sm font-medium text-zinc-100">
+                  {todaySplit.label}
+                  {todaySplit.workoutKey ? ` (${todaySplit.workoutKey})` : ""}
+                </p>
+                <p className="text-xs text-zinc-500 mt-0.5">
+                  {todaySplit.workoutKey
+                    ? `${todayLiftSummary} + ${config.trainingPlan.liftSessionCardioFinisherMin}m cardio`
+                    : `${todaySplit.detail} · ${todaySplit.minutes || 0} min`}
+                </p>
+                <p className="text-xs text-zinc-600 mt-1">
+                  Home: {config.trainingPlan.homeDose.pullupsPerDay} PU + {config.trainingPlan.homeDose.pushupsPerDay} push-ups
+                </p>
+              </div>
+
+              {/* Schedule (undone blocks only) */}
+              {undonePlan.length > 0 && (
+                <div>
+                  <p className="text-[11px] text-zinc-500 uppercase mb-1">Schedule</p>
+                  <div className="space-y-1">
+                    {undonePlan.map((block, i) => (
+                      <p key={i} className="text-sm text-zinc-300">
+                        <span className="text-zinc-500 text-xs mr-2">{formatTime(block.start)}</span>
+                        {block.item}
+                      </p>
+                    ))}
+                  </div>
+                  <Link href="/plan" className="text-xs text-blue-400 hover:text-blue-300 mt-1.5 inline-block">
+                    → Open Plan
+                  </Link>
+                </div>
+              )}
+
+              {/* Todos (undone, max 5) */}
+              {undoneTodos.length > 0 && (
+                <div>
+                  <p className="text-[11px] text-zinc-500 uppercase mb-1">Todos</p>
+                  <div className="space-y-1">
+                    {undoneTodos.map((todo) => (
+                      <p key={todo.id} className="text-sm text-zinc-300">
+                        <span className="text-zinc-600 mr-1.5">○</span>{todo.item}
+                      </p>
+                    ))}
+                  </div>
+                  <Link href="/plan" className="text-xs text-blue-400 hover:text-blue-300 mt-1.5 inline-block">
+                    → Open Plan
+                  </Link>
+                </div>
+              )}
+
+              {/* Review queue */}
+              {data.reviewBacklog.total > 0 && (
+                <div className="flex items-center gap-2 pt-1 border-t border-zinc-800">
+                  <span className="text-amber-400 text-xs">⚠</span>
+                  <Link href="/review" className="text-sm text-zinc-300 hover:text-zinc-100">
+                    {data.reviewBacklog.total} capture{data.reviewBacklog.total === 1 ? "" : "s"} need review
+                  </Link>
+                  <Link href="/review" className="text-xs text-blue-400 hover:text-blue-300 ml-auto">
+                    → Open Review
+                  </Link>
+                </div>
+              )}
+            </section>
+          </div>
 
           {/* ==================== MORNING PRIMING ==================== */}
           {data.nowWindow === "morning" && data.yesterdayChanges.length > 0 && (
@@ -272,27 +345,6 @@ export default function Home() {
 
           {/* ==================== DAILY INSIGHT ==================== */}
           {data.insight && <DailyInsight data={data.insight} />}
-
-          {/* ==================== NEXT ACTION ==================== */}
-          <section className="mb-5 p-4 bg-zinc-900 border border-blue-500/30 rounded-lg">
-            <p className="text-xs text-zinc-500 uppercase mb-2">Next Action</p>
-            <p className="text-sm text-zinc-200 font-medium">{data.nextAction.label}</p>
-            <p className="text-xs text-zinc-500 mt-1">{data.nextAction.reason}</p>
-            <div className="mt-3 flex items-center gap-2">
-              <Link
-                href={data.nextAction.href}
-                className="px-3 py-1.5 rounded bg-blue-500/20 border border-blue-500/40 text-blue-300 text-sm"
-              >
-                {data.nextAction.cta}
-              </Link>
-              <Link
-                href="/review"
-                className="text-xs text-zinc-400 hover:text-zinc-200"
-              >
-                Review queue: {data.reviewBacklog.total}
-              </Link>
-            </div>
-          </section>
 
           {/* ==================== 90-DAY DOPAMINE GRID ==================== */}
           <section className="mb-5">
@@ -433,9 +485,12 @@ export default function Home() {
             <summary className="text-xs text-zinc-600 cursor-pointer hover:text-zinc-500 transition-colors">
               WHY
             </summary>
-            <p className="text-xs text-zinc-500 mt-2 pl-3 border-l border-zinc-800">
-              {config.why}
-            </p>
+            <div className="mt-2 pl-3 border-l border-zinc-800 space-y-1">
+              <p className="text-xs text-zinc-500">{config.why}</p>
+              <p className="text-xs text-zinc-600">
+                Meaningful relationships · Mental clarity · Time spent on what I love
+              </p>
+            </div>
           </details>
 
         </div>

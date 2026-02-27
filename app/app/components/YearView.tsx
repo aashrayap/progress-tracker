@@ -50,10 +50,11 @@ export default function YearView({ events, habits, focusDate, onNavigate }: Prop
     <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
       {MONTH_NAMES.map((name, i) => {
         const monthEvents = eventsByMonth[i] || [];
-        const allDayEvents = monthEvents.filter(
+        const visibleMonthEvents = monthEvents.filter((e) => e.item.trim() !== "PTO - B Schedule");
+        const allDayEvents = visibleMonthEvents.filter(
           (e) => e.start === 0 && e.end === 0
         );
-        const timedCount = monthEvents.length - allDayEvents.length;
+        const timedCount = visibleMonthEvents.length - allDayEvents.length;
         const habitData = habitsByMonth[i];
         const isCurrent = i === currentMonth && year === currentYear;
 
@@ -88,7 +89,7 @@ export default function YearView({ events, habits, focusDate, onNavigate }: Prop
               )}
             </div>
 
-            {monthEvents.length > 0 && (
+            {visibleMonthEvents.length > 0 && (
               <p className="text-xs text-zinc-500 mb-2">
                 {timedCount > 0 &&
                   `${timedCount} event${timedCount > 1 ? "s" : ""}`}

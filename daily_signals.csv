@@ -138,3 +138,5 @@ date,signal,value,unit,context,source,capture_id,category
 2026-02-26,ate_clean,1,bool,ate clean,claude-cli,signal-137,
 2026-02-26,lol,0,bool,relapsed,claude-cli,signal-138,
 2026-02-26,poker,1,bool,clean,claude-cli,signal-139,
+2026-02-26,sleep,1,bool,bed 9pm woke 730am - slept great,chat,,habits
+2026-02-27,meditate,1,bool,15min warm water + backyard reading Perfume of Silence + EdVita meditation,chat,,habits

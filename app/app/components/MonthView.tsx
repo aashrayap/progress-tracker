@@ -10,7 +10,7 @@ interface Props {
   onNavigate: (date: Date, zoom: ZoomLevel) => void;
 }
 
-const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export default function MonthView({ events, habits, focusDate, onNavigate }: Props) {
   const year = focusDate.getFullYear();
@@ -18,9 +18,8 @@ export default function MonthView({ events, habits, focusDate, onNavigate }: Pro
   const todayStr = toDateStr(new Date());
 
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  let startDow = new Date(year, month, 1).getDay();
-  if (startDow === 0) startDow = 7;
-  const paddingBefore = startDow - 1;
+  const startDow = new Date(year, month, 1).getDay();
+  const paddingBefore = startDow;
 
   const cells: (Date | null)[] = [];
   for (let i = 0; i < paddingBefore; i++) cells.push(null);

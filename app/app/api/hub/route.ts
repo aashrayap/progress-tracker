@@ -42,6 +42,10 @@ export async function GET() {
     const todos = readTodos();
     const inbox = readInbox();
     const todaysPlan = getTodaysPlan(plan);
+    const yesterday = daysAgoStr(1);
+    const yesterdaysPlan = plan
+      .filter((p) => p.date === yesterday)
+      .sort((a, b) => a.start - b.start);
 
     const weightHistory = getMetricHistory(signals, "weight").map((w) => ({
       date: w.date,
@@ -86,7 +90,6 @@ export async function GET() {
     const nextWorkout = getNextWorkout(signals, Object.keys(config.workoutTemplates));
     const todaySplit = getSplitForDate(new Date());
 
-    const yesterday = daysAgoStr(1);
     const yesterdayChanges = reflections
       .filter((r) => r.date === yesterday && r.change.trim())
       .map((r) => ({ domain: r.domain, change: r.change }));
@@ -197,6 +200,13 @@ export async function GET() {
         },
       },
       todaysPlan: todaysPlan.map((p) => ({
+        start: p.start,
+        end: p.end,
+        item: p.item,
+        done: p.done,
+        notes: p.notes || "",
+      })),
+      yesterdaysPlan: yesterdaysPlan.map((p) => ({
         start: p.start,
         end: p.end,
         item: p.item,
