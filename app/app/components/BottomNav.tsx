@@ -14,7 +14,7 @@ export default function TopNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="sticky top-0 z-50 bg-zinc-950/90 backdrop-blur-sm border-b border-zinc-800/50">
+    <nav className="sticky top-0 z-50 bg-black/90 backdrop-blur-sm border-b border-white/5">
       <div className="flex items-center gap-1 py-2 px-2 overflow-x-auto">
         {tabs.map((tab) => {
           const active = tab.href === "/" ? pathname === "/" : pathname.startsWith(tab.href);
@@ -25,7 +25,7 @@ export default function TopNav() {
               className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors ${
                 active
                   ? "bg-zinc-800 text-zinc-100"
-                  : "text-zinc-500 hover:text-zinc-300"
+                  : "text-zinc-400 hover:text-zinc-300"
               }`}
             >
               {tab.label}

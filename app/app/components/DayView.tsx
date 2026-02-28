@@ -91,7 +91,7 @@ export default function DayView({ events, habits, focusDate, onRefresh, todos: e
         {isToday && (
           <button
             onClick={handleEdit}
-            className="px-4 py-3 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-400 text-sm hover:border-blue-400/50 transition-colors min-h-[44px]"
+            className="px-4 py-3 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-400 text-sm hover:border-blue-400/50 transition-colors min-h-[44px]"
           >
             Edit Plan
           </button>
@@ -99,8 +99,8 @@ export default function DayView({ events, habits, focusDate, onRefresh, todos: e
 
         {/* Habits */}
         {Object.keys(dayHabits).length > 0 && (
-          <div className="p-4 bg-zinc-900 rounded-lg border border-zinc-800">
-            <h3 className="text-xs text-zinc-500 uppercase tracking-wide mb-3">
+          <div className="p-4 bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10">
+            <h3 className="text-xs text-zinc-400 uppercase tracking-wide mb-3">
               Habits
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -125,8 +125,8 @@ export default function DayView({ events, habits, focusDate, onRefresh, todos: e
 
         {/* Plan vs Actual (gym) */}
         {(plannedGym || gymDone) && (
-          <div className="p-4 bg-zinc-900 rounded-lg border border-zinc-800">
-            <h3 className="text-xs text-zinc-500 uppercase tracking-wide mb-2">
+          <div className="p-4 bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10">
+            <h3 className="text-xs text-zinc-400 uppercase tracking-wide mb-2">
               Plan vs Actual
             </h3>
             <p
@@ -147,8 +147,8 @@ export default function DayView({ events, habits, focusDate, onRefresh, todos: e
 
         {/* All-day events */}
         {allDayEvents.length > 0 && (
-          <div className="p-4 bg-zinc-900 rounded-lg border border-zinc-800">
-            <h3 className="text-xs text-zinc-500 uppercase tracking-wide mb-3">
+          <div className="p-4 bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10">
+            <h3 className="text-xs text-zinc-400 uppercase tracking-wide mb-3">
               All Day
             </h3>
             <div className="space-y-2">
@@ -159,7 +159,7 @@ export default function DayView({ events, habits, focusDate, onRefresh, todos: e
                 >
                   <span className="text-sm text-purple-300">{e.item}</span>
                   {e.notes && (
-                    <span className="text-xs text-zinc-500">{e.notes}</span>
+                    <span className="text-xs text-zinc-400">{e.notes}</span>
                   )}
                 </div>
               ))}
@@ -168,8 +168,8 @@ export default function DayView({ events, habits, focusDate, onRefresh, todos: e
         )}
 
         {/* Schedule */}
-        <div className="p-4 bg-zinc-900 rounded-lg border border-zinc-800">
-          <h3 className="text-xs text-zinc-500 uppercase tracking-wide mb-3">
+        <div className="p-4 bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10">
+          <h3 className="text-xs text-zinc-400 uppercase tracking-wide mb-3">
             Schedule
           </h3>
           {timedEvents.length === 0 ? (
@@ -182,7 +182,7 @@ export default function DayView({ events, habits, focusDate, onRefresh, todos: e
                 return (
                   <div
                     key={`${e.date}-${e.start}-${e.end}-${e.item}-${idx}`}
-                    className="flex items-center gap-3 py-2 border-b border-zinc-800 last:border-0 min-h-[44px]"
+                    className="flex items-center gap-3 py-2 border-b border-white/10 last:border-0 min-h-[44px]"
                   >
                     <button
                       onClick={() => setPlanDone(e, isDone ? "" : "1")}
@@ -191,32 +191,32 @@ export default function DayView({ events, habits, focusDate, onRefresh, todos: e
                           ? "border-green-600 text-green-400"
                           : isSkipped
                             ? "border-red-600 text-red-400"
-                            : "border-zinc-700 text-zinc-600"
+                            : "border-white/20 text-zinc-600"
                       }`}
                     >
                       {isDone ? "✓" : isSkipped ? "✗" : "○"}
                     </button>
-                    <span className="text-xs text-zinc-500 w-24">
+                    <span className="text-xs text-zinc-400 w-24">
                       {formatTime(e.start)}–{formatTime(e.end)}
                     </span>
                     <span
                       className={`text-sm ${
                         isDone
-                          ? "text-zinc-500 line-through"
+                          ? "text-zinc-400 line-through"
                           : "text-zinc-300"
                       }`}
                     >
                       {e.item}
                     </span>
                     {e.notes && (
-                      <span className="text-xs text-zinc-500">
+                      <span className="text-xs text-zinc-400">
                         — {e.notes}
                       </span>
                     )}
                     {!isDone && (
                       <button
                         onClick={() => setPlanDone(e, "0")}
-                        className="ml-auto text-[10px] text-zinc-500 hover:text-red-400"
+                        className="ml-auto text-[10px] text-zinc-400 hover:text-red-400"
                       >
                         skip
                       </button>

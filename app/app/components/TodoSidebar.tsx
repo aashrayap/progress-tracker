@@ -69,7 +69,7 @@ export default function TodoSidebar({ todos, onTodosChange, hideHeader }: Props)
   return (
     <div className="flex flex-col h-full">
       {!hideHeader && (
-        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-medium text-zinc-300">Todos</h2>
             {incomplete.length > 0 && (
@@ -89,7 +89,7 @@ export default function TodoSidebar({ todos, onTodosChange, hideHeader }: Props)
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Add todo..."
-            className="w-full px-3 py-1.5 text-sm bg-zinc-800/50 border border-zinc-800 rounded-lg text-zinc-300 placeholder-zinc-600 focus:outline-none focus:border-zinc-700"
+            className="w-full px-3 py-1.5 text-sm bg-zinc-800/50 border border-white/10 rounded-xl text-zinc-300 placeholder-zinc-600 focus:outline-none focus:border-white/20"
           />
         </form>
 
@@ -97,11 +97,11 @@ export default function TodoSidebar({ todos, onTodosChange, hideHeader }: Props)
         {incomplete.map((todo) => (
           <div
             key={todo.id}
-            className="group flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-zinc-800/50 transition-colors min-h-[44px]"
+            className="group flex items-center gap-2 px-2 py-2 rounded-xl hover:bg-zinc-800/50 transition-colors min-h-[44px]"
           >
             <button
               onClick={() => toggleTodo(todo.id, true)}
-              className="w-6 h-6 rounded border border-zinc-700 flex items-center justify-center text-xs shrink-0 hover:border-zinc-500 transition-colors"
+              className="w-6 h-6 rounded border border-white/20 flex items-center justify-center text-xs shrink-0 hover:border-zinc-500 transition-colors"
             />
             <span className="text-sm text-zinc-300 flex-1 truncate">
               {todo.item}
@@ -123,10 +123,10 @@ export default function TodoSidebar({ todos, onTodosChange, hideHeader }: Props)
 
         {/* Completed (collapsible) */}
         {completed.length > 0 && (
-          <div className="pt-3 mt-2 border-t border-zinc-800/50">
+          <div className="pt-3 mt-2 border-t border-white/5">
             <button
               onClick={() => setShowDone(!showDone)}
-              className="flex items-center gap-1.5 text-[11px] text-zinc-600 hover:text-zinc-500 transition-colors mb-1"
+              className="flex items-center gap-1.5 text-[11px] text-zinc-600 hover:text-zinc-400 transition-colors mb-1"
             >
               <span className="text-[10px]">{showDone ? "▼" : "▶"}</span>
               Done ({completed.length})
@@ -135,7 +135,7 @@ export default function TodoSidebar({ todos, onTodosChange, hideHeader }: Props)
               completed.map((todo) => (
                 <div
                   key={todo.id}
-                  className="group flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-zinc-800/30 transition-colors min-h-[44px]"
+                  className="group flex items-center gap-2 px-2 py-2 rounded-xl hover:bg-zinc-800/30 transition-colors min-h-[44px]"
                 >
                   <button
                     onClick={() => toggleTodo(todo.id, false)}

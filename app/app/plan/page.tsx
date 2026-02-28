@@ -171,7 +171,7 @@ export default function PlanPage() {
   const incompleteCount = todos.filter((t) => t.done === 0).length;
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+    <div className="min-h-screen bg-black text-zinc-100">
       <div className="p-4 sm:p-6">
         <div className="max-w-6xl mx-auto">
           {/* Breadcrumb */}
@@ -184,7 +184,7 @@ export default function PlanPage() {
                   className={
                     i === breadcrumbs.length - 1
                       ? "text-zinc-300"
-                      : "text-zinc-500 hover:text-zinc-300"
+                      : "text-zinc-400 hover:text-zinc-300"
                   }
                 >
                   {bc.label}
@@ -198,13 +198,13 @@ export default function PlanPage() {
               <div className="flex items-center">
                 <button
                   onClick={() => navigate(-1)}
-                  className="px-3 py-2 rounded-l bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-400 text-sm min-h-[44px] min-w-[44px] flex items-center justify-center"
+                  className="px-3 py-2 rounded-l bg-zinc-900/60 backdrop-blur-md border border-white/10 hover:border-white/20 text-zinc-400 text-sm min-h-[44px] min-w-[44px] flex items-center justify-center"
                 >
                   ◀
                 </button>
                 <button
                   onClick={() => navigate(1)}
-                  className="px-3 py-2 rounded-r bg-zinc-900 border border-l-0 border-zinc-800 hover:border-zinc-700 text-zinc-400 text-sm min-h-[44px] min-w-[44px] flex items-center justify-center"
+                  className="px-3 py-2 rounded-r bg-zinc-900/60 backdrop-blur-md border border-l-0 border-white/10 hover:border-white/20 text-zinc-400 text-sm min-h-[44px] min-w-[44px] flex items-center justify-center"
                 >
                   ▶
                 </button>
@@ -212,13 +212,13 @@ export default function PlanPage() {
               <h1 className="text-lg sm:text-xl font-semibold flex-1 truncate">{title}</h1>
               <button
                 onClick={() => handleZoom(new Date(), "day")}
-                className="px-3 py-2 rounded bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-400 text-sm min-h-[44px]"
+                className="px-3 py-2 rounded bg-zinc-900/60 backdrop-blur-md border border-white/10 hover:border-white/20 text-zinc-400 text-sm min-h-[44px]"
               >
                 Today
               </button>
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="px-3 py-2 rounded bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-400 text-sm relative min-h-[44px]"
+                className="px-3 py-2 rounded bg-zinc-900/60 backdrop-blur-md border border-white/10 hover:border-white/20 text-zinc-400 text-sm relative min-h-[44px]"
               >
                 Todos
                 {incompleteCount > 0 && (
@@ -232,7 +232,7 @@ export default function PlanPage() {
             {/* Content */}
             {loading ? (
               <div className="flex items-center justify-center py-20">
-                <p className="text-zinc-500">Loading...</p>
+                <p className="text-zinc-400">Loading...</p>
               </div>
             ) : data ? (
               <>
@@ -286,15 +286,15 @@ export default function PlanPage() {
         />
       )}
       <div
-        className={`fixed right-0 top-0 bottom-0 w-80 bg-zinc-900 border-l border-zinc-800 z-50 flex flex-col transform transition-transform ${
+        className={`fixed right-0 top-0 bottom-0 w-80 bg-zinc-900/60 backdrop-blur-md border-l border-white/10 z-50 flex flex-col transform transition-transform ${
           sidebarOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
           <span className="text-sm font-medium text-zinc-300">Todos</span>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="text-zinc-500 hover:text-zinc-300 text-sm"
+            className="text-zinc-400 hover:text-zinc-300 text-sm"
           >
             ✕
           </button>

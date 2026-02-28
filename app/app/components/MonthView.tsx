@@ -50,7 +50,7 @@ export default function MonthView({ events, habits, focusDate, onNavigate }: Pro
             return (
               <div
                 key={`empty-${i}`}
-                className="h-24 rounded bg-zinc-900/30"
+                className="h-24 rounded bg-zinc-900/60 backdrop-blur-md/30"
               />
             );
           }
@@ -73,7 +73,7 @@ export default function MonthView({ events, habits, focusDate, onNavigate }: Pro
               className={`h-24 rounded border p-1.5 cursor-pointer hover:border-zinc-600 transition-colors overflow-hidden ${
                 isToday
                   ? "bg-blue-500/5 border-blue-500/30"
-                  : "bg-zinc-900 border-zinc-800"
+                  : "bg-zinc-900/60 backdrop-blur-md border-white/10"
               }`}
               onClick={() => onNavigate(date, "day")}
             >

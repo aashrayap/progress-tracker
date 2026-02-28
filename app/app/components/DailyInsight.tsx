@@ -48,9 +48,9 @@ export default function DailyInsight({ data }: { data: InsightData }) {
   const { insight } = data;
 
   return (
-    <section className="mb-5 bg-zinc-900 rounded-lg border border-zinc-800 overflow-hidden">
-      <div className="px-4 py-2 border-b border-zinc-800/60">
-        <span className="text-xs text-zinc-500 uppercase tracking-wide">
+    <section className="mb-5 bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10 overflow-hidden">
+      <div className="px-4 py-2 border-b border-white/5">
+        <span className="text-xs text-zinc-400 uppercase tracking-wide">
           Daily Insight
         </span>
       </div>
@@ -61,7 +61,7 @@ export default function DailyInsight({ data }: { data: InsightData }) {
       </div>
 
       {insight.warning && (
-        <div className="px-4 py-3 border-t border-zinc-800/60 bg-red-500/5">
+        <div className="px-4 py-3 border-t border-white/5 bg-red-500/5">
           <p className="text-xs text-red-300 uppercase tracking-wide mb-1">Risk</p>
           <p className="text-sm text-red-200">{insight.warning}</p>
         </div>

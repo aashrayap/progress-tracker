@@ -35,7 +35,7 @@ export default function TodoPool({ todos, dailyTasks, scheduledItems, onAdd, onT
   };
 
   return (
-    <div className="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-zinc-800 flex flex-col bg-zinc-900/50 max-h-[50vh] lg:max-h-none overflow-y-auto">
+    <div className="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-white/10 flex flex-col bg-zinc-900/60 backdrop-blur-md/50 max-h-[50vh] lg:max-h-none overflow-y-auto">
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* Daily Tasks */}
         <div>
@@ -62,11 +62,11 @@ export default function TodoPool({ todos, dailyTasks, scheduledItems, onAdd, onT
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Add todo..."
-              className="flex-1 px-3 py-1.5 text-sm bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-300 placeholder-zinc-600 focus:outline-none focus:border-zinc-600"
+              className="flex-1 px-3 py-1.5 text-sm bg-zinc-800 border border-white/20 rounded-xl text-zinc-300 placeholder-zinc-600 focus:outline-none focus:border-zinc-600"
             />
             <button
               type="submit"
-              className="px-3 py-1.5 text-sm bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-400 hover:text-zinc-300 hover:border-zinc-600"
+              className="px-3 py-1.5 text-sm bg-zinc-800 border border-white/20 rounded-xl text-zinc-400 hover:text-zinc-300 hover:border-zinc-600"
             >
               +
             </button>

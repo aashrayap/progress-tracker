@@ -84,10 +84,10 @@ export default function ExerciseHistory({
         <section className="mb-6">
           <button
             onClick={() => setShowProgress(!showProgress)}
-            className="w-full p-4 bg-zinc-900 rounded-xl border border-zinc-800 flex justify-between items-center"
+            className="w-full p-4 bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10 flex justify-between items-center"
           >
             <h2 className="text-lg font-semibold">Exercise Progress</h2>
-            <span className="text-zinc-500 text-sm">
+            <span className="text-zinc-400 text-sm">
               {showProgress ? "Hide" : "Show"}
             </span>
           </button>
@@ -106,7 +106,7 @@ export default function ExerciseHistory({
                 return (
                   <div
                     key={exerciseId}
-                    className="bg-zinc-900 rounded-lg border border-zinc-800 overflow-hidden"
+                    className="bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10 overflow-hidden"
                   >
                     <button
                       onClick={() => toggleExercise(exerciseId)}
@@ -131,7 +131,7 @@ export default function ExerciseHistory({
                     </button>
 
                     {isExpanded && (
-                      <div className="px-3 pb-3 space-y-1 border-t border-zinc-800 pt-2">
+                      <div className="px-3 pb-3 space-y-1 border-t border-white/10 pt-2">
                         {entries.map((e, i) => {
                           const prev = entries[i - 1];
                           const diff = prev
@@ -142,7 +142,7 @@ export default function ExerciseHistory({
                               key={e.date}
                               className="flex justify-between items-center text-sm"
                             >
-                              <span className="text-zinc-500 text-xs">
+                              <span className="text-zinc-400 text-xs">
                                 {fmtDate(e.date)}
                               </span>
                               <div className="flex items-center gap-3">
@@ -179,14 +179,14 @@ export default function ExerciseHistory({
       <section className="mb-6">
         <button
           onClick={() => setShowHistory(!showHistory)}
-          className="w-full p-4 bg-zinc-900 rounded-xl border border-zinc-800 flex justify-between items-center"
+          className="w-full p-4 bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10 flex justify-between items-center"
         >
           <h2 className="text-lg font-semibold">Workout History</h2>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-zinc-500">
+            <span className="text-xs text-zinc-400">
               {workoutHistory.length} sessions
             </span>
-            <span className="text-zinc-500 text-sm">
+            <span className="text-zinc-400 text-sm">
               {showHistory ? "Hide" : "Show"}
             </span>
           </div>
@@ -195,7 +195,7 @@ export default function ExerciseHistory({
         {showHistory && (
           <div className="mt-2 space-y-2">
             {workoutHistory.length === 0 ? (
-              <div className="p-4 bg-zinc-900 rounded-lg border border-zinc-800">
+              <div className="p-4 bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10">
                 <p className="text-sm text-zinc-600 text-center">
                   No workouts logged yet. Voice-log your sets at the gym!
                 </p>
@@ -206,7 +206,7 @@ export default function ExerciseHistory({
                 return (
                   <div
                     key={day.date}
-                    className="bg-zinc-900 rounded-lg border border-zinc-800 overflow-hidden"
+                    className="bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10 overflow-hidden"
                   >
                     <button
                       onClick={() => toggleDay(day.date)}
@@ -221,7 +221,7 @@ export default function ExerciseHistory({
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-zinc-500">
+                        <span className="text-xs text-zinc-400">
                           {day.exercises.length} exercises
                         </span>
                         <span className="text-zinc-600 text-xs">
@@ -231,7 +231,7 @@ export default function ExerciseHistory({
                     </button>
 
                     {isExpanded && (
-                      <div className="px-3 pb-3 space-y-3 border-t border-zinc-800 pt-3">
+                      <div className="px-3 pb-3 space-y-3 border-t border-white/10 pt-3">
                         {day.exercises.map((ex) => (
                           <div key={ex.id}>
                             <p className="text-sm font-medium text-zinc-300 mb-1">
@@ -250,7 +250,7 @@ export default function ExerciseHistory({
                                     {s.weight} x {s.reps}
                                   </span>
                                   {s.notes && (
-                                    <span className="text-xs text-zinc-500">
+                                    <span className="text-xs text-zinc-400">
                                       {s.notes}
                                     </span>
                                   )}

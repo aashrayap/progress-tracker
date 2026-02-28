@@ -38,7 +38,7 @@ function TimeSlot({ time }: { time: number }) {
     <div
       ref={ref}
       className={`relative transition-colors ${
-        isFullHour ? "border-t border-zinc-800" : "border-t border-zinc-800/30"
+        isFullHour ? "border-t border-white/10" : "border-t border-white/5"
       } ${isDropTarget ? "bg-blue-500/10" : ""}`}
       style={{ height: SLOT_HEIGHT }}
     >
@@ -72,7 +72,7 @@ export default function Timeline({ plan, onDeleteItem }: Props) {
 
         {/* Fixed sleep block at 10pm */}
         <div
-          className="absolute left-16 right-2 z-10 rounded-lg px-3 py-1.5 bg-indigo-500/10 border border-indigo-500/30"
+          className="absolute left-16 right-2 z-10 rounded-xl px-3 py-1.5 bg-indigo-500/10 border border-indigo-500/30"
           style={{
             top: (22 - START_HOUR) * HOUR_HEIGHT,
             height: HOUR_HEIGHT,

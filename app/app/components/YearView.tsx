@@ -62,10 +62,10 @@ export default function YearView({ events, habits, focusDate, onNavigate }: Prop
           <div
             key={name}
             onClick={() => onNavigate(new Date(year, i, 1), "month")}
-            className={`p-4 rounded-lg border cursor-pointer hover:border-zinc-600 transition-colors ${
+            className={`p-4 rounded-xl border cursor-pointer hover:border-zinc-600 transition-colors ${
               isCurrent
                 ? "bg-blue-500/5 border-blue-500/30"
-                : "bg-zinc-900 border-zinc-800"
+                : "bg-zinc-900/60 backdrop-blur-md border-white/10"
             }`}
           >
             <div className="flex items-center justify-between mb-2">
@@ -90,7 +90,7 @@ export default function YearView({ events, habits, focusDate, onNavigate }: Prop
             </div>
 
             {visibleMonthEvents.length > 0 && (
-              <p className="text-xs text-zinc-500 mb-2">
+              <p className="text-xs text-zinc-400 mb-2">
                 {timedCount > 0 &&
                   `${timedCount} event${timedCount > 1 ? "s" : ""}`}
                 {timedCount > 0 && allDayEvents.length > 0 && " · "}

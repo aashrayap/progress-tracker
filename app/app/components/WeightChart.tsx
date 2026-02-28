@@ -28,10 +28,10 @@ export default function WeightChart({ weight }: WeightChartProps) {
   );
 
   return (
-    <section className="mb-6 p-5 bg-zinc-900 rounded-xl border border-zinc-800">
+    <section className="mb-6 p-5 bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold">Weight</h2>
-        <span className="text-sm text-zinc-500">
+        <span className="text-sm text-zinc-400">
           Goal: {weight.goal} lbs by{" "}
           {new Date(weight.deadline + "T12:00:00").toLocaleDateString("en-US", {
             month: "short",
@@ -43,7 +43,7 @@ export default function WeightChart({ weight }: WeightChartProps) {
       {/* Big current weight */}
       <div className="text-center mb-4">
         <p className="text-5xl font-bold tracking-tight">{weight.current}</p>
-        <p className="text-sm text-zinc-500 mt-1">
+        <p className="text-sm text-zinc-400 mt-1">
           {weightLost > 0 ? (
             <>
               <span className="text-emerald-400">-{weightLost} lbs</span> from{" "}
@@ -62,7 +62,7 @@ export default function WeightChart({ weight }: WeightChartProps) {
 
       {/* Progress bar */}
       <div className="mb-4">
-        <div className="flex justify-between text-xs text-zinc-500 mb-1">
+        <div className="flex justify-between text-xs text-zinc-400 mb-1">
           <span>{weight.start}</span>
           <span className="text-blue-400">{Math.round(weightPct)}%</span>
           <span className="text-emerald-400">{weight.goal}</span>
@@ -89,7 +89,7 @@ export default function WeightChart({ weight }: WeightChartProps) {
                   : "bg-zinc-800/50"
               }`}
             >
-              <p className="text-xs text-zinc-500">{cp.month}</p>
+              <p className="text-xs text-zinc-400">{cp.month}</p>
               <p
                 className={`text-sm font-mono ${
                   hit ? "text-emerald-400" : "text-zinc-400"
@@ -104,7 +104,7 @@ export default function WeightChart({ weight }: WeightChartProps) {
 
       {/* Target this week */}
       {currentCheckpoint && (
-        <div className="flex justify-between items-center text-sm p-3 rounded-lg bg-zinc-800/50 border border-zinc-700/50">
+        <div className="flex justify-between items-center text-sm p-3 rounded-xl bg-zinc-800/50 border border-white/10">
           <span className="text-zinc-400">This week&apos;s target</span>
           <span className="font-mono">{weeklyTarget} lbs</span>
         </div>
@@ -113,7 +113,7 @@ export default function WeightChart({ weight }: WeightChartProps) {
       {/* Weight history (last 10) */}
       {weight.history.length > 0 && (
         <div className="mt-4">
-          <p className="text-xs text-zinc-500 uppercase tracking-wide mb-2">
+          <p className="text-xs text-zinc-400 uppercase tracking-wide mb-2">
             Recent Weigh-ins
           </p>
           <div className="space-y-1">
@@ -128,7 +128,7 @@ export default function WeightChart({ weight }: WeightChartProps) {
                     key={w.date}
                     className="flex justify-between items-center text-sm py-1"
                   >
-                    <span className="text-zinc-500">{fmtDate(w.date)}</span>
+                    <span className="text-zinc-400">{fmtDate(w.date)}</span>
                     <div className="flex items-center gap-3">
                       {diff !== 0 && (
                         <span

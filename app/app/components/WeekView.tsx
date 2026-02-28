@@ -56,17 +56,17 @@ export default function WeekView({ events, habits, focusDate, onNavigate }: Prop
         return (
           <div
             key={dateStr}
-            className={`rounded-lg border p-3 sm:p-2 cursor-pointer hover:border-zinc-600 transition-colors flex flex-col min-h-[56px] ${
+            className={`rounded-xl border p-3 sm:p-2 cursor-pointer hover:border-zinc-600 transition-colors flex flex-col min-h-[56px] ${
               isToday
                 ? "bg-blue-500/5 border-blue-500/30"
-                : "bg-zinc-900 border-zinc-800"
+                : "bg-zinc-900/60 backdrop-blur-md border-white/10"
             }`}
             onClick={() => onNavigate(day, "day")}
           >
             {/* Day header */}
             <div className="flex items-center justify-between mb-1 sm:mb-2">
               <div className="flex items-center gap-2">
-                <span className="text-[11px] text-zinc-500">
+                <span className="text-[11px] text-zinc-400">
                   {day.toLocaleDateString("en-US", { weekday: "short" })}
                 </span>
                 <span
@@ -78,7 +78,7 @@ export default function WeekView({ events, habits, focusDate, onNavigate }: Prop
                 </span>
                 {/* Mobile: event count badge */}
                 {timedEvents.length > 0 && (
-                  <span className="sm:hidden text-[10px] text-zinc-500 bg-zinc-800 px-1.5 py-0.5 rounded-full">
+                  <span className="sm:hidden text-[10px] text-zinc-400 bg-zinc-800 px-1.5 py-0.5 rounded-full">
                     {doneCount}/{timedEvents.length}
                   </span>
                 )}
@@ -137,7 +137,7 @@ export default function WeekView({ events, habits, focusDate, onNavigate }: Prop
 
             {/* Day stats footer — desktop only */}
             {timedEvents.length > 0 && (
-              <div className="hidden sm:block mt-auto pt-1 border-t border-zinc-800/50">
+              <div className="hidden sm:block mt-auto pt-1 border-t border-white/5">
                 <span className="text-[10px] text-zinc-600">
                   {doneCount}/{timedEvents.length} done
                 </span>

@@ -89,15 +89,15 @@ export default function HealthPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center">
-        <p className="text-zinc-500">Loading...</p>
+      <div className="min-h-screen bg-black text-zinc-100 flex items-center justify-center">
+        <p className="text-zinc-400">Loading...</p>
       </div>
     );
   }
 
   if (!data) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center">
+      <div className="min-h-screen bg-black text-zinc-100 flex items-center justify-center">
         <p className="text-red-400">Failed to load data</p>
       </div>
     );
@@ -206,26 +206,26 @@ export default function HealthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+    <div className="min-h-screen bg-black text-zinc-100">
       <div className="p-4 sm:p-6">
         <div className="max-w-lg mx-auto">
           {/* Header stats */}
           <header className="mb-6">
             <h1 className="text-2xl font-bold mb-3">Health</h1>
             <div className="flex gap-3">
-              <div className="flex-1 p-3 rounded-lg bg-zinc-900 border border-zinc-800 text-center">
+              <div className="flex-1 p-3 rounded-xl bg-zinc-900/60 backdrop-blur-md border border-white/10 text-center">
                 <p className="text-2xl font-bold text-emerald-400">{gymStreak}</p>
-                <p className="text-xs text-zinc-500">Gym Streak</p>
+                <p className="text-xs text-zinc-400">Gym Streak</p>
               </div>
-              <div className="flex-1 p-3 rounded-lg bg-zinc-900 border border-zinc-800 text-center">
+              <div className="flex-1 p-3 rounded-xl bg-zinc-900/60 backdrop-blur-md border border-white/10 text-center">
                 <p className="text-2xl font-bold text-blue-400">
                   {gymThisWeek}/{config.trainingPlan.liftDaysPerWeek}
                 </p>
-                <p className="text-xs text-zinc-500">This Week</p>
+                <p className="text-xs text-zinc-400">This Week</p>
               </div>
-              <div className="flex-1 p-3 rounded-lg bg-zinc-900 border border-zinc-800 text-center">
+              <div className="flex-1 p-3 rounded-xl bg-zinc-900/60 backdrop-blur-md border border-white/10 text-center">
                 <p className="text-2xl font-bold text-zinc-100">{weight.current}</p>
-                <p className="text-xs text-zinc-500">lbs</p>
+                <p className="text-xs text-zinc-400">lbs</p>
               </div>
             </div>
           </header>
@@ -240,9 +240,9 @@ export default function HealthPage() {
             onMarkDone={handleMarkDone}
           />
 
-          <section className="mb-6 p-4 bg-zinc-900 rounded-xl border border-zinc-800">
+          <section className="mb-6 p-4 bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10">
             <div className="flex items-center justify-between gap-3">
-              <p className="text-xs text-zinc-500 uppercase">Weekly Split (Option B)</p>
+              <p className="text-xs text-zinc-400 uppercase">Weekly Split (Option B)</p>
               <span className="text-xs text-blue-400">
                 {gymThisWeek}/{config.trainingPlan.liftDaysPerWeek} lift days done
               </span>
@@ -262,7 +262,7 @@ export default function HealthPage() {
                     {config.trainingPlan.weeklySplit.map((entry, idx) => (
                       <th
                         key={entry.day}
-                        className={`border border-zinc-800 px-2 py-1 text-left font-medium ${
+                        className={`border border-white/10 px-2 py-1 text-left font-medium ${
                           idx === todayIndex ? "bg-blue-500/15 text-blue-300" : "text-zinc-400"
                         }`}
                       >
@@ -276,7 +276,7 @@ export default function HealthPage() {
                     {config.trainingPlan.weeklySplit.map((entry, idx) => (
                       <td
                         key={`${entry.day}-label`}
-                        className={`border border-zinc-800 px-2 py-1 ${
+                        className={`border border-white/10 px-2 py-1 ${
                           idx === todayIndex ? "bg-blue-500/10 text-zinc-100" : "text-zinc-200"
                         }`}
                       >
@@ -288,8 +288,8 @@ export default function HealthPage() {
                     {config.trainingPlan.weeklySplit.map((entry, idx) => (
                       <td
                         key={`${entry.day}-detail`}
-                        className={`border border-zinc-800 px-2 py-1 ${
-                          idx === todayIndex ? "bg-blue-500/5 text-zinc-300" : "text-zinc-500"
+                        className={`border border-white/10 px-2 py-1 ${
+                          idx === todayIndex ? "bg-blue-500/5 text-zinc-300" : "text-zinc-400"
                         }`}
                       >
                         {entry.workoutKey
@@ -303,33 +303,33 @@ export default function HealthPage() {
             </div>
           </section>
 
-          <section className="mb-6 p-4 bg-zinc-900 rounded-xl border border-zinc-800">
-            <p className="text-xs text-zinc-500 uppercase mb-2">Daily Home Dose</p>
+          <section className="mb-6 p-4 bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10">
+            <p className="text-xs text-zinc-400 uppercase mb-2">Daily Home Dose</p>
             <div className="grid grid-cols-2 gap-2">
-              <div className="rounded border border-zinc-800 bg-zinc-800/40 p-2">
-                <p className="text-xs text-zinc-500">Pull-Ups</p>
+              <div className="rounded border border-white/10 bg-zinc-800/40 p-2">
+                <p className="text-xs text-zinc-400">Pull-Ups</p>
                 <p className="text-lg font-semibold text-zinc-100">
                   {config.trainingPlan.homeDose.pullupsPerDay}/day
                 </p>
               </div>
-              <div className="rounded border border-zinc-800 bg-zinc-800/40 p-2">
-                <p className="text-xs text-zinc-500">Push-Ups</p>
+              <div className="rounded border border-white/10 bg-zinc-800/40 p-2">
+                <p className="text-xs text-zinc-400">Push-Ups</p>
                 <p className="text-lg font-semibold text-zinc-100">
                   {config.trainingPlan.homeDose.pushupsPerDay}/day
                 </p>
               </div>
             </div>
-            <p className="mt-2 text-xs text-zinc-500">
+            <p className="mt-2 text-xs text-zinc-400">
               {config.trainingPlan.homeDose.guidance}
             </p>
           </section>
 
-          <section className="mb-6 p-4 bg-zinc-900 rounded-xl border border-zinc-800">
-            <p className="text-xs text-zinc-500 uppercase mb-2">Compound Master List</p>
+          <section className="mb-6 p-4 bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10">
+            <p className="text-xs text-zinc-400 uppercase mb-2">Compound Master List</p>
             <div className="space-y-2">
               {masterListSections.map((section) => (
-                <div key={section.label} className="rounded border border-zinc-800 p-2">
-                  <p className="text-xs text-zinc-500 mb-1">{section.label}</p>
+                <div key={section.label} className="rounded border border-white/10 p-2">
+                  <p className="text-xs text-zinc-400 mb-1">{section.label}</p>
                   <p className="text-sm text-zinc-300">
                     {section.ids
                       .map((id) => exerciseById.get(id)?.name || id)
@@ -341,25 +341,25 @@ export default function HealthPage() {
           </section>
 
           {gymReflection && (
-            <section className="mb-6 p-4 bg-zinc-900 rounded-xl border border-zinc-800">
-              <p className="text-xs text-zinc-500 uppercase mb-2">Latest Gym Reflection</p>
+            <section className="mb-6 p-4 bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10">
+              <p className="text-xs text-zinc-400 uppercase mb-2">Latest Gym Reflection</p>
               <p className="text-sm text-zinc-300">Win: {gymReflection.win || "-"}</p>
               <p className="text-sm text-zinc-300">Lesson: {gymReflection.lesson || "-"}</p>
               <p className="text-sm text-zinc-300">Change: {gymReflection.change || "-"}</p>
             </section>
           )}
 
-          <section className="mb-6 p-4 bg-zinc-900 rounded-xl border border-zinc-800">
-            <p className="text-xs text-zinc-500 uppercase mb-2">Eating Today</p>
+          <section className="mb-6 p-4 bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10">
+            <p className="text-xs text-zinc-400 uppercase mb-2">Eating Today</p>
             {mealsToday.length === 0 ? (
               <p className="text-sm text-zinc-600">No meal entries logged today.</p>
             ) : (
               <div className="space-y-2">
                 {mealsToday.map((m, idx) => (
-                  <div key={`${m.slot}-${idx}`} className="flex items-center justify-between border border-zinc-800 rounded p-2">
+                  <div key={`${m.slot}-${idx}`} className="flex items-center justify-between border border-white/10 rounded p-2">
                     <div>
                       <p className="text-sm text-zinc-300 capitalize">{m.slot}</p>
-                      {m.notes && <p className="text-xs text-zinc-500">{m.notes}</p>}
+                      {m.notes && <p className="text-xs text-zinc-400">{m.notes}</p>}
                     </div>
                     <span className={`text-xs ${m.clean ? "text-emerald-400" : "text-red-400"}`}>
                       {m.clean ? "clean" : "off-plan"}

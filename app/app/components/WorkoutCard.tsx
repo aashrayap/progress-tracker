@@ -55,13 +55,13 @@ export default function WorkoutCard({
   };
 
   return (
-    <section className="mb-6 p-5 bg-zinc-900 rounded-xl border border-zinc-800">
+    <section className="mb-6 p-5 bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10">
       <div className="flex justify-between items-center mb-4">
         <div>
           <h2 className="text-lg font-semibold">
             {gymToday ? "Today's Workout" : "Next Workout"}
           </h2>
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-zinc-400">
             Day {templateKey} · {totalSets} sets · ~30 min
             {cardioFinisherMin > 0 ? ` + ${cardioFinisherMin} min cardio` : ""}
           </p>
@@ -73,7 +73,7 @@ export default function WorkoutCard({
         ) : (
           <button
             onClick={onMarkDone}
-            className="px-4 py-2 text-sm font-medium rounded-lg bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/25 active:bg-emerald-500/35 transition-colors"
+            className="px-4 py-2 text-sm font-medium rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/25 active:bg-emerald-500/35 transition-colors"
           >
             Mark Done
           </button>
@@ -88,10 +88,10 @@ export default function WorkoutCard({
           return (
             <div
               key={ex.id}
-              className={`p-4 rounded-lg border ${
+              className={`p-4 rounded-xl border ${
                 hasLoggedSets
                   ? "bg-emerald-500/5 border-emerald-500/20"
-                  : "bg-zinc-800/50 border-zinc-700/50"
+                  : "bg-zinc-800/50 border-white/10"
               }`}
             >
               <div className="flex justify-between items-center">
@@ -108,14 +108,14 @@ export default function WorkoutCard({
                       key={s.set}
                       className="flex items-center gap-3 text-sm"
                     >
-                      <span className="text-xs text-zinc-500 w-8">
+                      <span className="text-xs text-zinc-400 w-8">
                         Set {s.set}
                       </span>
                       <span className="font-mono text-emerald-400">
                         {formatSet(s)}
                       </span>
                       {s.notes && (
-                        <span className="text-xs text-zinc-500">
+                        <span className="text-xs text-zinc-400">
                           {s.notes}
                         </span>
                       )}

@@ -97,15 +97,15 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center">
-        <p className="text-zinc-500">Loading...</p>
+      <div className="min-h-screen bg-black text-zinc-100 flex items-center justify-center">
+        <p className="text-zinc-400">Loading...</p>
       </div>
     );
   }
 
   if (!data) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center">
+      <div className="min-h-screen bg-black text-zinc-100 flex items-center justify-center">
         <p className="text-red-400">Failed to load data</p>
       </div>
     );
@@ -130,7 +130,7 @@ export default function Home() {
   const lbsToGoal = Math.max(0, Math.round(data.weight.current - data.weight.goal));
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+    <div className="min-h-screen bg-black text-zinc-100">
       <div className="p-4 sm:p-6 pb-24">
         <div className="max-w-3xl mx-auto space-y-5">
           <header className="flex items-center justify-between">
@@ -141,28 +141,28 @@ export default function Home() {
                 day: "numeric",
               })}
             </span>
-            <h1 className="text-sm font-semibold text-zinc-500 uppercase tracking-wide">Hub</h1>
+            <h1 className="text-sm font-semibold text-zinc-400 uppercase tracking-wide">Hub</h1>
           </header>
 
-          <section className="p-4 bg-zinc-900 border border-zinc-700 rounded-lg">
-            <p className="text-xs text-zinc-500 uppercase mb-2">Next Action</p>
+          <section className="p-4 bg-zinc-900/60 backdrop-blur-md border border-white/20 rounded-xl">
+            <p className="text-xs text-zinc-400 uppercase mb-2">Next Action</p>
             <p className="text-lg font-semibold text-zinc-100">{data.nextAction.label}</p>
             <p className="text-sm text-zinc-400 mt-1">{data.nextAction.reason}</p>
             <Link
               href={data.nextAction.href}
-              className="inline-flex mt-3 px-3 py-1.5 rounded border border-zinc-600 text-sm text-zinc-100 hover:border-zinc-500"
+              className="inline-flex mt-3 px-4 py-2 rounded-lg bg-zinc-100 text-zinc-900 font-medium text-sm hover:bg-white transition-colors"
             >
               {data.nextAction.cta}
             </Link>
           </section>
 
           {undonePlan.length > 0 || undoneTodos.length > 0 ? (
-            <section className="p-4 bg-zinc-900 border border-zinc-800 rounded-lg">
-              <p className="text-xs text-zinc-500 uppercase mb-2">Today Queue</p>
+            <section className="p-4 bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl">
+              <p className="text-xs text-zinc-400 uppercase mb-2">Today Queue</p>
               <div className="space-y-1">
                 {undonePlan.slice(0, 3).map((block, idx) => (
                   <p key={`${block.item}-${idx}`} className="text-sm text-zinc-300">
-                    <span className="text-zinc-500 text-xs mr-2">{formatHour(block.start)}</span>
+                    <span className="text-zinc-400 text-xs mr-2">{formatHour(block.start)}</span>
                     {block.item}
                   </p>
                 ))}
@@ -173,7 +173,7 @@ export default function Home() {
                   </p>
                 ))}
               </div>
-              <div className="mt-2 flex items-center gap-3 text-xs text-zinc-500">
+              <div className="mt-2 flex items-center gap-3 text-xs text-zinc-400">
                 {undonePlan.length > 0 && <Link href="/plan" className="hover:text-zinc-300">Open Plan</Link>}
                 {data.reviewBacklog.total > 0 && <Link href="/review" className="hover:text-zinc-300">Open Review ({data.reviewBacklog.total})</Link>}
               </div>
@@ -181,11 +181,11 @@ export default function Home() {
           ) : null}
 
           <section className="grid gap-3 sm:grid-cols-2">
-            <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-lg">
-              <p className="text-xs text-zinc-500 uppercase">Weight</p>
+            <div className="p-4 bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl">
+              <p className="text-xs text-zinc-400 uppercase">Weight</p>
               <div className="flex items-end justify-between mt-2">
                 <p className="text-2xl font-semibold text-zinc-100">{data.weight.current} lbs</p>
-                <p className="text-xs text-zinc-500">goal {data.weight.goal}</p>
+                <p className="text-xs text-zinc-400">goal {data.weight.goal}</p>
               </div>
               <div className="mt-3 h-2 bg-zinc-800 rounded-full overflow-hidden">
                 <div
@@ -193,17 +193,17 @@ export default function Home() {
                   style={{ width: `${Math.round(weightProgress * 100)}%` }}
                 />
               </div>
-              <p className="mt-2 text-xs text-zinc-500">
+              <p className="mt-2 text-xs text-zinc-400">
                 {lbsToGoal} lbs to go · started at {data.weight.start}
               </p>
             </div>
 
-            <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-lg">
-              <p className="text-xs text-zinc-500 uppercase">Recovery</p>
+            <div className="p-4 bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl">
+              <p className="text-xs text-zinc-400 uppercase">Recovery</p>
               <p className="mt-2 text-2xl font-semibold text-zinc-100">
                 Day {resetDay}/{data.dopamineReset.days}
               </p>
-              <p className="mt-2 text-xs text-zinc-500">
+              <p className="mt-2 text-xs text-zinc-400">
                 {data.dopamineReset.streaks.weed}d weed · {data.dopamineReset.streaks.lol}d lol · {data.dopamineReset.streaks.poker}d poker
               </p>
               <div className="mt-3 h-2 bg-zinc-800 rounded-full overflow-hidden">
@@ -217,8 +217,8 @@ export default function Home() {
 
           <DailyInsight data={data.insight} />
 
-          <section className="p-4 bg-zinc-900 border border-zinc-800 rounded-lg">
-            <p className="text-xs text-zinc-500 uppercase mb-2">Daily Habits — 14 Days</p>
+          <section className="p-4 bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl">
+            <p className="text-xs text-zinc-400 uppercase mb-2">Daily Habits — 14 Days</p>
             <div className="space-y-2">
               {[
                 { key: "sleep", label: "Sleep" },
@@ -231,7 +231,7 @@ export default function Home() {
                 { key: "poker", label: "No Poker" },
               ].map((habit) => (
                 <div key={habit.key} className="flex items-center gap-2.5">
-                  <span className="text-xs text-zinc-500 w-[4.5rem] shrink-0 text-right truncate">{habit.label}</span>
+                  <span className="text-xs text-zinc-400 w-[4.5rem] shrink-0 text-right truncate">{habit.label}</span>
                   <div className="flex gap-1">
                     {data.habitTracker.days.map((day, i) => {
                       const val = day[habit.key];
@@ -255,9 +255,9 @@ export default function Home() {
             </div>
           </section>
 
-          <section className="p-4 bg-zinc-900 border border-zinc-800 rounded-lg">
+          <section className="p-4 bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-zinc-500 uppercase tracking-wide">90-Day Reset</span>
+              <span className="text-xs text-zinc-400 uppercase tracking-wide">90-Day Reset</span>
               <span className="text-xs text-zinc-600">Day {resetDay}</span>
             </div>
             <div className="flex flex-wrap -m-0.5">

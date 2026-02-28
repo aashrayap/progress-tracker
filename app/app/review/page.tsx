@@ -77,15 +77,15 @@ export default function ReviewPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center">
-        <p className="text-zinc-500">Loading...</p>
+      <div className="min-h-screen bg-black text-zinc-100 flex items-center justify-center">
+        <p className="text-zinc-400">Loading...</p>
       </div>
     );
   }
 
   if (!data) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center">
+      <div className="min-h-screen bg-black text-zinc-100 flex items-center justify-center">
         <p className="text-red-400">Failed to load review queue</p>
       </div>
     );
@@ -106,12 +106,12 @@ export default function ReviewPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+    <div className="min-h-screen bg-black text-zinc-100">
       <div className="p-4 sm:p-6">
         <div className="max-w-3xl mx-auto">
           <header className="mb-5">
             <h1 className="text-xl font-semibold">Review</h1>
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-zinc-400">
               Resolve captured items before they affect analysis.
             </p>
           </header>
@@ -119,10 +119,10 @@ export default function ReviewPage() {
           <section className="flex gap-2 mb-5">
             <button
               onClick={() => setFilter(filter === "pending" ? null : "pending")}
-              className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+              className={`px-4 py-2 rounded-xl border text-sm font-medium transition-colors ${
                 filter === "pending"
                   ? "bg-blue-500/20 border-blue-500/50 text-blue-300"
-                  : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700"
+                  : "bg-zinc-900/60 backdrop-blur-md border-white/10 text-zinc-400 hover:border-white/20"
               }`}
             >
               Pending · {pendingCount}
@@ -130,10 +130,10 @@ export default function ReviewPage() {
             {failedCount > 0 && (
               <button
                 onClick={() => setFilter(filter === "failed" ? null : "failed")}
-                className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-xl border text-sm font-medium transition-colors ${
                   filter === "failed"
                     ? "bg-red-500/20 border-red-500/50 text-red-300"
-                    : "bg-zinc-900 border-zinc-800 text-red-400 hover:border-zinc-700"
+                    : "bg-zinc-900/60 backdrop-blur-md border-white/10 text-red-400 hover:border-white/20"
                 }`}
               >
                 Failed · {failedCount}
@@ -142,21 +142,21 @@ export default function ReviewPage() {
           </section>
 
           {actionError && (
-            <section className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 p-3">
+            <section className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3">
               <p className="text-sm text-red-300">{actionError}</p>
             </section>
           )}
 
           {filtered.length === 0 ? (
-            <div className="p-4 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-500 text-sm">
+            <div className="p-4 rounded-xl bg-zinc-900/60 backdrop-blur-md border border-white/10 text-zinc-400 text-sm">
               No pending captures.
             </div>
           ) : (
             <div className="space-y-3">
               {filtered.map((item) => (
-                <article key={item.captureId} className="p-4 bg-zinc-900 border border-zinc-800 rounded-lg">
+                <article key={item.captureId} className="p-4 bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs text-zinc-500">
+                    <span className="text-xs text-zinc-400">
                       {new Date(item.capturedAt).toLocaleString()} · {item.source}
                     </span>
                     <span
@@ -173,13 +173,13 @@ export default function ReviewPage() {
                   </div>
                   <p className="text-sm text-zinc-300 whitespace-pre-wrap">{item.rawText}</p>
                   {item.suggestedDestination && (
-                    <p className="text-xs text-zinc-500 mt-2">
+                    <p className="text-xs text-zinc-400 mt-2">
                       Suggested: {item.suggestedDestination}
                     </p>
                   )}
                   {item.error && <p className="text-xs text-red-400 mt-2">{item.error}</p>}
                   <div className="mt-3">
-                    <label className="text-xs text-zinc-500">Route To</label>
+                    <label className="text-xs text-zinc-400">Route To</label>
                     <select
                       value={getDestination(item)}
                       onChange={(e) =>
@@ -189,7 +189,7 @@ export default function ReviewPage() {
                         }))
                       }
                       disabled={busyCaptureId === item.captureId}
-                      className="mt-1 block w-full rounded border border-zinc-700 bg-zinc-800 px-2 py-1.5 text-sm text-zinc-200"
+                      className="mt-1 block w-full rounded border border-white/20 bg-zinc-800 px-2 py-1.5 text-sm text-zinc-200"
                     >
                       <option value="todos">todos</option>
                       <option value="reflections">reflections</option>

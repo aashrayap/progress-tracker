@@ -303,28 +303,28 @@ export default function ReflectPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center">
-        <span className="text-zinc-500">Loading...</span>
+      <div className="min-h-screen bg-black text-zinc-100 flex items-center justify-center">
+        <span className="text-zinc-400">Loading...</span>
       </div>
     );
   }
 
   if (error || !reflectionData || !deepWorkData || !insightsData) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-zinc-100 p-4">
-        <p className="text-zinc-500">{error || "Failed to load reflection dashboard."}</p>
+      <div className="min-h-screen bg-black text-zinc-100 p-4">
+        <p className="text-zinc-400">{error || "Failed to load reflection dashboard."}</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+    <div className="min-h-screen bg-black text-zinc-100">
       <div className="p-4 sm:p-6 pb-24">
         <div className="max-w-3xl mx-auto space-y-5">
           <header className="space-y-3">
             <h1 className="text-2xl font-bold">Reflect</h1>
-            <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
-              <p className="text-xs text-zinc-500 uppercase mb-2">Timeline</p>
+            <section className="bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl p-3">
+              <p className="text-xs text-zinc-400 uppercase mb-2">Timeline</p>
               <div className="flex gap-2">
                 {TIMEFRAMES.map((t) => (
                   <button
@@ -332,23 +332,23 @@ export default function ReflectPage() {
                     onClick={() => handleTimeframeChange(t.key)}
                     className={`px-3 py-1.5 rounded text-sm border transition-colors ${
                       timeframe === t.key
-                        ? "bg-zinc-800 border-zinc-700 text-zinc-100"
-                        : "bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-zinc-300"
+                        ? "bg-zinc-800 border-white/20 text-zinc-100"
+                        : "bg-zinc-900/60 backdrop-blur-md border-white/10 text-zinc-400 hover:text-zinc-300"
                     }`}
                   >
                     {t.label}
                   </button>
                 ))}
               </div>
-              <p className="mt-2 text-xs text-zinc-500">
+              <p className="mt-2 text-xs text-zinc-400">
                 {reflectionData.range.startDate} to {reflectionData.range.endDate}
               </p>
             </section>
           </header>
 
-          <section className="bg-zinc-900 border border-blue-500/30 rounded-lg p-3">
+          <section className="bg-zinc-900/60 backdrop-blur-md border border-blue-500/30 rounded-xl p-3">
             <div className="flex items-center justify-between gap-3">
-              <p className="text-xs text-zinc-500 uppercase">AI Timeframe Insight</p>
+              <p className="text-xs text-zinc-400 uppercase">AI Timeframe Insight</p>
               <span className="text-xs text-blue-300">{insightsData.range.label}</span>
             </div>
             <p className="mt-2 text-sm text-zinc-300">
@@ -370,10 +370,10 @@ export default function ReflectPage() {
             </div>
           </section>
 
-          <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
+          <section className="bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl p-3">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-xs text-zinc-500 uppercase">Reflections</p>
-              <span className="text-xs text-zinc-500">{reflectionData.total} entries</span>
+              <p className="text-xs text-zinc-400 uppercase">Reflections</p>
+              <span className="text-xs text-zinc-400">{reflectionData.total} entries</span>
             </div>
             <p className="mt-2 text-sm text-zinc-300">By Domain</p>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -386,7 +386,7 @@ export default function ReflectPage() {
                     className={`px-2 py-1 rounded text-xs border ${
                       isToday
                         ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
-                        : "bg-zinc-800 border-zinc-700 text-zinc-300"
+                        : "bg-zinc-800 border-white/20 text-zinc-300"
                     }`}
                   >
                     {domainLabel(d)}: {count}
@@ -397,11 +397,11 @@ export default function ReflectPage() {
 
             {reflectionData.yesterdayChanges.length > 0 && (
               <div className="mt-4 border border-amber-500/20 rounded p-2">
-                <p className="text-xs text-zinc-500 uppercase mb-1">Yesterday&apos;s Changes</p>
+                <p className="text-xs text-zinc-400 uppercase mb-1">Yesterday&apos;s Changes</p>
                 <div className="space-y-1">
                   {reflectionData.yesterdayChanges.map((r, idx) => (
                     <p key={`${r.domain}-${idx}`} className="text-sm text-zinc-300">
-                      - {r.change} <span className="text-zinc-500">({domainLabel(r.domain)})</span>
+                      - {r.change} <span className="text-zinc-400">({domainLabel(r.domain)})</span>
                     </p>
                   ))}
                 </div>
@@ -409,7 +409,7 @@ export default function ReflectPage() {
             )}
 
             <div className="mt-4">
-              <p className="text-xs text-zinc-500 uppercase mb-2">Recent in Range</p>
+              <p className="text-xs text-zinc-400 uppercase mb-2">Recent in Range</p>
               <div className="space-y-2">
                 {reflectionData.recent.length === 0 && (
                   <p className="text-sm text-zinc-600">No reflections in this timeframe.</p>
@@ -419,8 +419,8 @@ export default function ReflectPage() {
                   const promoted = promotedKeys.has(promoteKey);
                   const promoting = actionBusyKey === promoteKey;
                   return (
-                    <div key={`${r.date}-${i}`} className="border border-zinc-800 rounded p-2">
-                      <p className="text-xs text-zinc-500 mb-1">
+                    <div key={`${r.date}-${i}`} className="border border-white/10 rounded p-2">
+                      <p className="text-xs text-zinc-400 mb-1">
                         {r.date} · {domainLabel(r.domain)}
                       </p>
                       {r.win && <p className="text-sm text-zinc-300">Win: {r.win}</p>}
@@ -433,7 +433,7 @@ export default function ReflectPage() {
                           className={`px-2 py-1 text-xs rounded border transition-colors ${
                             promoted
                               ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
-                              : "bg-zinc-800 border-zinc-700 text-zinc-300 hover:text-zinc-100"
+                              : "bg-zinc-800 border-white/20 text-zinc-300 hover:text-zinc-100"
                           } ${promoting ? "opacity-70" : ""}`}
                         >
                           {promoted
@@ -451,7 +451,7 @@ export default function ReflectPage() {
 
             {reflectionData.patterns.length > 0 && (
               <div className="mt-4">
-                <p className="text-xs text-zinc-500 uppercase mb-1">Recurring Lessons</p>
+                <p className="text-xs text-zinc-400 uppercase mb-1">Recurring Lessons</p>
                 <div className="space-y-1">
                   {reflectionData.patterns.slice(0, 8).map((p) => (
                     <p key={p.lesson} className="text-sm text-zinc-300">
@@ -463,14 +463,14 @@ export default function ReflectPage() {
             )}
           </section>
 
-          <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
-            <p className="text-xs text-zinc-500 uppercase">Actions</p>
+          <section className="bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl p-3">
+            <p className="text-xs text-zinc-400 uppercase">Actions</p>
 
             <div className="mt-2 flex flex-wrap gap-2">
               {IDEA_STATUSES.map((status) => (
                 <span
                   key={status}
-                  className="px-2 py-1 rounded text-xs border bg-zinc-800 border-zinc-700 text-zinc-300"
+                  className="px-2 py-1 rounded text-xs border bg-zinc-800 border-white/20 text-zinc-300"
                 >
                   {status}: {actionsByStatus[status].length}
                 </span>
@@ -487,19 +487,19 @@ export default function ReflectPage() {
                 const busyKey = `idea-${idea.id}`;
                 const isBusy = actionBusyKey === busyKey;
                 return (
-                  <div key={idea.id} className="border border-zinc-800 rounded p-2">
+                  <div key={idea.id} className="border border-white/10 rounded p-2">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm text-zinc-200 font-medium">{idea.title || "Untitled action"}</p>
-                        {idea.details && <p className="text-xs text-zinc-500 mt-1 line-clamp-3">{idea.details}</p>}
-                        <p className="text-xs text-zinc-500 mt-1">
+                        {idea.details && <p className="text-xs text-zinc-400 mt-1 line-clamp-3">{idea.details}</p>}
+                        <p className="text-xs text-zinc-400 mt-1">
                           {idea.domain} · {new Date(idea.createdAt).toLocaleDateString()} · {idea.source || "unknown"}
                         </p>
                       </div>
                       <button
                         disabled={isBusy}
                         onClick={() => handleIdeaStatusChange(idea, "archived")}
-                        className={`shrink-0 px-2 py-1 rounded border text-xs transition-colors bg-zinc-800 border-zinc-700 text-zinc-300 hover:text-zinc-100 ${
+                        className={`shrink-0 px-2 py-1 rounded border text-xs transition-colors bg-zinc-800 border-white/20 text-zinc-300 hover:text-zinc-100 ${
                           isBusy ? "opacity-70" : ""
                         }`}
                       >
@@ -512,41 +512,41 @@ export default function ReflectPage() {
             </div>
           </section>
 
-          <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
-            <p className="text-xs text-zinc-500 uppercase mb-2">Deep Work</p>
+          <section className="bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl p-3">
+            <p className="text-xs text-zinc-400 uppercase mb-2">Deep Work</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              <div className="bg-zinc-800/50 border border-zinc-800 rounded p-2 text-center">
-                <p className="text-[11px] text-zinc-500">Minutes</p>
+              <div className="bg-zinc-800/50 border border-white/10 rounded p-2 text-center">
+                <p className="text-[11px] text-zinc-400">Minutes</p>
                 <p className="text-lg font-semibold">{deepWorkData.stats.totalMinutes}</p>
               </div>
-              <div className="bg-zinc-800/50 border border-zinc-800 rounded p-2 text-center">
-                <p className="text-[11px] text-zinc-500">Sessions</p>
+              <div className="bg-zinc-800/50 border border-white/10 rounded p-2 text-center">
+                <p className="text-[11px] text-zinc-400">Sessions</p>
                 <p className="text-lg font-semibold">{deepWorkData.stats.totalSessions}</p>
               </div>
-              <div className="bg-zinc-800/50 border border-zinc-800 rounded p-2 text-center">
-                <p className="text-[11px] text-zinc-500">Active Days</p>
+              <div className="bg-zinc-800/50 border border-white/10 rounded p-2 text-center">
+                <p className="text-[11px] text-zinc-400">Active Days</p>
                 <p className="text-lg font-semibold">{deepWorkData.stats.activeDays}</p>
               </div>
-              <div className="bg-zinc-800/50 border border-zinc-800 rounded p-2 text-center">
-                <p className="text-[11px] text-zinc-500">Avg / Session</p>
+              <div className="bg-zinc-800/50 border border-white/10 rounded p-2 text-center">
+                <p className="text-[11px] text-zinc-400">Avg / Session</p>
                 <p className="text-lg font-semibold">{deepWorkData.stats.avgSessionMin}m</p>
               </div>
             </div>
 
             <div className="mt-4">
-              <p className="text-xs text-zinc-500 uppercase mb-2">Recent Sessions</p>
+              <p className="text-xs text-zinc-400 uppercase mb-2">Recent Sessions</p>
               <div className="space-y-2">
                 {deepWorkData.recent.length === 0 && (
                   <p className="text-sm text-zinc-600">No sessions to show in this timeframe.</p>
                 )}
                 {deepWorkData.recent.slice(0, 10).map((s, i) => (
-                  <div key={`${s.date}-${i}`} className="border border-zinc-800 rounded p-2">
-                    <p className="text-xs text-zinc-500 mb-1">
+                  <div key={`${s.date}-${i}`} className="border border-white/10 rounded p-2">
+                    <p className="text-xs text-zinc-400 mb-1">
                       {s.date} · {s.durationMin}m
                     </p>
                     <p className="text-sm text-zinc-300">{s.topic || "No topic"}</p>
                     {s.reflection?.lesson && (
-                      <p className="text-xs text-zinc-500 mt-1">
+                      <p className="text-xs text-zinc-400 mt-1">
                         Reflection: {s.reflection.lesson}
                       </p>
                     )}

@@ -28,7 +28,7 @@ export default function TimelineItem({ item, start, end, done, notes, onDelete }
   return (
     <div
       ref={ref}
-      className={`absolute left-16 right-2 rounded-lg border px-3 py-1.5 cursor-grab active:cursor-grabbing group transition-colors ${
+      className={`absolute left-16 right-2 rounded-xl border px-3 py-1.5 cursor-grab active:cursor-grabbing group transition-colors ${
         isDone
           ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
           : "bg-blue-500/15 border-blue-500/30 text-blue-300 hover:border-blue-400/50"

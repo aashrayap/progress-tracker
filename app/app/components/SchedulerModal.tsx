@@ -155,15 +155,15 @@ export default function SchedulerModal({ initialPlan, initialTodos, onClose, onT
   );
 
   return (
-    <div className="fixed inset-0 z-50 bg-zinc-950 flex flex-col">
-      <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
+    <div className="fixed inset-0 z-50 bg-black flex flex-col">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
         <div>
           <h2 className="text-lg font-semibold text-zinc-100">Plan Your Day</h2>
-          <p className="text-xs text-zinc-500">{today}</p>
+          <p className="text-xs text-zinc-400">{today}</p>
         </div>
         <button
           onClick={onClose}
-          className="px-4 py-2 text-sm bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-400 hover:text-zinc-300 hover:border-zinc-600 transition-colors"
+          className="px-4 py-2 text-sm bg-zinc-800 border border-white/20 rounded-xl text-zinc-400 hover:text-zinc-300 hover:border-zinc-600 transition-colors"
         >
           Done
         </button>
@@ -177,7 +177,7 @@ export default function SchedulerModal({ initialPlan, initialTodos, onClose, onT
           {/* Mobile: collapsible toggle */}
           <button
             onClick={() => setTodoPoolOpen(!todoPoolOpen)}
-            className="lg:hidden flex items-center justify-center gap-2 px-4 py-3 bg-zinc-900 border-t border-zinc-800 text-sm text-zinc-400"
+            className="lg:hidden flex items-center justify-center gap-2 px-4 py-3 bg-zinc-900/60 backdrop-blur-md border-t border-white/10 text-sm text-zinc-400"
           >
             <span>{todoPoolOpen ? "Hide" : "Show"} Todos</span>
             <span className="text-xs text-zinc-600">{todos.filter(t => t.done === 0).length} pending</span>
