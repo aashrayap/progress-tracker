@@ -142,3 +142,9 @@ date,signal,value,unit,context,source,capture_id,category
 2026-02-27,meditate,1,bool,15min warm water + backyard reading Perfume of Silence + EdVita meditation,chat,,habits
 2026-02-27,deep_work,1,bool,DVN + Rigby AG Grid + tracker repo - felt surface level due to context switching between projects - flat motivation from dopamine withdrawal but pulling through,chat,,coding
 2026-02-27,gym,1,bool,squat/bench/barbell_row,voice,voice-40,
+2026-02-27,sleep,0,bool,did not sleep on time,chat,,habits
+2026-02-27,weed,1,bool,clean,chat,,addiction
+2026-02-27,ate_clean,0,bool,,chat,,habits
+2026-02-27,lol,1,bool,clean,chat,,addiction
+2026-02-27,poker,0,bool,relapsed,chat,,addiction
+2026-02-28,deep_work,1,bool,not feeling great but setting the day right — get next tracker iteration done and start with progress. maybe gym too.,chat,,coding

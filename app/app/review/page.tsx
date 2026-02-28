@@ -29,6 +29,7 @@ export default function ReviewPage() {
   const [destinationById, setDestinationById] = useState<Record<string, string>>({});
   const [actionError, setActionError] = useState<string | null>(null);
   const [busyCaptureId, setBusyCaptureId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<"pending" | "failed" | null>(null);
 
   const fetchData = useCallback(() => {
     fetch("/api/inbox")
@@ -91,6 +92,13 @@ export default function ReviewPage() {
   }
 
   const active = data.rows.filter((r) => ["new", "needs_review", "failed"].includes(r.status));
+  const pendingCount = active.filter((r) => r.status !== "failed").length;
+  const failedCount = active.filter((r) => r.status === "failed").length;
+  const filtered = filter === "failed"
+    ? active.filter((r) => r.status === "failed")
+    : filter === "pending"
+      ? active.filter((r) => r.status !== "failed")
+      : active;
   const getDestination = (item: InboxItem): string =>
     destinationById[item.captureId] || item.suggestedDestination || "ideas";
 
@@ -105,23 +113,29 @@ export default function ReviewPage() {
             </p>
           </header>
 
-          <section className="grid grid-cols-4 gap-2 mb-5">
-            <div className="p-3 rounded-lg bg-zinc-900 border border-zinc-800 text-center">
-              <p className="text-xs text-zinc-500">Total</p>
-              <p className="text-lg font-semibold">{data.counts.total}</p>
-            </div>
-            <div className="p-3 rounded-lg bg-zinc-900 border border-zinc-800 text-center">
-              <p className="text-xs text-zinc-500">New</p>
-              <p className="text-lg font-semibold text-blue-400">{data.counts.new}</p>
-            </div>
-            <div className="p-3 rounded-lg bg-zinc-900 border border-zinc-800 text-center">
-              <p className="text-xs text-zinc-500">Needs Review</p>
-              <p className="text-lg font-semibold text-amber-400">{data.counts.needsReview}</p>
-            </div>
-            <div className="p-3 rounded-lg bg-zinc-900 border border-zinc-800 text-center">
-              <p className="text-xs text-zinc-500">Failed</p>
-              <p className="text-lg font-semibold text-red-400">{data.counts.failed}</p>
-            </div>
+          <section className="flex gap-2 mb-5">
+            <button
+              onClick={() => setFilter(filter === "pending" ? null : "pending")}
+              className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                filter === "pending"
+                  ? "bg-blue-500/20 border-blue-500/50 text-blue-300"
+                  : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700"
+              }`}
+            >
+              Pending · {pendingCount}
+            </button>
+            {failedCount > 0 && (
+              <button
+                onClick={() => setFilter(filter === "failed" ? null : "failed")}
+                className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                  filter === "failed"
+                    ? "bg-red-500/20 border-red-500/50 text-red-300"
+                    : "bg-zinc-900 border-zinc-800 text-red-400 hover:border-zinc-700"
+                }`}
+              >
+                Failed · {failedCount}
+              </button>
+            )}
           </section>
 
           {actionError && (
@@ -130,13 +144,13 @@ export default function ReviewPage() {
             </section>
           )}
 
-          {active.length === 0 ? (
+          {filtered.length === 0 ? (
             <div className="p-4 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-500 text-sm">
               No pending captures.
             </div>
           ) : (
             <div className="space-y-3">
-              {active.map((item) => (
+              {filtered.map((item) => (
                 <article key={item.captureId} className="p-4 bg-zinc-900 border border-zinc-800 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs text-zinc-500">
@@ -190,15 +204,6 @@ export default function ReviewPage() {
                       className="px-3 py-1.5 text-xs rounded bg-emerald-500/15 border border-emerald-500/40 text-emerald-300"
                     >
                       Route + Accept
-                    </button>
-                    <button
-                      disabled={busyCaptureId === item.captureId}
-                      onClick={() =>
-                        updateStatus(item.captureId, "needs_review", getDestination(item))
-                      }
-                      className="px-3 py-1.5 text-xs rounded bg-amber-500/15 border border-amber-500/40 text-amber-300"
-                    >
-                      Needs Review
                     </button>
                     <button
                       disabled={busyCaptureId === item.captureId}

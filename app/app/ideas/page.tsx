@@ -21,7 +21,7 @@ const STATUSES: IdeaStatus[] = ["inbox", "reviewed", "building", "archived"];
 export default function IdeasPage() {
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showArchived, setShowArchived] = useState(false);
+  const [filter, setFilter] = useState<IdeaStatus | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
 
   const fetchIdeas = useCallback(() => {
@@ -56,9 +56,9 @@ export default function IdeasPage() {
   }, [ideas]);
 
   const visibleIdeas = useMemo(() => {
-    if (showArchived) return ideas;
+    if (filter) return ideas.filter((idea) => idea.status === filter);
     return ideas.filter((idea) => idea.status !== "archived");
-  }, [ideas, showArchived]);
+  }, [ideas, filter]);
 
   const updateStatus = async (idea: Idea, status: IdeaStatus) => {
     if (idea.status === status) return;
@@ -102,26 +102,32 @@ export default function IdeasPage() {
             </a>
           </header>
 
-          <section className="mb-4 p-3 rounded-lg bg-zinc-900 border border-zinc-800">
-            <p className="text-xs uppercase text-zinc-500 mb-2">Status Counts</p>
-            <div className="flex flex-wrap gap-2">
-              {STATUSES.map((status) => (
-                <span
-                  key={status}
-                  className="px-2 py-1 rounded text-xs border bg-zinc-800 border-zinc-700 text-zinc-300"
-                >
-                  {status}: {counts[status]}
-                </span>
-              ))}
-            </div>
-            <div className="mt-3">
+          <section className="flex flex-wrap gap-2 mb-5">
+            {(["inbox", "reviewed", "building"] as IdeaStatus[]).map((status) => (
               <button
-                onClick={() => setShowArchived((v) => !v)}
-                className="px-2 py-1 text-xs rounded border bg-zinc-800 border-zinc-700 text-zinc-300 hover:text-zinc-100"
+                key={status}
+                onClick={() => setFilter(filter === status ? null : status)}
+                className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                  filter === status
+                    ? "bg-blue-500/20 border-blue-500/50 text-blue-300"
+                    : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700"
+                }`}
               >
-                {showArchived ? "Hide archived" : "Show archived"}
+                {status.charAt(0).toUpperCase() + status.slice(1)} · {counts[status]}
               </button>
-            </div>
+            ))}
+            {counts.archived > 0 && (
+              <button
+                onClick={() => setFilter(filter === "archived" ? null : "archived")}
+                className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                  filter === "archived"
+                    ? "bg-zinc-500/20 border-zinc-500/50 text-zinc-300"
+                    : "bg-zinc-900 border-zinc-800 text-zinc-500 hover:border-zinc-700"
+                }`}
+              >
+                Archived · {counts.archived}
+              </button>
+            )}
           </section>
 
           <section className="space-y-2">
