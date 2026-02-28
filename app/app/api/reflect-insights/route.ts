@@ -98,23 +98,6 @@ export async function GET(req: Request) {
     const topLesson =
       Object.entries(lessonCounts).sort((a, b) => b[1] - a[1])[0] || null;
 
-    let sleepAndDeepWork = 0;
-    let sleepDays = 0;
-    let noSleepAndDeepWork = 0;
-    let noSleepDays = 0;
-    for (const [, metrics] of dayMap) {
-      const sleep = metrics.get("sleep");
-      const deepWork = metrics.get("deep_work");
-      if (sleep === undefined || deepWork === undefined) continue;
-      if (sleep === "1") {
-        sleepDays++;
-        if (deepWork === "1") sleepAndDeepWork++;
-      } else {
-        noSleepDays++;
-        if (deepWork === "1") noSleepAndDeepWork++;
-      }
-    }
-
     const insights: InsightItem[] = [];
 
     if (deepWorkSessions > 0) {
@@ -143,20 +126,6 @@ export async function GET(req: Request) {
           type: "opportunity",
           title: "Gym Opportunity",
           message: `Gym completion is ${gymRate}% (${gymDoneDays}/${gymTrackedDays}). One extra lift day this window materially changes momentum.`,
-        });
-      }
-    }
-
-    if (sleepDays >= 3 && noSleepDays >= 2) {
-      const withSleepRate = Math.round((sleepAndDeepWork / sleepDays) * 100);
-      const withoutSleepRate = Math.round(
-        (noSleepAndDeepWork / noSleepDays) * 100
-      );
-      if (withSleepRate - withoutSleepRate >= 20) {
-        insights.push({
-          type: "opportunity",
-          title: "Sleep -> Focus Link",
-          message: `Deep work happens ${withSleepRate}% on good-sleep days vs ${withoutSleepRate}% otherwise.`,
         });
       }
     }
@@ -210,4 +179,3 @@ export async function GET(req: Request) {
     );
   }
 }
-

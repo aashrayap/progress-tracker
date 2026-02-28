@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 type TimeframeKey = "week" | "month";
-type IdeaStatus = "inbox" | "reviewed" | "building" | "archived";
+type IdeaStatus = "inbox" | "archived";
 type IdeaDomain = "app" | "health" | "life" | "system";
 
 interface ReflectionEntry {
@@ -40,12 +40,10 @@ interface DeepWorkData {
     avgSessionMin: number;
     avgActiveDayMin: number;
   };
-  categoryBreakdown: { category: string; minutes: number; pct: number }[];
   recent: {
     date: string;
     durationMin: number;
     topic: string;
-    category: string;
     reflection: ReflectionEntry | null;
   }[];
 }
@@ -81,12 +79,11 @@ interface Idea {
   captureId: string;
 }
 
-const DOMAINS = ["deep_work", "gym", "eating", "sleep", "addiction"];
 const TIMEFRAMES: { key: TimeframeKey; label: string }[] = [
   { key: "week", label: "This Week" },
   { key: "month", label: "This Month" },
 ];
-const IDEA_STATUSES: IdeaStatus[] = ["inbox", "reviewed", "building", "archived"];
+const IDEA_STATUSES: IdeaStatus[] = ["inbox", "archived"];
 
 function domainLabel(domain: string): string {
   if (domain === "deep_work") return "Deep Work";
@@ -195,14 +192,22 @@ export default function ReflectPage() {
     return map;
   }, [reflectionData]);
 
+  const visibleDomains = useMemo(() => {
+    const present = (reflectionData?.byDomain || [])
+      .map((entry) => entry.domain)
+      .filter((domain) => domain !== "gym" && domain !== "sleep");
+    return present.length > 0 ? present : ["deep_work", "eating", "addiction"];
+  }, [reflectionData]);
+
   const actionsByStatus = useMemo(() => {
     const buckets: Record<IdeaStatus, Idea[]> = {
       inbox: [],
-      reviewed: [],
-      building: [],
       archived: [],
     };
-    for (const idea of ideas) buckets[idea.status].push(idea);
+    for (const idea of ideas) {
+      const status = idea.status === "archived" ? "archived" : "inbox";
+      buckets[status].push(idea);
+    }
     return buckets;
   }, [ideas]);
 
@@ -247,7 +252,13 @@ export default function ReflectPage() {
       }
 
       const createdIdea = (await res.json()) as Idea;
-      setIdeas((prev) => [createdIdea, ...prev]);
+      setIdeas((prev) => {
+        const exists = prev.some((row) => row.id === createdIdea.id);
+        if (exists) {
+          return prev.map((row) => (row.id === createdIdea.id ? createdIdea : row));
+        }
+        return [createdIdea, ...prev];
+      });
       setPromotedKeys((prev) => {
         const next = new Set(prev);
         next.add(promoteKey);
@@ -366,7 +377,7 @@ export default function ReflectPage() {
             </div>
             <p className="mt-2 text-sm text-zinc-300">By Domain</p>
             <div className="mt-2 flex flex-wrap gap-2">
-              {DOMAINS.map((d) => {
+              {visibleDomains.map((d) => {
                 const count = domainCountMap.get(d) || 0;
                 const isToday = todaysDomainSet.has(d);
                 return (
@@ -453,12 +464,7 @@ export default function ReflectPage() {
           </section>
 
           <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-xs text-zinc-500 uppercase">Actions</p>
-              <a href="/ideas" className="text-xs text-blue-300 hover:text-blue-200">
-                Open Backlog View
-              </a>
-            </div>
+            <p className="text-xs text-zinc-500 uppercase">Actions</p>
 
             <div className="mt-2 flex flex-wrap gap-2">
               {IDEA_STATUSES.map((status) => (
@@ -490,23 +496,15 @@ export default function ReflectPage() {
                           {idea.domain} · {new Date(idea.createdAt).toLocaleDateString()} · {idea.source || "unknown"}
                         </p>
                       </div>
-                      <label className="text-xs text-zinc-500">
-                        <span className="sr-only">Action status</span>
-                        <select
-                          value={idea.status}
-                          disabled={isBusy}
-                          onChange={(e) =>
-                            handleIdeaStatusChange(idea, e.target.value as IdeaStatus)
-                          }
-                          className="bg-zinc-800 border border-zinc-700 text-zinc-200 rounded px-2 py-1"
-                        >
-                          {IDEA_STATUSES.map((status) => (
-                            <option key={status} value={status}>
-                              {status}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
+                      <button
+                        disabled={isBusy}
+                        onClick={() => handleIdeaStatusChange(idea, "archived")}
+                        className={`shrink-0 px-2 py-1 rounded border text-xs transition-colors bg-zinc-800 border-zinc-700 text-zinc-300 hover:text-zinc-100 ${
+                          isBusy ? "opacity-70" : ""
+                        }`}
+                      >
+                        Archive
+                      </button>
                     </div>
                   </div>
                 );
@@ -536,31 +534,6 @@ export default function ReflectPage() {
             </div>
 
             <div className="mt-4">
-              <p className="text-xs text-zinc-500 uppercase mb-2">Category Breakdown</p>
-              <div className="space-y-2">
-                {deepWorkData.categoryBreakdown.length === 0 && (
-                  <p className="text-sm text-zinc-600">No deep work sessions in this timeframe.</p>
-                )}
-                {deepWorkData.categoryBreakdown.map((c) => (
-                  <div key={c.category}>
-                    <div className="flex items-center justify-between text-xs mb-1">
-                      <span className="text-zinc-300">{c.category}</span>
-                      <span className="text-zinc-500">
-                        {c.minutes}m ({c.pct}%)
-                      </span>
-                    </div>
-                    <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-blue-500"
-                        style={{ width: `${c.pct}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-4">
               <p className="text-xs text-zinc-500 uppercase mb-2">Recent Sessions</p>
               <div className="space-y-2">
                 {deepWorkData.recent.length === 0 && (
@@ -569,7 +542,7 @@ export default function ReflectPage() {
                 {deepWorkData.recent.slice(0, 10).map((s, i) => (
                   <div key={`${s.date}-${i}`} className="border border-zinc-800 rounded p-2">
                     <p className="text-xs text-zinc-500 mb-1">
-                      {s.date} · {s.category} · {s.durationMin}m
+                      {s.date} · {s.durationMin}m
                     </p>
                     <p className="text-sm text-zinc-300">{s.topic || "No topic"}</p>
                     {s.reflection?.lesson && (

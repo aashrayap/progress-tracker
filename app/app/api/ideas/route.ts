@@ -3,6 +3,21 @@ import { appendIdea, readIdeas, updateIdea } from "../../lib/csv";
 import { resolveTimeframeWindow } from "../../lib/timeframe";
 import { toDateStr } from "../../lib/utils";
 
+type IdeaStatus = "inbox" | "archived";
+type IdeaDomain = "app" | "health" | "life" | "system";
+
+function normalizeStatus(raw: unknown): IdeaStatus {
+  return String(raw || "").toLowerCase() === "archived" ? "archived" : "inbox";
+}
+
+function normalizeDomain(raw: unknown): IdeaDomain {
+  const value = String(raw || "").toLowerCase();
+  if (value === "app" || value === "health" || value === "life" || value === "system") {
+    return value;
+  }
+  return "system";
+}
+
 export async function GET(request: NextRequest) {
   try {
     const status = request.nextUrl.searchParams.get("status");
@@ -29,16 +44,25 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const title = String(body.title || "").trim();
+    const captureId = String(body.captureId || "").trim();
     if (!title) {
       return NextResponse.json({ error: "title required" }, { status: 400 });
     }
+
+    if (captureId) {
+      const existing = readIdeas().find((idea) => idea.captureId === captureId);
+      if (existing) {
+        return NextResponse.json(existing);
+      }
+    }
+
     const idea = appendIdea({
       title,
       details: String(body.details || "").trim(),
-      domain: body.domain || "system",
-      status: body.status || "inbox",
+      domain: normalizeDomain(body.domain),
+      status: normalizeStatus(body.status),
       source: body.source || "manual",
-      captureId: body.captureId || "",
+      captureId,
     });
     return NextResponse.json(idea);
   } catch (e) {
@@ -58,8 +82,8 @@ export async function PATCH(request: Request) {
     updateIdea(id, {
       title: body.title,
       details: body.details,
-      status: body.status,
-      domain: body.domain,
+      status: body.status === undefined ? undefined : normalizeStatus(body.status),
+      domain: body.domain === undefined ? undefined : normalizeDomain(body.domain),
       source: body.source,
       captureId: body.captureId,
     });

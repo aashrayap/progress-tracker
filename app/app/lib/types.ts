@@ -42,7 +42,7 @@ export interface IdeaEntry {
   title: string;
   details: string;
   domain: "app" | "health" | "life" | "system";
-  status: "inbox" | "reviewed" | "building" | "archived";
+  status: "inbox" | "archived";
   source: string;
   captureId: string;
 }

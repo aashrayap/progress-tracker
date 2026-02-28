@@ -284,22 +284,44 @@ export function updateInboxEntry(
 // Ideas
 // ─────────────────────────────────────────────────────────────────────────────
 
+const IDEA_DOMAINS = new Set<IdeaEntry["domain"]>(["app", "health", "life", "system"]);
+
+function normalizeIdeaDomain(raw: string): IdeaEntry["domain"] {
+  const v = (raw || "").trim().toLowerCase();
+  return IDEA_DOMAINS.has(v as IdeaEntry["domain"]) ? (v as IdeaEntry["domain"]) : "system";
+}
+
+function normalizeIdeaStatus(raw: string): IdeaEntry["status"] {
+  const v = (raw || "").trim().toLowerCase();
+  return v === "archived" ? "archived" : "inbox";
+}
+
 export function readIdeas(): IdeaEntry[] {
   if (!fs.existsSync(IDEAS_PATH)) return [];
   const lines = readDataLines(IDEAS_PATH);
-  return lines.map((line) => {
-    const clean = parseCSVLine(line);
-    return {
-      id: parseInt(clean[0], 10) || 0,
-      createdAt: clean[1] || "",
-      title: clean[2] || "",
-      details: clean[3] || "",
-      domain: (clean[4] as IdeaEntry["domain"]) || "system",
-      status: (clean[5] as IdeaEntry["status"]) || "inbox",
-      source: clean[6] || "",
-      captureId: clean[7] || "",
-    };
-  });
+  return lines
+    .map((line) => {
+      const clean = parseCSVLine(line);
+      return {
+        id: parseInt(clean[0], 10) || 0,
+        createdAt: clean[1] || "",
+        title: clean[2] || "",
+        details: clean[3] || "",
+        domain: normalizeIdeaDomain(clean[4] || ""),
+        status: normalizeIdeaStatus(clean[5] || ""),
+        source: clean[6] || "",
+        captureId: clean[7] || "",
+      };
+    })
+    .filter((idea) => {
+      if (idea.id <= 0) return false;
+      const hasContent =
+        idea.title.trim() ||
+        idea.details.trim() ||
+        idea.source.trim() ||
+        idea.captureId.trim();
+      return Boolean(hasContent);
+    });
 }
 
 export function appendIdea(

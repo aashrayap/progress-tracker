@@ -99,8 +99,11 @@ export default function ReviewPage() {
     : filter === "pending"
       ? active.filter((r) => r.status !== "failed")
       : active;
-  const getDestination = (item: InboxItem): string =>
-    destinationById[item.captureId] || item.suggestedDestination || "ideas";
+  const getDestination = (item: InboxItem): string => {
+    const candidate = destinationById[item.captureId] || item.suggestedDestination || "todos";
+    if (["todos", "reflections", "manual"].includes(candidate)) return candidate;
+    return "todos";
+  };
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -188,10 +191,8 @@ export default function ReviewPage() {
                       disabled={busyCaptureId === item.captureId}
                       className="mt-1 block w-full rounded border border-zinc-700 bg-zinc-800 px-2 py-1.5 text-sm text-zinc-200"
                     >
-                      <option value="ideas">ideas</option>
                       <option value="todos">todos</option>
                       <option value="reflections">reflections</option>
-                      <option value="daily_signals">daily_signals</option>
                       <option value="manual">manual</option>
                     </select>
                   </div>

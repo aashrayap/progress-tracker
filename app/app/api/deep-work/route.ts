@@ -6,7 +6,6 @@ interface DeepWorkSession {
   date: string;
   durationMin: number;
   topic: string;
-  category: string;
   notes: string;
 }
 
@@ -21,15 +20,6 @@ function parseTopic(notes: string): string {
   return parts.slice(1).join("-").trim();
 }
 
-function inferCategory(topic: string): string {
-  const t = topic.toLowerCase();
-  if (t.includes("read") || t.includes("book") || t.includes("chapter")) return "reading";
-  if (t.includes("design") || t.includes("ux") || t.includes("ui")) return "design";
-  if (t.includes("plan") || t.includes("strategy")) return "planning";
-  if (t.includes("meeting") || t.includes("review")) return "coordination";
-  return "coding";
-}
-
 export async function GET(req: Request) {
   try {
     const signals = readDailySignals();
@@ -42,12 +32,10 @@ export async function GET(req: Request) {
       .filter((e) => e.signal === "deep_work" && e.value === "1")
       .map((e) => {
         const topic = parseTopic(e.context || "");
-        const category = e.category?.trim() || inferCategory(topic);
         return {
           date: e.date,
           durationMin: parseDuration(e.context || ""),
           topic,
-          category,
           notes: e.context || "",
         };
       })
@@ -58,19 +46,6 @@ export async function GET(req: Request) {
     );
     const totalMinutes = inRange.reduce((sum, s) => sum + s.durationMin, 0);
     const activeDays = new Set(inRange.map((s) => s.date)).size;
-
-    const byCategory: Record<string, number> = {};
-    for (const s of inRange) {
-      byCategory[s.category] = (byCategory[s.category] || 0) + s.durationMin;
-    }
-
-    const categoryBreakdown = Object.entries(byCategory)
-      .map(([category, minutes]) => ({
-        category,
-        minutes,
-        pct: totalMinutes > 0 ? Math.round((minutes / totalMinutes) * 100) : 0,
-      }))
-      .sort((a, b) => b.minutes - a.minutes);
 
     const reflectionByDate = new Map(reflections.filter((r) => r.domain === "deep_work").map((r) => [r.date, r]));
     const recent = inRange.slice(0, 20).map((s) => ({
@@ -89,7 +64,6 @@ export async function GET(req: Request) {
         avgActiveDayMin:
           activeDays > 0 ? Math.round(totalMinutes / activeDays) : 0,
       },
-      categoryBreakdown,
       recent,
     });
   } catch (e) {
