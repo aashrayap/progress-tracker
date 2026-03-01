@@ -8,6 +8,7 @@ const tabs = [
   { href: "/plan", label: "Plan" },
   { href: "/health", label: "Health" },
   { href: "/reflect", label: "Reflect" },
+  { href: "/ideas", label: "Ideas" },
 ] as const;
 
 export default function TopNav() {

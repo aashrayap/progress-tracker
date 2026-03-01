@@ -10,13 +10,52 @@ unset CLAUDECODE 2>/dev/null || true
 REPO="aashrayap/progress-tracker"
 PROJECT_DIR="$HOME/Documents/tracker"
 LOCK_FILE="/tmp/voice-inbox.lock"
+WRITER_LOCK_DIR="/tmp/tracker-csv-writer.lock.d"
 LOG_FILE="$HOME/.local/log/voice-inbox.log"
 NTFY_TOPIC="ash-9f2k7x3m"
+WRITER_LOCK_HELD=0
 
 mkdir -p "$(dirname "$LOG_FILE")"
 
 log() {
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" >> "$LOG_FILE"
+}
+
+acquire_writer_lock() {
+  if mkdir "$WRITER_LOCK_DIR" 2>/dev/null; then
+    echo $$ > "$WRITER_LOCK_DIR/pid"
+    WRITER_LOCK_HELD=1
+    return 0
+  fi
+
+  local holder=""
+  if [ -f "$WRITER_LOCK_DIR/pid" ]; then
+    holder=$(cat "$WRITER_LOCK_DIR/pid" 2>/dev/null || true)
+  fi
+
+  if [ -n "$holder" ] && ! kill -0 "$holder" 2>/dev/null; then
+    rm -rf "$WRITER_LOCK_DIR"
+    if mkdir "$WRITER_LOCK_DIR" 2>/dev/null; then
+      echo $$ > "$WRITER_LOCK_DIR/pid"
+      WRITER_LOCK_HELD=1
+      return 0
+    fi
+  fi
+
+  return 1
+}
+
+release_writer_lock() {
+  if [ "$WRITER_LOCK_HELD" = "1" ]; then
+    rm -f "$WRITER_LOCK_DIR/pid"
+    rmdir "$WRITER_LOCK_DIR" 2>/dev/null || rm -rf "$WRITER_LOCK_DIR"
+    WRITER_LOCK_HELD=0
+  fi
+}
+
+cleanup() {
+  release_writer_lock
+  rm -f "$LOCK_FILE"
 }
 
 # Prevent concurrent runs
@@ -29,7 +68,7 @@ if [ -f "$LOCK_FILE" ]; then
   rm -f "$LOCK_FILE"
 fi
 echo $$ > "$LOCK_FILE"
-trap 'rm -f "$LOCK_FILE"' EXIT
+trap cleanup EXIT
 
 # Pull latest to avoid conflicts
 cd "$PROJECT_DIR"
@@ -46,12 +85,17 @@ fi
 
 log "Found $count voice issue(s)"
 
-echo "$issues" | jq -c '.[]' | while read -r issue; do
+while read -r issue; do
   number=$(echo "$issue" | jq -r '.number')
   title=$(echo "$issue" | jq -r '.title')
   body=$(echo "$issue" | jq -r '.body')
   created=$(echo "$issue" | jq -r '.createdAt')
   date_str=$(echo "$created" | cut -d'T' -f1)
+
+  if ! acquire_writer_lock; then
+    log "Shared writer lock busy, deferring issue #$number"
+    break
+  fi
 
   log "Processing issue #$number: $title"
 
@@ -100,8 +144,9 @@ Steps:
     log "No notification file generated for issue #$number"
   fi
 
+  release_writer_lock
   log "Done with issue #$number"
-done
+done < <(echo "$issues" | jq -c '.[]')
 
 # Push any commits
 cd "$PROJECT_DIR"

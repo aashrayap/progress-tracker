@@ -9,6 +9,7 @@ import {
   getNextWorkout,
   getStreak,
   getTodaysPlan,
+  readInbox,
   readPlan,
   readReflections,
   readTodos,
@@ -39,6 +40,11 @@ export async function GET() {
     const plan = readPlan();
     const reflections = readReflections();
     const todos = readTodos();
+    const inbox = readInbox();
+    const ideas = inbox.filter((e) => e.suggestedDestination === "idea");
+    const ideaCount = ideas.length;
+    const ideaShipped = ideas.filter((e) => e.status === "shipped").length;
+    const ideaPending = ideas.filter((e) => e.status === "logged" || e.status === "investigating").length;
     const todaysPlan = getTodaysPlan(plan);
     const yesterday = daysAgoStr(1);
     const yesterdaysPlan = plan
@@ -221,6 +227,7 @@ export async function GET() {
       habitTracker,
       habitTrends,
       nextAction,
+      ideas: { total: ideaCount, shipped: ideaShipped, pending: ideaPending },
     });
   } catch (e) {
     console.error("GET /api/hub error:", e);

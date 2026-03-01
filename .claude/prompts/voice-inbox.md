@@ -14,8 +14,9 @@ Primary routing categories:
 1. daily signal
 2. workout log
 3. reflection
-4. actionable todo
-5. unresolved note (todo with clarify prefix)
+4. codebase idea
+5. actionable todo
+6. unresolved note (todo with clarify prefix)
 
 A single issue may map to multiple categories.
 
@@ -54,8 +55,21 @@ If deep work session + reflection are both present:
 - log `deep_work=1` in `daily_signals.csv`
 - log reflection row in `reflections.csv`
 
+## Idea Detection
+
+If the voice note is a **codebase improvement idea** — feature request, app enhancement, architectural suggestion — route it as an idea, NOT a todo.
+
+**Idea keywords**: feature, idea, should have, what if, build, improve, add support for, redesign, refactor, make it so, upgrade, integrate, the app should, the tracker should, wouldn't it be cool
+
+**What makes an idea (not a todo)**:
+- Describes a change to the tracker app, UI, or pipeline
+- Suggests new functionality or improvements to existing features
+- Proposes architectural or workflow changes
+
+**Routing**: Set `suggested_destination=idea` in inbox.csv. Do NOT also append to `todos.csv`. The idea pipeline daemon will handle investigation and implementation.
+
 ## Todo Routing
-- Actionable requests -> append todo (`done=0`, `created=today`)
+- Actionable requests (NOT codebase ideas) -> append todo (`done=0`, `created=today`)
 - Unclear but important -> todo prefixed with `Clarify:`
 
 ## Date Handling

@@ -55,6 +55,7 @@ interface AppData {
   };
   habitTrends: Record<string, { date: string; value: boolean | null }[]>;
   nextAction: NextAction;
+  ideas: { total: number; shipped: number; pending: number };
 }
 
 const HABIT_ORDER = [
@@ -278,6 +279,24 @@ export default function Home() {
               </div>
             </div>
           </section>
+
+          {data.ideas.total > 0 && (
+            <Link
+              href="/ideas"
+              className="block p-4 bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl hover:border-white/20 transition-colors"
+            >
+              <p className="text-xs text-zinc-400 uppercase">Ideas</p>
+              <div className="flex items-end justify-between mt-2">
+                <p className="text-2xl font-semibold text-zinc-100">{data.ideas.total}</p>
+                <div className="text-xs text-zinc-400 text-right">
+                  {data.ideas.shipped > 0 && <span>{data.ideas.shipped} shipped</span>}
+                  {data.ideas.pending > 0 && (
+                    <span className="ml-2">{data.ideas.pending} pending</span>
+                  )}
+                </div>
+              </div>
+            </Link>
+          )}
 
           <DailyInsight data={data.insight} />
 

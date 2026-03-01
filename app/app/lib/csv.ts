@@ -119,7 +119,12 @@ function appendLines(filePath: string, header: string, lines: string[]): void {
 }
 
 function writeAll(filePath: string, header: string, lines: string[]): void {
-  fs.writeFileSync(filePath, header + "\n" + lines.join("\n") + (lines.length ? "\n" : ""));
+  const content = header + "\n" + lines.join("\n") + (lines.length ? "\n" : "");
+  const dir = path.dirname(filePath);
+  const base = path.basename(filePath);
+  const tmpPath = path.join(dir, `.${base}.tmp-${process.pid}-${Date.now()}`);
+  fs.writeFileSync(tmpPath, content);
+  fs.renameSync(tmpPath, filePath);
 }
 
 function serializeDailySignal(entry: DailySignalEntry): string {

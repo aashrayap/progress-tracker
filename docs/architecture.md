@@ -24,7 +24,7 @@ Main routes:
 - `/plan` Plan
 - `/health` Health
 - `/reflect` Reflect
-- `/ideas` alias redirect to Reflect
+- `/ideas` Ideas (voice idea pipeline status)
 
 ## Voice + Text Intake Pipeline
 Both iOS shortcuts (voice and text) flow through one processor:
@@ -34,6 +34,36 @@ Both iOS shortcuts (voice and text) flow through one processor:
 4. CSVs are updated
 5. Commit + push, issue comment, issue close
 
+## Idea Pipeline
+
+```
+Phone (voice/text — "idea: add dark mode")
+  │
+  ▼
+voice-inbox.sh (detects idea keywords → inbox.csv with suggested_destination=idea)
+  │
+  ▼
+idea-pipeline.sh (60s poll via launchd)
+  │  finds: suggested_destination=idea + status=logged
+  │  one idea per run
+  │
+  │  Phase 1: INVESTIGATE (read-only)
+  │    Claude scans codebase, assesses 3 layers + runtime loop
+  │    inbox status → investigating
+  │
+  │  Phase 2: IMPLEMENT
+  │    branch: idea-{captureId}
+  │    Claude codes, opens PR with structured notes
+  │    inbox status → shipped, error field ← PR URL
+  │    ntfy → "PR ready"
+  │
+  ▼
+GitHub PR (sole human gate)
+```
+
+Plist: `~/Library/LaunchAgents/com.ash.idea-pipeline.plist` (60s interval)
+Logs: `~/.local/log/idea-pipeline.log`
+
 ## API Surface (Current)
 - `/api/hub`
 - `/api/daily-signals`
@@ -42,8 +72,10 @@ Both iOS shortcuts (voice and text) flow through one processor:
 - `/api/plan`
 - `/api/plan/range`
 - `/api/todos`
+- `/api/ideas`
 
 ## Known Constraints
-- CSV writes are read-modify-write (no file locks)
+- CSV writes use atomic temp+rename but no cross-process file locks
+- Shared writer lock (`/tmp/tracker-csv-writer.lock.d`) coordinates voice-inbox and idea-pipeline daemons
 - Some historical labels are still normalized for backward compatibility
 - Single-user local-first model (no auth boundary)

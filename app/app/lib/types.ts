@@ -30,7 +30,7 @@ export interface InboxEntry {
   capturedAt: string;
   source: string;
   rawText: string;
-  status: "logged" | "new" | "needs_review" | "accepted" | "archived" | "failed";
+  status: "logged" | "new" | "needs_review" | "accepted" | "archived" | "failed" | "investigating" | "shipped";
   suggestedDestination: string;
   normalizedText: string;
   error: string;
