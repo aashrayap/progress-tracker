@@ -26,3 +26,4 @@ id,item,done,created
 25,"Feature: voice notes should trigger Claude to investigate and make incremental repo improvements autonomously",0,2026-03-01
 26,"Clarify: garbled voice note - 'Next round of sex sex for work idea' - re-record or clarify intent",0,2026-03-01
 27,"Clarify: 'Create shortcut except without instead of dictation type' - likely about iOS Shortcut with text input instead of dictation. Re-record or clarify.",0,2026-03-01
+28,"Feature: idea cards with Claude pre-investigation — voice idea → Claude scans repo against core pillars/3 layers → presents concise investigation on idea card → user approves → PR created automatically",0,2026-03-01
