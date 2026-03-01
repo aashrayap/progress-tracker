@@ -1,47 +1,28 @@
 # Features
 
-Current state of the app surfaces and known gaps.
+## Active Surfaces
+| Route | Surface | Role |
+|---|---|---|
+| `/` | Hub | Priority and next action |
+| `/plan` | Plan | Time-block execution and completion |
+| `/health` | Health | Workout/body metrics and progression |
+| `/reflect` | Reflect | Reflection evidence and recurring lessons |
+| `/ideas` | Alias | Redirect to Reflect |
 
-## Surfaces
+## What Is Working
+- Single canonical data model based on CSV files
+- End-to-end capture path from phone to structured logs
+- Hub-driven daily decision payload
+- Calendar/todo execution loop
+- Reflection capture and lesson surfacing
 
-| Route | Surface | Primary Role |
-|-------|---------|-------------|
-| `/` | Hub | Daily command center: habits, next action, streaks, 90-day grid |
-| `/plan` | Plan | Calendar planner (year/month/week/day) + todo sidebar + DnD scheduler |
-| `/health` | Health | Workout tracker, weight trend, progression charts, weekly split |
-| `/reflect` | Reflect | Reflection history, recurring lessons, action promotion to todos |
+## Current Gaps
+1. Data integrity hardening (idempotency, file-locking strategy)
+2. Stable plan row identity model
+3. Better correction/edit UX for logged signals
+4. Reduced duplication across documentation and assistant instructions
 
-## What Works Well
-
-- Single daily decision surface (Hub) with clear next action
-- Time-block execution (Plan) with drag-to-schedule and completion signals
-- Domain-specific health tracking with workout programming and progression
-- Reflection loop with recurring lesson detection
-- Voice capture pipeline (phone → GitHub Issue → auto-processed → CSV)
-- Dense but legible mobile-first layouts
-
-## Known Gaps
-
-### Data Integrity
-- No file locks for concurrent CSV writes
-- Plan entries keyed by `date + item` text, not stable row IDs
-- No idempotency guard on daily_signals POST (duplicate writes possible)
-- Workout day labels have historical inconsistency (`A/B/C` vs `W1..W5`)
-
-### UX Gaps
-- No in-app reflection capture for end-of-day input
-- Limited edit UX for plan rows and signal corrections
-- Calendar scheduler lacks conflict/duplication guardrails
-
-### Architecture Gaps
-- No auth (single-user local model assumed)
-- No schema enforcement beyond minimal route checks
-- Voice routing logic partly outside web app boundary (in Claude CLI prompt)
-- Streak logic based on logged rows, not strict day continuity
-
-## Iteration Priorities
-
-1. **Data integrity** — stable row IDs for plan, idempotency guards, file locking
-2. **Capture quality** — improve voice routing confidence while preserving raw capture audit
-3. **Cross-layer consistency** — normalize workout labels, standardize streak definitions
-4. **UX loop closure** — end-of-day capture panel, inline signal corrections
+## Cleanup Direction
+- Keep docs short and canonical
+- Remove obsolete files and references quickly
+- Keep behavior deterministic and auditable

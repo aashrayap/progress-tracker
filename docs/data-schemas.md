@@ -1,77 +1,48 @@
 # Data Schemas
 
-All data lives in CSV files at repo root.
+All canonical state lives in CSV files at repo root.
 
-## daily_signals.csv — Canonical daily signals
-
+## daily_signals.csv
 ```
 date,signal,value,unit,context,source,capture_id,category
 ```
 
-| signal | values | meaning |
-|--------|--------|---------|
-| weight | number | lbs |
-| lol, weed, poker | 0/1 | 0=relapse, 1=clean |
-| gym, sleep, meditate, deep_work, ate_clean | 0/1 | 0=missed, 1=done |
-| calories | number | daily total |
-| trigger | text | what caused craving |
-| relapse | text | what was relapsed on |
-| reset | 1 | marks a reset day |
+Common signals:
+- `weight` (number)
+- `lol`, `weed`, `poker` (`0|1`)
+- `gym`, `sleep`, `meditate`, `deep_work`, `ate_clean` (`0|1`)
+- `calories` (number)
+- `trigger` (text)
+- `relapse` (text)
+- `reset` (`1`)
 
-## workouts.csv — Set-level gym data
-
+## workouts.csv
 ```
 date,workout,exercise,set,weight,reps,notes
 ```
 
-## plan.csv — Daily schedule
-
+## plan.csv
 ```
 date,start,end,item,done,notes
 ```
 
-- All-day events: `start=0, end=0`
-- Completion: `done` as `"1" | "0" | ""`
-- No dedicated primary key (keyed by `date + item`)
-
-## todos.csv — Task backlog
-
+## todos.csv
 ```
 id,item,done,created
 ```
 
-- Auto-increment numeric `id`
-
-## reflections.csv — Daily micro-reflections
-
+## reflections.csv
 ```
 date,domain,win,lesson,change
 ```
 
-| domain | meaning |
-|--------|---------|
-| gym | workout reflection |
-| addiction | recovery reflection |
-| deep_work | focused work reflection |
-| eating | nutrition reflection |
-| sleep | sleep quality reflection |
-
-## inbox.csv — Raw capture audit log
-
+## inbox.csv
 ```
 capture_id,captured_at,source,raw_text,status,suggested_destination,normalized_text,error
 ```
 
-- `status` is audit metadata (`logged` for new rows; legacy values may exist)
-- Append-only log: preserves raw input text for reprocessing/debug
-
-## Relationships
-
-```
-daily_signals.csv ──── gym=1 means detail in workouts.csv
-                  ──── deep_work=1 + context has session detail
-                  ──── ate_clean + calories = nutrition state
-inbox.csv ─────────── audit copy of raw capture before routing
-                  ─── actionable/unresolved routes to todos.csv
-reflections.csv ───── one per domain per day (gym, addiction, deep_work, eating, sleep)
-```
+## Relationship Notes
+- `gym=1` in `daily_signals.csv` can have supporting set data in `workouts.csv`.
+- `inbox.csv` is append-only audit memory for raw captures.
+- `plan.csv` + `todos.csv` represent action memory.
+- `reflections.csv` stores evidence for future rule updates.
