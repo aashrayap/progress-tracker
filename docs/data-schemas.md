@@ -56,22 +56,14 @@ date,domain,win,lesson,change
 | eating | nutrition reflection |
 | sleep | sleep quality reflection |
 
-## inbox.csv — Capture queue
+## inbox.csv — Raw capture audit log
 
 ```
 capture_id,captured_at,source,raw_text,status,suggested_destination,normalized_text,error
 ```
 
-- Statuses: `new | needs_review | accepted | archived | failed`
-
-## ideas.csv — Idea backlog
-
-```
-id,created_at,title,details,domain,status,source,capture_id
-```
-
-- Domains: `app | health | life | system`
-- Statuses: `inbox | reviewed | building | archived`
+- `status` is audit metadata (`logged` for new rows; legacy values may exist)
+- Append-only log: preserves raw input text for reprocessing/debug
 
 ## Relationships
 
@@ -79,6 +71,7 @@ id,created_at,title,details,domain,status,source,capture_id
 daily_signals.csv ──── gym=1 means detail in workouts.csv
                   ──── deep_work=1 + context has session detail
                   ──── ate_clean + calories = nutrition state
-inbox.csv ─────────── routes to: daily_signals, workouts, reflections, ideas
+inbox.csv ─────────── audit copy of raw capture before routing
+                  ─── actionable/unresolved routes to todos.csv
 reflections.csv ───── one per domain per day (gym, addiction, deep_work, eating, sleep)
 ```

@@ -9,9 +9,7 @@ Current state of the app surfaces and known gaps.
 | `/` | Hub | Daily command center: habits, next action, streaks, 90-day grid |
 | `/plan` | Plan | Calendar planner (year/month/week/day) + todo sidebar + DnD scheduler |
 | `/health` | Health | Workout tracker, weight trend, progression charts, weekly split |
-| `/reflect` | Reflect | Reflection history, recurring lessons, deep work analytics |
-| `/review` | Review | Capture triage queue with status counts |
-| `/ideas` | Ideas | Kanban-style idea pipeline (inbox → reviewed → building → archived) |
+| `/reflect` | Reflect | Reflection history, recurring lessons, action promotion to todos |
 
 ## What Works Well
 
@@ -31,7 +29,6 @@ Current state of the app surfaces and known gaps.
 - Workout day labels have historical inconsistency (`A/B/C` vs `W1..W5`)
 
 ### UX Gaps
-- Review actions are status-only, not full resolve/route actions
 - No in-app reflection capture for end-of-day input
 - Limited edit UX for plan rows and signal corrections
 - Calendar scheduler lacks conflict/duplication guardrails
@@ -45,6 +42,6 @@ Current state of the app surfaces and known gaps.
 ## Iteration Priorities
 
 1. **Data integrity** — stable row IDs for plan, idempotency guards, file locking
-2. **Review resolution** — deterministic accept+route, edit+route, split+route flows
+2. **Capture quality** — improve voice routing confidence while preserving raw capture audit
 3. **Cross-layer consistency** — normalize workout labels, standardize streak definitions
 4. **UX loop closure** — end-of-day capture panel, inline signal corrections

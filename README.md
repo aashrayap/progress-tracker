@@ -132,7 +132,7 @@ Strategy: hold S&P broad index · 10% annual return · no contributions
 ┌──────────────────────────────────────────────────────────────────────────┐
 │ UI LAYER (decision + execution surfaces)                                 │
 ├──────────────────────────────────────────────────────────────────────────┤
-│ Hub │ Review │ Plan │ Reflect │ Health │ Ideas                            │
+│ Hub │ Plan │ Reflect │ Health                                           │
 │ Each surface has ONE job. No surface invents its own semantics.           │
 └───────────────────────────────┬──────────────────────────────────────────┘
                                 │ consumes read models
@@ -246,7 +246,7 @@ Pipeline rule:
 │  /reflect  REFLECT                                              │
 │  Evidence + insights                                            │
 │  ├─ reflections by timeframe (week/month)                       │
-│  ├─ recurring lessons · deep work analytics                     │
+│  ├─ recurring lessons · action promotion                        │
 │  └─ add reflection follow-up → todo                             │
 ├─────────────────────────────────────────────────────────────────┤
 │  /health  HEALTH                                                │
@@ -274,8 +274,6 @@ nextAction computed server-side:
 READ MODELS (aggregation):
 ├─ GET /api/hub              → decision payload: habits, streaks, weight, plan, next action, insight
 ├─ GET /api/health           → weight trend, workouts, gym streak, weekly count, meal status
-├─ GET /api/deep-work        → deep work sessions, week stats, category breakdown
-├─ GET /api/reflect-insights → timeframe-aware insight synthesis
 └─ GET /api/plan/range       → calendar range (events + habit map by date range)
 
 CRUD ENDPOINTS:
@@ -294,7 +292,7 @@ CRUD ENDPOINTS:
 │   Web App    │     │    Voice     │     │  CLI Skills  │
 │   app/       │     │   Pipeline   │     │              │
 │              │     │              │     │  /log        │
-│  Review ───▶ │     │ iOS Shortcut │     │  /reflect    │
+│  Reflect ──▶ │     │ iOS Shortcut │     │  /reflect    │
 │  Plan ────▶  │     │  ▼           │     │  /weekly     │
 │  Health ──▶  │     │ GH Issue     │     │              │
 │  (reads +    │     │  ▼           │     │  Writes      │

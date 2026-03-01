@@ -27,8 +27,6 @@ This app is the decision and execution surface over canonical CSV data in the re
 | `/api/daily-signals` | Canonical daily event read/write |
 | `/api/health` | Health/workout read model |
 | `/api/reflections` | Reflection read/write + patterns |
-| `/api/deep-work` | Deep-work analytics by timeframe |
-| `/api/reflect-insights` | Timeframe-aware insight synthesis |
 | `/api/plan` + `/api/plan/range` | Plan CRUD + calendar range read model |
 | `/api/todos` | Todo CRUD |
 

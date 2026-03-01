@@ -29,43 +29,6 @@ interface ReflectionData {
   patterns: { lesson: string; count: number }[];
 }
 
-interface DeepWorkData {
-  range: TimeframeWindow;
-  stats: {
-    totalMinutes: number;
-    totalSessions: number;
-    activeDays: number;
-    avgSessionMin: number;
-    avgActiveDayMin: number;
-  };
-  recent: {
-    date: string;
-    durationMin: number;
-    topic: string;
-    reflection: ReflectionEntry | null;
-  }[];
-}
-
-interface ReflectInsightsData {
-  range: TimeframeWindow;
-  summary: {
-    trackedDays: number;
-    reflectionCount: number;
-    deepWorkMinutes: number;
-    deepWorkSessions: number;
-    gymDoneDays: number;
-    gymTrackedDays: number;
-    sleepDoneDays: number;
-    sleepTrackedDays: number;
-    topDomain: { domain: string; count: number } | null;
-  };
-  insights: {
-    type: "positive" | "warning" | "opportunity";
-    title: string;
-    message: string;
-  }[];
-}
-
 const TIMEFRAMES: { key: TimeframeKey; label: string }[] = [
   { key: "week", label: "This Week" },
   { key: "month", label: "This Month" },
@@ -78,18 +41,6 @@ function domainLabel(domain: string): string {
   if (domain === "sleep") return "Sleep";
   if (domain === "addiction") return "Recovery";
   return domain;
-}
-
-function insightTone(type: "positive" | "warning" | "opportunity"): string {
-  if (type === "positive") return "border-emerald-500/30 bg-emerald-500/5";
-  if (type === "warning") return "border-amber-500/30 bg-amber-500/5";
-  return "border-blue-500/30 bg-blue-500/5";
-}
-
-function insightTextTone(type: "positive" | "warning" | "opportunity"): string {
-  if (type === "positive") return "text-emerald-300";
-  if (type === "warning") return "text-amber-300";
-  return "text-blue-300";
 }
 
 function todoTitleFromReflection(reflection: ReflectionEntry): string {
@@ -110,8 +61,6 @@ async function fetchJson<T>(url: string): Promise<T> {
 export default function ReflectPage() {
   const [timeframe, setTimeframe] = useState<TimeframeKey>("week");
   const [reflectionData, setReflectionData] = useState<ReflectionData | null>(null);
-  const [deepWorkData, setDeepWorkData] = useState<DeepWorkData | null>(null);
-  const [insightsData, setInsightsData] = useState<ReflectInsightsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionBusyKey, setActionBusyKey] = useState<string | null>(null);
@@ -131,16 +80,10 @@ export default function ReflectPage() {
     let active = true;
     const query = `?range=${timeframe}`;
 
-    Promise.all([
-      fetchJson<ReflectionData>(`/api/reflections${query}`),
-      fetchJson<DeepWorkData>(`/api/deep-work${query}`),
-      fetchJson<ReflectInsightsData>(`/api/reflect-insights${query}`),
-    ])
-      .then(([r, d, i]) => {
+    fetchJson<ReflectionData>(`/api/reflections${query}`)
+      .then((r) => {
         if (!active) return;
         setReflectionData(r);
-        setDeepWorkData(d);
-        setInsightsData(i);
       })
       .catch((e: unknown) => {
         if (!active) return;
@@ -219,7 +162,7 @@ export default function ReflectPage() {
     );
   }
 
-  if (error || !reflectionData || !deepWorkData || !insightsData) {
+  if (error || !reflectionData) {
     return (
       <div className="min-h-screen bg-black text-zinc-100 p-4">
         <p className="text-zinc-400">{error || "Failed to load reflection dashboard."}</p>
@@ -255,30 +198,6 @@ export default function ReflectPage() {
               </p>
             </section>
           </header>
-
-          <section className="bg-zinc-900/60 backdrop-blur-md border border-blue-500/30 rounded-xl p-3">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-xs text-zinc-400 uppercase">AI Timeframe Insight</p>
-              <span className="text-xs text-blue-300">{insightsData.range.label}</span>
-            </div>
-            <p className="mt-2 text-sm text-zinc-300">
-              {insightsData.summary.trackedDays} tracked days, {insightsData.summary.reflectionCount} reflections, {" "}
-              {insightsData.summary.deepWorkMinutes} deep-work minutes.
-            </p>
-            <div className="mt-3 space-y-2">
-              {insightsData.insights.map((insight, idx) => (
-                <div
-                  key={`${insight.title}-${idx}`}
-                  className={`rounded border p-2 ${insightTone(insight.type)}`}
-                >
-                  <p className={`text-sm font-medium ${insightTextTone(insight.type)}`}>
-                    {insight.title}
-                  </p>
-                  <p className="text-sm text-zinc-300">{insight.message}</p>
-                </div>
-              ))}
-            </div>
-          </section>
 
           <section className="bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl p-3">
             <div className="flex items-center justify-between gap-2">
@@ -373,50 +292,6 @@ export default function ReflectPage() {
                 </div>
               </div>
             )}
-          </section>
-
-          <section className="bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl p-3">
-            <p className="text-xs text-zinc-400 uppercase mb-2">Deep Work</p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              <div className="bg-zinc-800/50 border border-white/10 rounded p-2 text-center">
-                <p className="text-[11px] text-zinc-400">Minutes</p>
-                <p className="text-lg font-semibold">{deepWorkData.stats.totalMinutes}</p>
-              </div>
-              <div className="bg-zinc-800/50 border border-white/10 rounded p-2 text-center">
-                <p className="text-[11px] text-zinc-400">Sessions</p>
-                <p className="text-lg font-semibold">{deepWorkData.stats.totalSessions}</p>
-              </div>
-              <div className="bg-zinc-800/50 border border-white/10 rounded p-2 text-center">
-                <p className="text-[11px] text-zinc-400">Active Days</p>
-                <p className="text-lg font-semibold">{deepWorkData.stats.activeDays}</p>
-              </div>
-              <div className="bg-zinc-800/50 border border-white/10 rounded p-2 text-center">
-                <p className="text-[11px] text-zinc-400">Avg / Session</p>
-                <p className="text-lg font-semibold">{deepWorkData.stats.avgSessionMin}m</p>
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <p className="text-xs text-zinc-400 uppercase mb-2">Recent Sessions</p>
-              <div className="space-y-2">
-                {deepWorkData.recent.length === 0 && (
-                  <p className="text-sm text-zinc-600">No sessions to show in this timeframe.</p>
-                )}
-                {deepWorkData.recent.slice(0, 10).map((s, i) => (
-                  <div key={`${s.date}-${i}`} className="border border-white/10 rounded p-2">
-                    <p className="text-xs text-zinc-400 mb-1">
-                      {s.date} · {s.durationMin}m
-                    </p>
-                    <p className="text-sm text-zinc-300">{s.topic || "No topic"}</p>
-                    {s.reflection?.lesson && (
-                      <p className="text-xs text-zinc-400 mt-1">
-                        Reflection: {s.reflection.lesson}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
           </section>
         </div>
       </div>

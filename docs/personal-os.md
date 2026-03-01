@@ -92,11 +92,9 @@ To avoid repeated explanations, memory must be explicit.
 | Surface | Primary Role |
 |---------|--------------|
 | `Hub` | Priority and next action now |
-| `Review` | Intake triage and routing confidence |
 | `Plan` | Time-block execution and completion |
 | `Reflect` | Evidence + insights + action promotion |
 | `Health` | Training and body-composition execution |
-| `Ideas` | Action backlog lifecycle |
 
 ## Decision Quality Bar
 
@@ -130,7 +128,7 @@ A recommendation is valid only if it is:
 ### Phase 4: Action Closure
 
 1. Tighten reflection-to-action flow.
-2. Ensure promoted ideas can become plan blocks quickly.
+2. Ensure promoted reflection actions can become plan blocks quickly.
 3. Track whether recommended actions were actually completed.
 
 ### Phase 5: Compounding Memory

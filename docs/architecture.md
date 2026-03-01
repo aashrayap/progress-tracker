@@ -8,9 +8,9 @@
 ├─────────────┬──────────────┬──────────────┬────────────────┤
 │ inbox.csv   │daily_signals │  plan.csv    │ reflections.csv│
 │ raw capture │  daily facts │  schedule    │  win/lesson/   │
-│ queue       │  + execution │  blocks      │  change        │
+│ audit log   │  + execution │  blocks      │  change        │
 ├─────────────┴──────────────┴──────────────┴────────────────┤
-│ workouts.csv (lift benchmarks) + ideas.csv (triage)        │
+│ workouts.csv (lift benchmarks) + todos.csv (single actions) │
 └────────────────────────┬────────────────────────────────────┘
                          │
          ┌───────────────┼───────────────┐
@@ -19,7 +19,7 @@
    │ Next.js  │   │ Claude   │   │ Voice Inbox  │
    │ App      │   │ CLI      │   │ Pipeline     │
    │ (app/)   │   │ /log     │   │              │
-   │          │   │ /review  │   │ iOS Shortcut │
+   │          │   │ /reflect │   │ iOS Shortcut │
    │ Reads    │   │ /weekly  │   │ → GH Issue   │
    │ CSVs →   │   │          │   │ → voice-     │
    │ web UI   │   │ Writes   │   │   inbox.sh   │
@@ -38,10 +38,8 @@ app/
 │   ├── api/
 │   │   ├── hub/route.ts  ← hub + next-action payload
 │   │   ├── daily-signals/← canonical daily facts API
-│   │   ├── inbox/route.ts← review queue API
-│   │   ├── ideas/route.ts← idea triage API
 │   │   ├── health/route.ts← health dashboard API
-│   │   ├── reflections/  ← reflection + deep-work APIs
+│   │   ├── reflections/  ← reflection read/write API
 │   │   ├── plan/         ← CRUD for plan.csv
 │   │   └── todos/        ← CRUD for todos.csv
 │   ├── components/       ← YearView, MonthView, WeekView, DayView, etc.
@@ -82,9 +80,9 @@ voice-inbox.sh (scripts/, runs via launchd every 5s)
   ▼
 Claude CLI (--print, bypassPermissions)
   │  reads .claude/prompts/voice-inbox.md for instructions
-  │  parses voice note → writes inbox + routed CSVs
+  │  parses voice note → appends inbox audit row + routed CSVs
   ▼
-CSV write (daily_signals.csv, workouts.csv, reflections.csv, ideas.csv)
+CSV write (inbox.csv, daily_signals.csv, workouts.csv, reflections.csv, todos.csv)
   │  git commit + push
   ▼
 GitHub Issue closed with summary comment
@@ -115,14 +113,10 @@ Reload: `launchctl unload ~/Library/LaunchAgents/com.ash.voice-inbox.plist && la
 | `/api/plan` | GET/POST/DELETE | CRUD for plan entries |
 | `/api/plan/range` | GET | Events + habit map by date range |
 | `/api/todos` | GET/POST/PUT/DELETE | CRUD for todos |
-| `/api/inbox` | GET/POST/PATCH | Review queue read + state patching |
-| `/api/ideas` | GET/POST/PATCH | Idea backlog lifecycle |
 | `/api/reflections` | GET/POST | Reflection read/write + recurring lesson detection |
-| `/api/deep-work` | GET | Deep work sessions derived from daily_signals |
 
 ### Hub Decision Priority
 
-1. Resolve review backlog if pending captures exist
-2. Start next scheduled plan block if one is pending
-3. Trigger training/cardio action if gym not yet logged
-4. Else push reflection review
+1. Start next scheduled plan block if one is pending
+2. Trigger training/cardio action if gym not yet logged
+3. Else push reflection review
