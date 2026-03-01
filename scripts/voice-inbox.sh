@@ -71,10 +71,10 @@ Voice note content:
 $body
 
 Steps:
-1. Read daily_signals.csv, inbox.csv, ideas.csv, and reflections.csv to understand current format
-2. Determine if this is a daily signal, workout, reflection, idea, or unresolved inbox item
+1. Read daily_signals.csv, inbox.csv, workouts.csv, reflections.csv, and todos.csv to understand current format
+2. Determine if this is a daily signal, workout, reflection, actionable todo, or unresolved note
 3. Append to the appropriate CSV file(s)
-4. Run: git add daily_signals.csv inbox.csv ideas.csv workouts.csv reflections.csv && git commit -m 'voice: process issue #$number'
+4. Run: git add daily_signals.csv inbox.csv workouts.csv reflections.csv todos.csv && git commit -m 'voice: process issue #$number'
 5. Run: gh issue comment $number --repo $REPO --body '<your summary>'
 6. Run: gh issue close $number --repo $REPO
 7. Write push notification to /tmp/voice-inbox-ntfy.txt (see prompt for format rules)" \

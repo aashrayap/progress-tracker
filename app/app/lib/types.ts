@@ -36,17 +36,6 @@ export interface InboxEntry {
   error: string;
 }
 
-export interface IdeaEntry {
-  id: number;
-  createdAt: string;
-  title: string;
-  details: string;
-  domain: "app" | "health" | "life" | "system";
-  status: "inbox" | "archived";
-  source: string;
-  captureId: string;
-}
-
 export type HabitMap = Record<string, Record<string, boolean>>;
 
 export type ZoomLevel = "year" | "month" | "week" | "day";

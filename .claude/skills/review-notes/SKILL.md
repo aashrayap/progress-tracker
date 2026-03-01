@@ -12,7 +12,7 @@ Surface everything that happened in a time period across all tracking files.
 | File | What to pull | Path |
 |------|-------------|------|
 | daily_signals.csv | Rows with non-empty `context` + all `trigger`/`relapse` signals | `~/Documents/tracker/daily_signals.csv` |
-| inbox.csv | Raw captures in review flow (`new`, `needs_review`, `routed`) | `~/Documents/tracker/inbox.csv` |
+| inbox.csv | Raw capture audit log | `~/Documents/tracker/inbox.csv` |
 | reflections.csv | All reflections (win/lesson/change per domain) | `~/Documents/tracker/reflections.csv` |
 | plan.csv | Scheduled items (show done status) | `~/Documents/tracker/plan.csv` |
 | todos.csv | Tasks created in the period | `~/Documents/tracker/todos.csv` |
@@ -54,7 +54,7 @@ workouts.csv:     date,workout,exercise,set,weight,reps,notes
 📋 NOTES REVIEW — [period label] ([start date] → [end date])
 
 📅 [DATE]
-├─ 📨 [inbox capture] [status]: [raw_text]
+├─ 📨 [inbox capture]: [raw_text]
 ├─ 🪞 [domain]: ✓ [win] | 💡 [lesson] | → [change]  (from reflections.csv)
 ├─ ⚠ trigger: [value] — [context from daily_signals]
 ├─ 🔴 relapse: [value] — [context from daily_signals]
@@ -68,7 +68,7 @@ workouts.csv:     date,workout,exercise,set,weight,reps,notes
 
 ───────────────────
 SUMMARY
-├─ Inbox captures: X
+├─ Raw captures: X
 ├─ Contextual signals: X
 ├─ Reflections: X
 ├─ Triggers: X
@@ -82,7 +82,7 @@ SUMMARY
 - Skip dates with no entries
 - Triggers and relapses always shown (even if notes column empty)
 - For daily_signals rows: only show if context is non-empty OR signal is trigger/relapse
-- Include inbox captures for the period regardless of whether they were routed
+- Include inbox captures for the period
 - plan.csv: show ✓ if done column has any value, ✗ if empty
 - todos.csv: ☑ if done=1, ☐ if done=0
 - If no data found for the period, say so plainly

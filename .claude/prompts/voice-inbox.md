@@ -1,15 +1,15 @@
 You are processing a voice note dictated from a phone. The note was captured via iOS Shortcut and created as a GitHub Issue.
 
 Canonical files:
-- `inbox.csv` (raw capture queue, always written first)
+- `inbox.csv` (raw capture audit log, append-only)
 - `daily_signals.csv` (structured daily facts)
 - `workouts.csv` (lift benchmark details)
 - `reflections.csv` (win/lesson/change)
-- `ideas.csv` (idea backlog)
+- `todos.csv` (single action backlog)
 
 ## Your Job
 
-Read the issue body and decide: is this a **daily signal**, a **workout log**, a **reflection**, an **idea**, or an **unresolved note**.
+Read the issue body and decide: is this a **daily signal**, a **workout log**, a **reflection**, an **actionable todo**, or an **unresolved note**.
 
 ## Log Entry Detection
 
@@ -96,12 +96,13 @@ Example voice: "Deep work 90 minutes on API routes. Learned about try catch patt
 
 1. Use today's date (from the issue creation timestamp) for all entries
 2. ALWAYS append raw capture to `inbox.csv` first
+   - Use `status=logged` for new capture rows (append-only audit semantics)
 3. If it's a daily signal: append rows to `daily_signals.csv`
 4. If it's a workout log: append rows to `workouts.csv` AND one gym completion signal to `daily_signals.csv`
 5. If it's a reflection: append to `reflections.csv` (and `daily_signals.csv` signal if applicable)
-6. If it's an idea: append to `ideas.csv`
-7. If unresolved: keep it in `inbox.csv` with `needs_review`
-8. If it contains BOTH signal-worthy data AND reflections/ideas, do both where essential
+6. If it's actionable or an idea: append to `todos.csv` with `done=0` and `created=today`
+7. If unresolved: append to `todos.csv` with a clear "Clarify:" prefix in the item text
+8. If it contains BOTH signal-worthy data AND reflections/todos, do both where essential
 9. After processing, comment on the GitHub issue with what you did
 10. Close the issue
 
@@ -238,6 +239,6 @@ After all CSV writes and git operations, as your FINAL step:
 - Be concise in issue comments
 - Do NOT create branches or PRs — edit files directly on main
 - Only append to CSVs, never modify existing rows
-- If you can't determine intent, default to `inbox.csv` with `needs_review`
+- If you can't determine intent, default to `todos.csv` with a "Clarify:" prefixed item
 - Create workouts.csv with header `date,workout,exercise,set,weight,reps,notes` if it doesn't exist
 - Create reflections.csv with header `date,domain,win,lesson,change` if it doesn't exist

@@ -1,15 +1,14 @@
 import fs from "fs";
 import path from "path";
-import type { DailySignalEntry, IdeaEntry, InboxEntry } from "./types";
+import type { DailySignalEntry, InboxEntry } from "./types";
 import { daysAgoStr, todayStr } from "./utils";
 import { normalizeWorkoutKey } from "./config";
 
-export type { DailySignalEntry, IdeaEntry, InboxEntry };
+export type { DailySignalEntry, InboxEntry };
 
 const ROOT = path.join(process.cwd(), "..");
 const DAILY_SIGNALS_PATH = path.join(ROOT, "daily_signals.csv");
 const INBOX_PATH = path.join(ROOT, "inbox.csv");
-const IDEAS_PATH = path.join(ROOT, "ideas.csv");
 const PLAN_PATH = path.join(ROOT, "plan.csv");
 const TODOS_PATH = path.join(ROOT, "todos.csv");
 const WORKOUTS_PATH = path.join(ROOT, "workouts.csv");
@@ -18,7 +17,6 @@ const REFLECTIONS_PATH = path.join(ROOT, "reflections.csv");
 const DAILY_SIGNALS_HEADER = "date,signal,value,unit,context,source,capture_id,category";
 const INBOX_HEADER =
   "capture_id,captured_at,source,raw_text,status,suggested_destination,normalized_text,error";
-const IDEAS_HEADER = "id,created_at,title,details,domain,status,source,capture_id";
 const PLAN_HEADER = "date,start,end,item,done,notes";
 const TODOS_HEADER = "id,item,done,created";
 const WORKOUTS_HEADER = "date,workout,exercise,set,weight,reps,notes";
@@ -278,89 +276,6 @@ export function updateInboxEntry(
       )},${csvQuote(e.error || "")}`
   );
   writeAll(INBOX_PATH, INBOX_HEADER, lines);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Ideas
-// ─────────────────────────────────────────────────────────────────────────────
-
-const IDEA_DOMAINS = new Set<IdeaEntry["domain"]>(["app", "health", "life", "system"]);
-
-function normalizeIdeaDomain(raw: string): IdeaEntry["domain"] {
-  const v = (raw || "").trim().toLowerCase();
-  return IDEA_DOMAINS.has(v as IdeaEntry["domain"]) ? (v as IdeaEntry["domain"]) : "system";
-}
-
-function normalizeIdeaStatus(raw: string): IdeaEntry["status"] {
-  const v = (raw || "").trim().toLowerCase();
-  return v === "archived" ? "archived" : "inbox";
-}
-
-export function readIdeas(): IdeaEntry[] {
-  if (!fs.existsSync(IDEAS_PATH)) return [];
-  const lines = readDataLines(IDEAS_PATH);
-  return lines
-    .map((line) => {
-      const clean = parseCSVLine(line);
-      return {
-        id: parseInt(clean[0], 10) || 0,
-        createdAt: clean[1] || "",
-        title: clean[2] || "",
-        details: clean[3] || "",
-        domain: normalizeIdeaDomain(clean[4] || ""),
-        status: normalizeIdeaStatus(clean[5] || ""),
-        source: clean[6] || "",
-        captureId: clean[7] || "",
-      };
-    })
-    .filter((idea) => {
-      if (idea.id <= 0) return false;
-      const hasContent =
-        idea.title.trim() ||
-        idea.details.trim() ||
-        idea.source.trim() ||
-        idea.captureId.trim();
-      return Boolean(hasContent);
-    });
-}
-
-export function appendIdea(
-  entry: Omit<IdeaEntry, "id" | "createdAt"> & { id?: number; createdAt?: string }
-): IdeaEntry {
-  const ideas = readIdeas();
-  const maxId = ideas.reduce((m, i) => Math.max(m, i.id), 0);
-  const newIdea: IdeaEntry = {
-    id: entry.id ?? maxId + 1,
-    createdAt: entry.createdAt ?? new Date().toISOString(),
-    title: entry.title,
-    details: entry.details,
-    domain: entry.domain,
-    status: entry.status,
-    source: entry.source,
-    captureId: entry.captureId,
-  };
-  const line = `${newIdea.id},${csvQuote(newIdea.createdAt)},${csvQuote(newIdea.title)},${csvQuote(
-    newIdea.details
-  )},${newIdea.domain},${newIdea.status},${csvQuote(newIdea.source)},${csvQuote(newIdea.captureId)}`;
-  appendLines(IDEAS_PATH, IDEAS_HEADER, [line]);
-  return newIdea;
-}
-
-export function updateIdea(
-  id: number,
-  updates: Partial<Omit<IdeaEntry, "id" | "createdAt">>
-): void {
-  const ideas = readIdeas();
-  const idx = ideas.findIndex((i) => i.id === id);
-  if (idx === -1) return;
-  ideas[idx] = { ...ideas[idx], ...updates };
-  const lines = ideas.map(
-    (e) =>
-      `${e.id},${csvQuote(e.createdAt)},${csvQuote(e.title)},${csvQuote(e.details)},${e.domain},${e.status},${csvQuote(
-        e.source
-      )},${csvQuote(e.captureId)}`
-  );
-  writeAll(IDEAS_PATH, IDEAS_HEADER, lines);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

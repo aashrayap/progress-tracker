@@ -12,7 +12,6 @@ import {
   readPlan,
   readReflections,
   readTodos,
-  readInbox,
   type DailySignalEntry,
 } from "../../lib/csv";
 import { config, getSplitForDate } from "../../lib/config";
@@ -40,7 +39,6 @@ export async function GET() {
     const plan = readPlan();
     const reflections = readReflections();
     const todos = readTodos();
-    const inbox = readInbox();
     const todaysPlan = getTodaysPlan(plan);
     const yesterday = daysAgoStr(1);
     const yesterdaysPlan = plan
@@ -128,13 +126,6 @@ export async function GET() {
       days: habitDates.map((date) => getHabitsForDate(signals, date)),
     };
 
-    const reviewBacklog = {
-      new: inbox.filter((i) => i.status === "new").length,
-      needsReview: inbox.filter((i) => i.status === "needs_review").length,
-      failed: inbox.filter((i) => i.status === "failed").length,
-    };
-    const reviewTotal = reviewBacklog.new + reviewBacklog.needsReview + reviewBacklog.failed;
-
     const nowHour = new Date().getHours() + new Date().getMinutes() / 60;
     const nextPlan = todaysPlan
       .filter((p) => p.done !== "1")
@@ -142,39 +133,32 @@ export async function GET() {
       .find((p) => p.end >= nowHour) || todaysPlan.filter((p) => p.done !== "1").sort((a, b) => a.start - b.start)[0];
 
     const nextAction =
-      reviewTotal > 0
+      nextPlan
         ? {
-            label: `Review ${reviewTotal} capture${reviewTotal === 1 ? "" : "s"}`,
-            reason: "Unresolved captures are blocking clean analysis.",
-            href: "/review",
-            cta: "Open Review",
+            label: `Start: ${nextPlan.item}`,
+            reason: "Next scheduled block is the highest priority execution step.",
+            href: "/plan",
+            cta: "Open Plan",
           }
-        : nextPlan
+        : !gymToday
           ? {
-              label: `Start: ${nextPlan.item}`,
-              reason: "Next scheduled block is the highest priority execution step.",
-              href: "/plan",
-              cta: "Open Plan",
+              label:
+                todaySplit.kind === "lift"
+                  ? `Train ${todaySplit.workoutKey || `Day ${nextWorkout}`} + ${config.trainingPlan.liftSessionCardioFinisherMin} min cardio`
+                  : `${todaySplit.label} (${todaySplit.minutes || 0} min)`,
+              reason:
+                todaySplit.kind === "lift"
+                  ? "Gym completion is one of your core compounding signals."
+                  : "Cardio days keep conditioning and recovery on track.",
+              href: "/health",
+              cta: "Open Health",
             }
-          : !gymToday
-            ? {
-                label:
-                  todaySplit.kind === "lift"
-                    ? `Train ${todaySplit.workoutKey || `Day ${nextWorkout}`} + ${config.trainingPlan.liftSessionCardioFinisherMin} min cardio`
-                    : `${todaySplit.label} (${todaySplit.minutes || 0} min)`,
-                reason:
-                  todaySplit.kind === "lift"
-                    ? "Gym completion is one of your core compounding signals."
-                    : "Cardio days keep conditioning and recovery on track.",
-                href: "/health",
-                cta: "Open Health",
-              }
-            : {
-                label: "Review today's patterns",
-                reason: "Use reflection analysis to set tomorrow's adjustments.",
-                href: "/reflect",
-                cta: "Open Reflect",
-              };
+          : {
+              label: "Review today's patterns",
+              reason: "Use reflection analysis to set tomorrow's adjustments.",
+              href: "/reflect",
+              cta: "Open Reflect",
+            };
 
     return NextResponse.json({
       nowWindow: getNowWindow(),
@@ -218,7 +202,6 @@ export async function GET() {
       insight,
       todayHabits,
       habitTracker,
-      reviewBacklog: { ...reviewBacklog, total: reviewTotal },
       nextAction,
     });
   } catch (e) {

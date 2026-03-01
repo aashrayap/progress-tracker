@@ -149,7 +149,7 @@ Strategy: hold S&P broad index · 10% annual return · no contributions
 │ DATA LAYER (canonical source of truth — flat CSVs in repo root)          │
 ├──────────────────────────────────────────────────────────────────────────┤
 │ inbox.csv │ daily_signals.csv │ workouts.csv │ reflections.csv            │
-│ ideas.csv │ plan.csv │ todos.csv                                         │
+│ plan.csv │ todos.csv                                                     │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -167,9 +167,8 @@ Three rules:
 ```
 inbox.csv
 ├─ capture_id, captured_at, source, raw_text
-├─ status (new │ needs_review │ accepted │ archived │ failed)
-├─ suggested_destination, normalized_text, error
-└─ Purpose: capture queue + review state
+├─ status, suggested_destination, normalized_text, error
+└─ Purpose: append-only raw capture audit log
 
 daily_signals.csv
 ├─ date, signal, value, unit, context, source, capture_id, category
@@ -183,12 +182,6 @@ reflections.csv
 ├─ date, domain, win, lesson, change
 ├─ Domains: gym │ addiction │ deep_work │ eating │ sleep
 └─ Purpose: win/lesson/change memory
-
-ideas.csv
-├─ id, created_at, title, details, domain, status, source, capture_id
-├─ Domains: app │ health │ life │ system
-├─ Statuses: inbox │ reviewed │ building │ archived
-└─ Purpose: action/idea backlog
 
 plan.csv
 ├─ date, start, end, item, done, notes
@@ -217,34 +210,18 @@ daily_signals.csv signal values:
 ## Workflow Pipeline
 
 ```
-┌────────────┐     ┌────────────┐     ┌──────────────────┐     ┌────────────┐
-│  CAPTURE   │────▶│  REVIEW    │────▶│  MATERIALIZE     │────▶│  CLOSED    │
-│  inbox.csv │     │  /review   │     │  → ideas.csv     │     │  inbox row │
-│  status:   │     │  pick dest │     │  → todos.csv     │     │  status:   │
-│  new       │     │  Route +   │     │  → reflections   │     │  archived  │
-│            │     │  Accept    │     │  (dedupe check)  │     │            │
-└────────────┘     └────────────┘     └──────────────────┘     └────────────┘
-                         │ fail
-                         ▼
-                   ┌─────────────┐
-                   │needs_review │
-                   │+ error msg  │
-                   └─────────────┘
+┌────────────┐     ┌──────────────────┐
+│  CAPTURE   │────▶│  MATERIALIZE     │
+│  inbox.csv │     │  → daily_signals │
+│  append-   │     │  → workouts      │
+│  only log  │     │  → reflections   │
+│            │     │  → todos         │
+└────────────┘     └──────────────────┘
 
 Pipeline rule:
-├─ Review    = ingestion quality control (is this clean? where does it go?)
-├─ Reflect   = interpretation (what patterns? what to change?)
-└─ Ideas     = execution backlog (what's next?)
-```
-
-Routing engine (`app/app/lib/inbox-pipeline.ts`):
-```
-routeInboxEntry(entry, destination)
-├─ ideas        → dedupe by captureId → appendIdea()
-├─ todos        → dedupe by text match → appendTodo()
-├─ reflections  → dedupe by date+domain+text → appendReflection()
-├─ daily_signals→ ✗ blocked (field mapping not yet defined)
-└─ manual/inbox → ✗ "pick a concrete destination first"
+├─ Capture  = preserve raw signal in inbox.csv for audit/reprocessing
+├─ Reflect  = interpretation (what patterns? what to change?)
+└─ Todos    = single actionable backlog
 ```
 
 ---
@@ -260,12 +237,6 @@ routeInboxEntry(entry, destination)
 │  ├─ training card · daily insight · next action                 │
 │  └─ 90-day dopamine grid                                        │
 ├─────────────────────────────────────────────────────────────────┤
-│  /review  REVIEW                                                │
-│  Capture triage + routing                                       │
-│  ├─ inbox counts (total/new/needs_review/failed)                │
-│  ├─ per-item destination selector (ideas/todos/reflections/...) │
-│  └─ Route+Accept / Needs Review / Archive                       │
-├─────────────────────────────────────────────────────────────────┤
 │  /plan  PLAN                                                    │
 │  Time-block execution                                           │
 │  ├─ year / month / week / day views                             │
@@ -273,20 +244,16 @@ routeInboxEntry(entry, destination)
 │  └─ todo sidebar                                                │
 ├─────────────────────────────────────────────────────────────────┤
 │  /reflect  REFLECT                                              │
-│  Evidence + insights + actions                                  │
+│  Evidence + insights                                            │
 │  ├─ reflections by timeframe (week/month)                       │
 │  ├─ recurring lessons · deep work analytics                     │
-│  └─ promote reflection → action                                 │
+│  └─ add reflection follow-up → todo                             │
 ├─────────────────────────────────────────────────────────────────┤
 │  /health  HEALTH                                                │
 │  Training + body composition                                    │
 │  ├─ current / next workout · weekly split (Option B)            │
 │  ├─ compound master list · exercise progression                 │
 │  └─ weight progress + checkpoints · meal status                 │
-├─────────────────────────────────────────────────────────────────┤
-│  /ideas  IDEAS                                                  │
-│  Action backlog lifecycle                                       │
-│  └─ kanban: inbox → reviewed → building → archived              │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -294,10 +261,9 @@ routeInboxEntry(entry, destination)
 
 ```
 nextAction computed server-side:
-1. ⚡ Resolve review backlog    (if pending captures exist)
-2. 📋 Start next plan block     (if one is pending)
-3. 🏋 Trigger training/cardio   (if gym not yet logged)
-4. 💭 Push reflection review    (fallback)
+1. 📋 Start next plan block     (if one is pending)
+2. 🏋 Trigger training/cardio   (if gym not yet logged)
+3. 💭 Push reflection review    (fallback)
 ```
 
 ---
@@ -314,8 +280,6 @@ READ MODELS (aggregation):
 
 CRUD ENDPOINTS:
 ├─ GET/POST     /api/daily-signals  → read (filterable) · append signals
-├─ GET/POST/PATCH /api/inbox        → capture queue · insert · status patch (routes on accept)
-├─ GET/POST/PATCH /api/ideas        → idea backlog read/create/update
 ├─ GET/POST     /api/reflections    → reflection read/write + recurring lesson detection
 ├─ GET/POST/DELETE /api/plan        → plan entry CRUD (upsert/delete by date+item)
 └─ GET/POST/PUT/DELETE /api/todos   → todo CRUD (ID-based)
@@ -360,9 +324,8 @@ app/app/lib/
 ├─ config.ts          Static config: profile, exercises, workout templates
 │                     (W1-W5), weekly split, triggers, daily tasks
 │                     Legacy normalization: A/B/C → W1/W2/W3
-├─ inbox-pipeline.ts  Routing engine: normalize dest, dedupe, materialize
 ├─ timeframe.ts       Timeframe resolution (week/month) for Reflect
-├─ types.ts           Shared types (DailySignalEntry, IdeaEntry, InboxEntry)
+├─ types.ts           Shared types (DailySignalEntry, InboxEntry)
 └─ utils.ts           Date helpers (todayStr, daysAgoStr, toDateStr)
 ```
 
@@ -381,7 +344,7 @@ app/app/lib/
 │ Rule Memory      │ Recurring lessons + playbook      │ What to do when   │
 │                  │ (docs/life-playbook.md)           │ patterns repeat   │
 ├──────────────────┼──────────────────────────────────┼───────────────────┤
-│ Action Memory    │ ideas, plan, todos                │ What is changing  │
+│ Action Memory    │ plan, todos                       │ What is changing  │
 │                  │                                   │ next              │
 └──────────────────┴──────────────────────────────────┴───────────────────┘
 ```
@@ -460,8 +423,8 @@ Node `>=20.9` required. Run `npm run lint && npm run build` before finishing cha
 
 ```
 1. Data integrity     → stable row IDs for plan, idempotency guards for signals
-2. Routing completion → expand inbox pipeline to support daily_signals
-3. Reflect center     → timeframe-aware insight synthesis → action promotion
+2. Capture clarity    → preserve raw capture log while routing directly to canonical tables
+3. Reflect center     → timeframe-aware insight synthesis → action promotion into todos
 4. Hub command center → elevate nextAction as primary UI control
 5. Compounding memory → recurring lessons → explicit rules → future decision ranking
 ```

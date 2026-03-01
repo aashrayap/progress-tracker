@@ -3,8 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 
 type TimeframeKey = "week" | "month";
-type IdeaStatus = "inbox" | "archived";
-type IdeaDomain = "app" | "health" | "life" | "system";
 
 interface ReflectionEntry {
   date: string;
@@ -68,22 +66,10 @@ interface ReflectInsightsData {
   }[];
 }
 
-interface Idea {
-  id: number;
-  createdAt: string;
-  title: string;
-  details: string;
-  domain: IdeaDomain;
-  status: IdeaStatus;
-  source: string;
-  captureId: string;
-}
-
 const TIMEFRAMES: { key: TimeframeKey; label: string }[] = [
   { key: "week", label: "This Week" },
   { key: "month", label: "This Month" },
 ];
-const IDEA_STATUSES: IdeaStatus[] = ["inbox", "archived"];
 
 function domainLabel(domain: string): string {
   if (domain === "deep_work") return "Deep Work";
@@ -106,15 +92,9 @@ function insightTextTone(type: "positive" | "warning" | "opportunity"): string {
   return "text-blue-300";
 }
 
-function mapReflectionDomainToIdeaDomain(domain: string): IdeaDomain {
-  if (["gym", "eating", "sleep", "addiction"].includes(domain)) return "health";
-  if (domain === "deep_work") return "life";
-  return "system";
-}
-
-function ideaTitleFromReflection(reflection: ReflectionEntry): string {
+function todoTitleFromReflection(reflection: ReflectionEntry): string {
   const raw = reflection.change || reflection.lesson || reflection.win;
-  if (!raw.trim()) return `Follow-up: ${domainLabel(reflection.domain)}`;
+  if (!raw.trim()) return `Follow up: ${domainLabel(reflection.domain)}`;
   const trimmed = raw.trim();
   return trimmed.length <= 90 ? trimmed : `${trimmed.slice(0, 87)}...`;
 }
@@ -132,7 +112,6 @@ export default function ReflectPage() {
   const [reflectionData, setReflectionData] = useState<ReflectionData | null>(null);
   const [deepWorkData, setDeepWorkData] = useState<DeepWorkData | null>(null);
   const [insightsData, setInsightsData] = useState<ReflectInsightsData | null>(null);
-  const [ideas, setIdeas] = useState<Idea[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionBusyKey, setActionBusyKey] = useState<string | null>(null);
@@ -156,14 +135,12 @@ export default function ReflectPage() {
       fetchJson<ReflectionData>(`/api/reflections${query}`),
       fetchJson<DeepWorkData>(`/api/deep-work${query}`),
       fetchJson<ReflectInsightsData>(`/api/reflect-insights${query}`),
-      fetchJson<Idea[]>(`/api/ideas${query}`),
     ])
-      .then(([r, d, i, a]) => {
+      .then(([r, d, i]) => {
         if (!active) return;
         setReflectionData(r);
         setDeepWorkData(d);
         setInsightsData(i);
-        setIdeas(a);
       })
       .catch((e: unknown) => {
         if (!active) return;
@@ -199,23 +176,6 @@ export default function ReflectPage() {
     return present.length > 0 ? present : ["deep_work", "eating", "addiction"];
   }, [reflectionData]);
 
-  const actionsByStatus = useMemo(() => {
-    const buckets: Record<IdeaStatus, Idea[]> = {
-      inbox: [],
-      archived: [],
-    };
-    for (const idea of ideas) {
-      const status = idea.status === "archived" ? "archived" : "inbox";
-      buckets[status].push(idea);
-    }
-    return buckets;
-  }, [ideas]);
-
-  const backlogActions = useMemo(
-    () => ideas.filter((idea) => idea.status !== "archived"),
-    [ideas]
-  );
-
   const handlePromoteReflection = async (
     reflection: ReflectionEntry,
     promoteKey: string
@@ -224,41 +184,20 @@ export default function ReflectPage() {
     setActionError(null);
 
     try {
-      const title = ideaTitleFromReflection(reflection);
-      const details = [
-        `Source: reflection ${reflection.date} (${domainLabel(reflection.domain)})`,
-        reflection.win ? `Win: ${reflection.win}` : "",
-        reflection.lesson ? `Lesson: ${reflection.lesson}` : "",
-        reflection.change ? `Change: ${reflection.change}` : "",
-      ]
-        .filter(Boolean)
-        .join("\n");
-
-      const res = await fetch("/api/ideas", {
+      const item = todoTitleFromReflection(reflection);
+      const res = await fetch("/api/todos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title,
-          details,
-          domain: mapReflectionDomainToIdeaDomain(reflection.domain),
-          status: "inbox",
-          source: "reflect",
-          captureId: `${reflection.date}:${reflection.domain}`,
+          item,
         }),
       });
 
       if (!res.ok) {
-        throw new Error("Failed to promote reflection");
+        throw new Error("Failed to create todo");
       }
 
-      const createdIdea = (await res.json()) as Idea;
-      setIdeas((prev) => {
-        const exists = prev.some((row) => row.id === createdIdea.id);
-        if (exists) {
-          return prev.map((row) => (row.id === createdIdea.id ? createdIdea : row));
-        }
-        return [createdIdea, ...prev];
-      });
+      await res.json();
       setPromotedKeys((prev) => {
         const next = new Set(prev);
         next.add(promoteKey);
@@ -266,36 +205,7 @@ export default function ReflectPage() {
       });
     } catch (e) {
       console.error(e);
-      setActionError("Could not create action from reflection.");
-    } finally {
-      setActionBusyKey(null);
-    }
-  };
-
-  const handleIdeaStatusChange = async (idea: Idea, status: IdeaStatus) => {
-    if (idea.status === status) return;
-
-    const busyKey = `idea-${idea.id}`;
-    setActionBusyKey(busyKey);
-    setActionError(null);
-
-    try {
-      const res = await fetch("/api/ideas", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: idea.id, status }),
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to update action status");
-      }
-
-      setIdeas((prev) =>
-        prev.map((row) => (row.id === idea.id ? { ...row, status } : row))
-      );
-    } catch (e) {
-      console.error(e);
-      setActionError("Could not update action status.");
+      setActionError("Could not add todo from reflection.");
     } finally {
       setActionBusyKey(null);
     }
@@ -395,6 +305,8 @@ export default function ReflectPage() {
               })}
             </div>
 
+            {actionError && <p className="mt-3 text-xs text-red-400">{actionError}</p>}
+
             {reflectionData.yesterdayChanges.length > 0 && (
               <div className="mt-4 border border-amber-500/20 rounded p-2">
                 <p className="text-xs text-zinc-400 uppercase mb-1">Yesterday&apos;s Changes</p>
@@ -437,10 +349,10 @@ export default function ReflectPage() {
                           } ${promoting ? "opacity-70" : ""}`}
                         >
                           {promoted
-                            ? "Added to Actions"
+                            ? "Added to Todos"
                             : promoting
                               ? "Adding..."
-                              : "Promote to Action"}
+                              : "Add to Todos"}
                         </button>
                       </div>
                     </div>
@@ -461,55 +373,6 @@ export default function ReflectPage() {
                 </div>
               </div>
             )}
-          </section>
-
-          <section className="bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl p-3">
-            <p className="text-xs text-zinc-400 uppercase">Actions</p>
-
-            <div className="mt-2 flex flex-wrap gap-2">
-              {IDEA_STATUSES.map((status) => (
-                <span
-                  key={status}
-                  className="px-2 py-1 rounded text-xs border bg-zinc-800 border-white/20 text-zinc-300"
-                >
-                  {status}: {actionsByStatus[status].length}
-                </span>
-              ))}
-            </div>
-
-            {actionError && <p className="mt-2 text-xs text-red-400">{actionError}</p>}
-
-            <div className="mt-3 space-y-2">
-              {backlogActions.length === 0 && (
-                <p className="text-sm text-zinc-600">No active actions in this timeframe.</p>
-              )}
-              {backlogActions.slice(0, 12).map((idea) => {
-                const busyKey = `idea-${idea.id}`;
-                const isBusy = actionBusyKey === busyKey;
-                return (
-                  <div key={idea.id} className="border border-white/10 rounded p-2">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm text-zinc-200 font-medium">{idea.title || "Untitled action"}</p>
-                        {idea.details && <p className="text-xs text-zinc-400 mt-1 line-clamp-3">{idea.details}</p>}
-                        <p className="text-xs text-zinc-400 mt-1">
-                          {idea.domain} · {new Date(idea.createdAt).toLocaleDateString()} · {idea.source || "unknown"}
-                        </p>
-                      </div>
-                      <button
-                        disabled={isBusy}
-                        onClick={() => handleIdeaStatusChange(idea, "archived")}
-                        className={`shrink-0 px-2 py-1 rounded border text-xs transition-colors bg-zinc-800 border-white/20 text-zinc-300 hover:text-zinc-100 ${
-                          isBusy ? "opacity-70" : ""
-                        }`}
-                      >
-                        Archive
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
           </section>
 
           <section className="bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl p-3">

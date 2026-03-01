@@ -50,12 +50,6 @@ interface AppData {
     dates: string[];
     days: Record<string, boolean>[];
   };
-  reviewBacklog: {
-    total: number;
-    new: number;
-    needsReview: number;
-    failed: number;
-  };
   nextAction: NextAction;
 }
 
@@ -175,7 +169,6 @@ export default function Home() {
               </div>
               <div className="mt-2 flex items-center gap-3 text-xs text-zinc-400">
                 {undonePlan.length > 0 && <Link href="/plan" className="hover:text-zinc-300">Open Plan</Link>}
-                {data.reviewBacklog.total > 0 && <Link href="/review" className="hover:text-zinc-300">Open Review ({data.reviewBacklog.total})</Link>}
               </div>
             </section>
           ) : null}

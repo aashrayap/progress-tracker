@@ -76,7 +76,7 @@ To avoid repeated explanations, memory must be explicit.
    - Source: recurring lessons and playbook constraints.
    - Role: what to do when patterns repeat.
 4. Action Memory
-   - Source: `ideas.csv`, `plan.csv`, `todos.csv`.
+   - Source: `plan.csv`, `todos.csv`.
    - Role: what is being changed next.
 
 ## System Contracts

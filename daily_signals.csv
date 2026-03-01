@@ -148,3 +148,9 @@ date,signal,value,unit,context,source,capture_id,category
 2026-02-27,lol,1,bool,clean,chat,,addiction
 2026-02-27,poker,0,bool,relapsed,chat,,addiction
 2026-02-28,deep_work,1,bool,not feeling great but setting the day right — get next tracker iteration done and start with progress. maybe gym too.,chat,,coding
+2026-02-28,gym,0,bool,,chat,,habits
+2026-02-28,meditate,0,bool,,chat,,habits
+2026-02-28,weed,1,bool,clean,chat,,addiction
+2026-02-28,ate_clean,0,bool,,chat,,habits
+2026-02-28,lol,1,bool,clean,chat,,addiction
+2026-02-28,poker,0,bool,relapsed,chat,,addiction

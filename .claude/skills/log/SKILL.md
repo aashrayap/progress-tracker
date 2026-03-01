@@ -54,10 +54,10 @@ Log a trigger event.
 ```
 
 ### /log note "<text>"
-Add an unstructured capture to inbox (not daily signals).
+Add an unstructured capture as a todo item.
 ```
 /log note "feeling strong today"
-→ inbox.csv entry (needs_review)
+→ todos.csv entry (done=0)
 ```
 
 ### /log relapse <substances>

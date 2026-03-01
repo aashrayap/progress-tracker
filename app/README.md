@@ -15,11 +15,9 @@ This app is the decision and execution surface over canonical CSV data in the re
 | Route | Purpose |
 |------|---------|
 | `/` | Hub: next action, momentum, daily orientation |
-| `/review` | Capture triage and routing review |
 | `/plan` | Time blocks + todo execution |
 | `/reflect` | Insights/evidence/actions by timeframe |
 | `/health` | Training, weight, and workout progression |
-| `/ideas` | Backlog lifecycle view |
 
 ## Core APIs
 
@@ -31,8 +29,6 @@ This app is the decision and execution surface over canonical CSV data in the re
 | `/api/reflections` | Reflection read/write + patterns |
 | `/api/deep-work` | Deep-work analytics by timeframe |
 | `/api/reflect-insights` | Timeframe-aware insight synthesis |
-| `/api/inbox` | Capture queue and review status updates |
-| `/api/ideas` | Idea/action backlog read/write |
 | `/api/plan` + `/api/plan/range` | Plan CRUD + calendar range read model |
 | `/api/todos` | Todo CRUD |
 
@@ -44,7 +40,6 @@ Canonical CSVs live one directory up from this app:
 - `../daily_signals.csv`
 - `../workouts.csv`
 - `../reflections.csv`
-- `../ideas.csv`
 - `../plan.csv`
 - `../todos.csv`
 

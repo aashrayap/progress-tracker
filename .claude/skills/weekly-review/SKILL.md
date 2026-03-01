@@ -20,7 +20,6 @@ date,signal,value,unit,context,source,capture_id,category
 | File | Purpose |
 |------|---------|
 | daily_signals.csv | Canonical source of daily metrics/habits |
-| inbox.csv | Raw captures pending review (optional context) |
 | workouts.csv | Set-level gym data (exercise, weight, reps) |
 | CLAUDE.md | Targets, pillars (always loaded) |
 | docs/life-playbook.md | Vision, weight, addiction trigger context |
