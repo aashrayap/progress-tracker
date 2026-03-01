@@ -21,9 +21,8 @@ id,item,done,created
 20,Clarify: Consider how adding meditate section into the app would integrate with existing functionalities - reflections and trigger tracking already exist. Into meditation (Francis Lucille). How might this factor in?,0,2026-02-26
 21,Clarify: Idea: notifications should give a contextual response after looking things up instead of just saying saved/logged. Unsure if good idea - logged for later review.,0,2026-02-26
 22,Clarify: Add 5min cardio to every gym session - start frictionless then expand later,1,2026-02-26
-23,"Rule: when getting takeout on Fri/Sat bring only enough for that night - no leftovers (Mezza Grille lesson)",0,2026-03-01
-24,"Replace pullups with lat_pulldown in gym Days C and E (pullups already covered by daily home reps)",0,2026-03-01
-25,"Feature: voice notes should trigger Claude to investigate and make incremental repo improvements autonomously",0,2026-03-01
-26,"Clarify: garbled voice note - 'Next round of sex sex for work idea' - re-record or clarify intent",0,2026-03-01
-27,"Clarify: 'Create shortcut except without instead of dictation type' - likely about iOS Shortcut with text input instead of dictation. Re-record or clarify.",0,2026-03-01
-28,"Feature: idea cards with Claude pre-investigation — voice idea → Claude scans repo against core pillars/3 layers → presents concise investigation on idea card → user approves → PR created automatically",0,2026-03-01
+23,Rule: when getting takeout on Fri/Sat bring only enough for that night - no leftovers (Mezza Grille lesson),1,2026-03-01
+24,Replace pullups with lat_pulldown in gym Days C and E (pullups already covered by daily home reps),0,2026-03-01
+25,Feature: voice notes should trigger Claude to investigate and make incremental repo improvements autonomously,0,2026-03-01
+27,Clarify: 'Create shortcut except without instead of dictation type' - likely about iOS Shortcut with text input instead of dictation. Re-record or clarify.,1,2026-03-01
+28,Feature: idea cards with Claude pre-investigation — voice idea → Claude scans repo against core pillars/3 layers → presents concise investigation on idea card → user approves → PR created automatically,0,2026-03-01

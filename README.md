@@ -289,15 +289,16 @@ CRUD ENDPOINTS:
 
 ```
 ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│   Web App    │     │    Voice     │     │  CLI Skills  │
+│   Web App    │     │    Inbox     │     │  CLI Skills  │
 │   app/       │     │   Pipeline   │     │              │
 │              │     │              │     │  /log        │
-│  Reflect ──▶ │     │ iOS Shortcut │     │  /reflect    │
-│  Plan ────▶  │     │  ▼           │     │  /weekly     │
-│  Health ──▶  │     │ GH Issue     │     │              │
-│  (reads +    │     │  ▼           │     │  Writes      │
-│   actions)   │     │ voice-       │     │  directly    │
-│              │     │  inbox.sh    │     │  to CSVs     │
+│  Reflect ──▶ │     │ iOS Shortcuts│     │  /reflect    │
+│  Plan ────▶  │     │ (voice+text) │     │  /weekly     │
+│  Health ──▶  │     │  ▼           │     │              │
+│  (reads +    │     │ GH Issue     │     │  Writes      │
+│   actions)   │     │  ▼           │     │  directly    │
+│              │     │ voice-       │     │  to CSVs     │
+│              │     │  inbox.sh    │     │              │
 │              │     │  ▼           │     │              │
 │              │     │ Claude CLI   │     │              │
 │              │     │  ▼           │     │              │
@@ -305,10 +306,10 @@ CRUD ENDPOINTS:
 │              │     │ git push     │     │              │
 └──────────────┘     └──────────────┘     └──────────────┘
 
-Voice pipeline: phone → dictate → GH Issue ("Voice: ...") → voice-inbox.sh
+Inbox pipeline: phone → voice or text → GH Issue ("Voice ...") → voice-inbox.sh
   (launchd, 5s poll) → Claude CLI → parse + write CSVs → commit + push → close issue
 
-Used at gym for workout logging (voice dictate sets/reps between exercises).
+Two iOS Shortcuts: voice (gym, hands-free) and text (on the go, can't speak).
 ```
 
 ---

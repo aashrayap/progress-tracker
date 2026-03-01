@@ -66,13 +66,19 @@ Current constraints:
 - Daily home-dose targets (pull-ups/push-ups)
 - Known triggers and profile data
 
-## Voice Inbox Pipeline
+## Inbox Pipeline (Voice + Text)
+
+Two iOS Shortcuts feed the same pipeline:
+- **Send Voice To Claude** — dictation input (hands-free, used at gym)
+- **Send Text To Claude** — text input (for when you can't speak)
+
+Both create a GitHub Issue with a `Voice`-prefixed title → same processing.
 
 ```
-Phone (iOS Shortcut)
-  │  dictate voice note
+Phone (iOS Shortcut — voice or text)
+  │  dictate or type
   ▼
-GitHub Issue (title: "Voice: ...")
+GitHub Issue (title: "Voice ...")
   │  created on aashrayap/progress-tracker
   ▼
 voice-inbox.sh (scripts/, runs via launchd every 5s)
@@ -80,7 +86,7 @@ voice-inbox.sh (scripts/, runs via launchd every 5s)
   ▼
 Claude CLI (--print, bypassPermissions)
   │  reads .claude/prompts/voice-inbox.md for instructions
-  │  parses voice note → appends inbox audit row + routed CSVs
+  │  parses input → appends inbox audit row + routed CSVs
   ▼
 CSV write (inbox.csv, daily_signals.csv, workouts.csv, reflections.csv, todos.csv)
   │  git commit + push
@@ -88,7 +94,8 @@ CSV write (inbox.csv, daily_signals.csv, workouts.csv, reflections.csv, todos.cs
 GitHub Issue closed with summary comment
 ```
 
-Also used for workout logging at the gym — voice dictate sets/reps between exercises.
+Voice shortcut used at gym for workout logging (dictate sets/reps between exercises).
+Text shortcut used on the go when speaking isn't possible.
 
 ### Launchd Setup
 

@@ -96,6 +96,10 @@ Typical daily total:
 - ~1,400 calories
 - ~115 g protein
 
+Rules:
+
+- Takeout (Fri/Sat only): bring exactly enough for that meal — no leftovers (Mezza Grille lesson)
+
 Weekly groceries (baseline):
 
 - Elk, rice, mixed vegetables, carrots, beets

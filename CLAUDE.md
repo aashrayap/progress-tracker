@@ -57,4 +57,4 @@ Full schemas: `docs/data-schemas.md`
 - **docs/ is reference** — read the relevant doc when working on that area
 - **Minimal by default** — no bloat, no dead code
 - **Delete > comment** — remove unused code completely
-- **Voice-first input** — iOS Shortcut → GitHub Issue → auto-processed
+- **Voice + text input** — two iOS Shortcuts (voice & text) → GitHub Issue → auto-processed

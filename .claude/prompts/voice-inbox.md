@@ -1,4 +1,4 @@
-You are processing a voice note dictated from a phone. The note was captured via iOS Shortcut and created as a GitHub Issue.
+You are processing input captured from a phone. The input was sent via iOS Shortcut (voice dictation or typed text) and created as a GitHub Issue.
 
 Canonical files:
 - `inbox.csv` (raw capture audit log, append-only)
