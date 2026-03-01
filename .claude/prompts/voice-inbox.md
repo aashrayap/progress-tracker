@@ -40,19 +40,30 @@ If the voice note mentions specific exercises with weights/reps (e.g., "squat 22
 Append to `workouts.csv` in format: `date,workout,exercise,set,weight,reps,notes`
 
 **Known exercises** (match these from voice):
-| Voice says | exercise value | workout |
-|-----------|----------------|---------|
-| squat, back squat | squat | A, B, C |
-| bench, bench press | bench | A |
-| incline bench, incline | incline_bench | B |
-| overhead press, OHP | ohp | C |
+| Voice says | exercise value | workout(s) |
+|-----------|----------------|------------|
+| squat, back squat | squat | A |
+| bench, bench press | bench | A, C |
 | lat pulldown, pulldown | lat_pulldown | A |
-| cable row | cable_row | B |
-| barbell row | barbell_row | C |
+| overhead press, OHP | ohp | B, E |
+| barbell row | barbell_row | B |
+| cable row | cable_row | D |
+| incline bench, incline | incline_bench | B, D |
+| RDL, Romanian deadlift | rdl | C |
+| pull-up, chin-up | pullup | C, E |
+| front squat | front_squat | D |
+| lunges, dumbbell lunges | lunges | E |
+| cable row | cable_row | (legacy) |
+| barbell row | barbell_row | (legacy) |
 
-**Workout templates:** A = squat/bench/lat_pulldown, B = squat/incline_bench/cable_row, C = squat/ohp/barbell_row
+**Workout templates (5 lift days):**
+- A = squat / bench / lat_pulldown
+- B = ohp / barbell_row / incline_bench
+- C = rdl / bench / pullup
+- D = front_squat / incline_bench / cable_row
+- E = lunges / ohp / pullup
 
-Infer the workout letter (A/B/C) from the exercises mentioned. If unclear, leave blank.
+Infer the workout letter (A-E) from the exercises mentioned. If unclear, leave blank.
 
 **Also** append one gym completion signal to `daily_signals.csv` when workout sets are logged.
 
@@ -135,7 +146,7 @@ Read last 7 days of weight entries. Compute trend.
 - If new low this month, mention it
 
 **GYM — MID-WORKOUT** (logged individual exercise sets to workouts.csv)
-Read today's existing workouts.csv entries. Check workout template (A/B/C) from config to show remaining.
+Read today's existing workouts.csv entries. Check workout template (A-E) from config to show remaining.
 ```
 ✓ Bench 185×8. Done: squat ✓ bench ✓ row ✗ (2/3)
 ```

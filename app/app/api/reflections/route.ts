@@ -1,13 +1,11 @@
 import { NextResponse } from "next/server";
 import { todayStr as todayLocal, daysAgoStr } from "../../lib/utils";
-import { appendReflection, readReflections } from "../../lib/csv";
+import { readReflections, archiveReflection } from "../../lib/csv";
 import { resolveTimeframeWindow } from "../../lib/timeframe";
-
-const VALID_DOMAINS = new Set(["gym", "addiction", "deep_work", "eating", "sleep"]);
 
 export async function GET(req: Request) {
   try {
-    const reflections = readReflections();
+    const reflections = readReflections().filter((r) => r.archived !== "1");
     const range = resolveTimeframeWindow(
       new URL(req.url).searchParams.get("range")
     );
@@ -60,30 +58,16 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+export async function PATCH(req: Request) {
   try {
-    const body = await req.json();
-    const { date, domain, win, lesson, change } = body;
-
-    if (!date || !domain) {
-      return NextResponse.json({ error: "date and domain are required" }, { status: 400 });
+    const { date, domain, index } = await req.json();
+    if (!date || !domain || index === undefined) {
+      return NextResponse.json({ error: "date, domain, and index are required" }, { status: 400 });
     }
-
-    if (!VALID_DOMAINS.has(domain)) {
-      return NextResponse.json({ error: "invalid domain" }, { status: 400 });
-    }
-
-    appendReflection({
-      date,
-      domain,
-      win: win || "",
-      lesson: lesson || "",
-      change: change || "",
-    });
-
+    archiveReflection(date, domain, index);
     return NextResponse.json({ success: true });
   } catch (e) {
-    console.error("POST /api/reflections error:", e);
-    return NextResponse.json({ error: "Failed to write reflection" }, { status: 500 });
+    console.error("PATCH /api/reflections error:", e);
+    return NextResponse.json({ error: "Failed to archive reflection" }, { status: 500 });
   }
 }

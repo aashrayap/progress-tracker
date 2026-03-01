@@ -1,67 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { config, getSplitForDate, normalizeWorkoutKey } from "../lib/config";
+import type { HealthData } from "../lib/types";
 import { toDateStr } from "../lib/utils";
 import WorkoutCard from "../components/WorkoutCard";
 import WeightChart from "../components/WeightChart";
 import ExerciseHistory from "../components/ExerciseHistory";
-
-interface WeightData {
-  current: number;
-  start: number;
-  goal: number;
-  deadline: string;
-  checkpoints: { month: string; target: number }[];
-  history: { date: string; value: number }[];
-}
-
-interface WorkoutSet {
-  set: number;
-  weight: number;
-  reps: number;
-  notes: string;
-}
-
-interface GroupedExercise {
-  name: string;
-  id: string;
-  sets: WorkoutSet[];
-}
-
-interface WorkoutDay {
-  date: string;
-  workout: string;
-  exercises: GroupedExercise[];
-}
-
-interface ExerciseProgressEntry {
-  date: string;
-  bestWeight: number;
-  bestReps: number;
-}
-
-interface HealthData {
-  weight: WeightData;
-  workouts: {
-    today: WorkoutDay | null;
-    history: WorkoutDay[];
-    nextWorkout: string;
-  };
-  gymToday: boolean;
-  gymStreak: number;
-  gymThisWeek: number;
-  ateCleanHistory: { date: string; clean: boolean }[];
-  mealsToday: { slot: string; clean: boolean; notes: string }[];
-  gymReflection: {
-    date: string;
-    domain: string;
-    win: string;
-    lesson: string;
-    change: string;
-  } | null;
-  exerciseProgress: Record<string, ExerciseProgressEntry[]>;
-}
 
 export default function HealthPage() {
   const [data, setData] = useState<HealthData | null>(null);
@@ -73,8 +17,8 @@ export default function HealthPage() {
         if (!res.ok) throw new Error("Failed to fetch health data");
         return res.json();
       })
-      .then((d) => {
-        setData(d);
+      .then((nextData) => {
+        setData(nextData);
         setLoading(false);
       })
       .catch((err) => {
@@ -103,85 +47,20 @@ export default function HealthPage() {
     );
   }
 
-  const { weight, workouts, gymToday, gymStreak, gymThisWeek, exerciseProgress, mealsToday, gymReflection } = data;
-
-  const allExercises = Object.values(config.exercises).flat();
-  const exerciseById = new Map(allExercises.map((exercise) => [exercise.id, exercise]));
-  const today = new Date();
-  const todayIndex = today.getDay();
-  const todaySplit = getSplitForDate(today);
-  const cycle = Object.keys(config.workoutTemplates);
-  const scheduledTemplateKey = (() => {
-    if (todaySplit.kind === "lift" && todaySplit.workoutKey) {
-      return todaySplit.workoutKey;
-    }
-    for (let offset = 1; offset <= config.trainingPlan.weeklySplit.length; offset++) {
-      const idx = (todayIndex + offset) % config.trainingPlan.weeklySplit.length;
-      const entry = config.trainingPlan.weeklySplit[idx];
-      if (entry.kind === "lift" && entry.workoutKey) {
-        return entry.workoutKey;
-      }
-    }
-    return null;
-  })();
-
-  const normalizedNextWorkout =
-    normalizeWorkoutKey(workouts.nextWorkout, cycle) || workouts.nextWorkout;
-  const normalizedTodayWorkout =
-    normalizeWorkoutKey(workouts.today?.workout, cycle) || workouts.today?.workout;
-  const templateKey = (
-    gymToday
-      ? (normalizedTodayWorkout || scheduledTemplateKey || normalizedNextWorkout)
-      : (scheduledTemplateKey || normalizedNextWorkout)
-  ) || cycle[0];
-  const template = config.workoutTemplates[templateKey];
-  const prescribedExercises = template
-    ? template
-        .map((id: string) => allExercises.find((e) => e.id === id))
-        .filter(
-          (
-            exercise
-          ): exercise is (typeof allExercises)[number] => Boolean(exercise)
-        )
-    : [];
-  const loggedExercises = workouts.today?.exercises || [];
-  const loggedOnlyExercises = loggedExercises
-    .filter((logged) => !prescribedExercises.some((p) => p.id === logged.id))
-    .map((logged) => ({
-      id: logged.id,
-      name: logged.name,
-      sets: Math.max(logged.sets.length, 1),
-      reps: "logged",
-    }));
-  const loggedAsDisplay = loggedExercises.map((logged) => ({
-    id: logged.id,
-    name: logged.name,
-    sets: Math.max(logged.sets.length, 1),
-    reps: "logged",
-  }));
-  const displayExercises =
-    gymToday && loggedAsDisplay.length > 0
-      ? loggedAsDisplay
-      : [...prescribedExercises, ...loggedOnlyExercises];
-  const totalSets = displayExercises.reduce(
-    (sum: number, e: { sets: number }) => sum + e.sets,
-    0
-  );
-  const workoutSummaryByKey = Object.fromEntries(
-    Object.entries(config.workoutTemplates).map(([key, exerciseIds]) => [
-      key,
-      exerciseIds
-        .map((exerciseId) => exerciseById.get(exerciseId)?.name || exerciseId)
-        .join(" / "),
-    ])
-  );
-  const masterListSections = [
-    { label: "Lower", ids: config.trainingPlan.masterList.lower },
-    { label: "Push", ids: config.trainingPlan.masterList.push },
-    { label: "Pull", ids: config.trainingPlan.masterList.pull },
-  ];
+  const {
+    weight,
+    workouts,
+    gymToday,
+    gymStreak,
+    gymLast7,
+    exerciseProgress,
+    eatingSummary,
+    gymReflection,
+  } = data;
 
   const handleMarkDone = async () => {
+    if (gymToday) return;
+
     const todayStr = toDateStr(new Date());
     const res = await fetch("/api/daily-signals", {
       method: "POST",
@@ -193,15 +72,20 @@ export default function HealthPage() {
             signal: "gym",
             value: "1",
             unit: "bool",
-            context: `Day ${templateKey}`,
+            context: workouts.displayTemplate,
             source: "ui",
             captureId: "",
-            category: templateKey,
+            category: workouts.templateKey,
           },
         ],
       }),
     });
-    if (!res.ok) console.error("Failed to mark gym done");
+
+    if (!res.ok) {
+      console.error("Failed to mark gym done");
+      return;
+    }
+
     fetchData();
   };
 
@@ -209,173 +93,47 @@ export default function HealthPage() {
     <div className="min-h-screen bg-black text-zinc-100">
       <div className="p-4 sm:p-6">
         <div className="max-w-lg mx-auto">
-          {/* Header stats */}
           <header className="mb-6">
             <h1 className="text-2xl font-bold mb-3">Health</h1>
-            <div className="flex gap-3">
-              <div className="flex-1 p-3 rounded-xl bg-zinc-900/60 backdrop-blur-md border border-white/10 text-center">
+            <div className="grid grid-cols-3 gap-3">
+              <div className="p-3 rounded-xl bg-zinc-900/60 backdrop-blur-md border border-white/10 text-center">
                 <p className="text-2xl font-bold text-emerald-400">{gymStreak}</p>
                 <p className="text-xs text-zinc-400">Gym Streak</p>
               </div>
-              <div className="flex-1 p-3 rounded-xl bg-zinc-900/60 backdrop-blur-md border border-white/10 text-center">
+              <div className="p-3 rounded-xl bg-zinc-900/60 backdrop-blur-md border border-white/10 text-center">
                 <p className="text-2xl font-bold text-blue-400">
-                  {gymThisWeek}/{config.trainingPlan.liftDaysPerWeek}
+                  {gymLast7}/{workouts.rotationLength}
                 </p>
-                <p className="text-xs text-zinc-400">This Week</p>
+                <p className="text-xs text-zinc-400">Last 7 Days</p>
               </div>
-              <div className="flex-1 p-3 rounded-xl bg-zinc-900/60 backdrop-blur-md border border-white/10 text-center">
-                <p className="text-2xl font-bold text-zinc-100">{weight.current}</p>
-                <p className="text-xs text-zinc-400">lbs</p>
+              <div className="p-3 rounded-xl bg-zinc-900/60 backdrop-blur-md border border-white/10 text-center">
+                <p className="text-2xl font-bold text-zinc-100">
+                  {eatingSummary.total > 0 ? `${eatingSummary.clean}/${eatingSummary.total}` : "-"}
+                </p>
+                <p className="text-xs text-zinc-400">Eating</p>
               </div>
             </div>
           </header>
 
           <WorkoutCard
             gymToday={gymToday}
-            templateKey={templateKey}
-            totalSets={totalSets}
-            prescribedExercises={displayExercises}
+            templateKey={workouts.templateKey}
+            totalSets={workouts.totalSets}
+            prescribedExercises={workouts.displayExercises}
             todayWorkout={workouts.today}
-            cardioFinisherMin={config.trainingPlan.liftSessionCardioFinisherMin}
+            cardioFinisherMin={workouts.cardioFinisherMin}
+            gymReflection={gymReflection}
             onMarkDone={handleMarkDone}
+            isCardio={workouts.isCardio}
+            cardioInfo={workouts.cardioInfo}
+            rotation={workouts.rotation}
           />
-
-          <section className="mb-6 p-4 bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-xs text-zinc-400 uppercase">Weekly Split (Option B)</p>
-              <span className="text-xs text-blue-400">
-                {gymThisWeek}/{config.trainingPlan.liftDaysPerWeek} lift days done
-              </span>
-            </div>
-            <p className="mt-2 text-sm text-zinc-300">
-              Today: {todaySplit.label}
-              {todaySplit.kind === "lift"
-                ? ` (+${config.trainingPlan.liftSessionCardioFinisherMin} min cardio)`
-                : todaySplit.minutes
-                  ? ` (${todaySplit.minutes} min)`
-                  : ""}
-            </p>
-            <div className="mt-3 overflow-x-auto">
-              <table className="w-full min-w-[740px] border-collapse text-xs">
-                <thead>
-                  <tr>
-                    {config.trainingPlan.weeklySplit.map((entry, idx) => (
-                      <th
-                        key={entry.day}
-                        className={`border border-white/10 px-2 py-1 text-left font-medium ${
-                          idx === todayIndex ? "bg-blue-500/15 text-blue-300" : "text-zinc-400"
-                        }`}
-                      >
-                        {entry.day}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    {config.trainingPlan.weeklySplit.map((entry, idx) => (
-                      <td
-                        key={`${entry.day}-label`}
-                        className={`border border-white/10 px-2 py-1 ${
-                          idx === todayIndex ? "bg-blue-500/10 text-zinc-100" : "text-zinc-200"
-                        }`}
-                      >
-                        {entry.label}
-                      </td>
-                    ))}
-                  </tr>
-                  <tr>
-                    {config.trainingPlan.weeklySplit.map((entry, idx) => (
-                      <td
-                        key={`${entry.day}-detail`}
-                        className={`border border-white/10 px-2 py-1 ${
-                          idx === todayIndex ? "bg-blue-500/5 text-zinc-300" : "text-zinc-400"
-                        }`}
-                      >
-                        {entry.workoutKey
-                          ? `${workoutSummaryByKey[entry.workoutKey]} + ${config.trainingPlan.liftSessionCardioFinisherMin}m cardio`
-                          : `${entry.minutes || 0} min`}
-                      </td>
-                    ))}
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          <section className="mb-6 p-4 bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10">
-            <p className="text-xs text-zinc-400 uppercase mb-2">Daily Home Dose</p>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="rounded border border-white/10 bg-zinc-800/40 p-2">
-                <p className="text-xs text-zinc-400">Pull-Ups</p>
-                <p className="text-lg font-semibold text-zinc-100">
-                  {config.trainingPlan.homeDose.pullupsPerDay}/day
-                </p>
-              </div>
-              <div className="rounded border border-white/10 bg-zinc-800/40 p-2">
-                <p className="text-xs text-zinc-400">Push-Ups</p>
-                <p className="text-lg font-semibold text-zinc-100">
-                  {config.trainingPlan.homeDose.pushupsPerDay}/day
-                </p>
-              </div>
-            </div>
-            <p className="mt-2 text-xs text-zinc-400">
-              {config.trainingPlan.homeDose.guidance}
-            </p>
-          </section>
-
-          <section className="mb-6 p-4 bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10">
-            <p className="text-xs text-zinc-400 uppercase mb-2">Compound Master List</p>
-            <div className="space-y-2">
-              {masterListSections.map((section) => (
-                <div key={section.label} className="rounded border border-white/10 p-2">
-                  <p className="text-xs text-zinc-400 mb-1">{section.label}</p>
-                  <p className="text-sm text-zinc-300">
-                    {section.ids
-                      .map((id) => exerciseById.get(id)?.name || id)
-                      .join(" / ")}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {gymReflection && (
-            <section className="mb-6 p-4 bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10">
-              <p className="text-xs text-zinc-400 uppercase mb-2">Latest Gym Reflection</p>
-              <p className="text-sm text-zinc-300">Win: {gymReflection.win || "-"}</p>
-              <p className="text-sm text-zinc-300">Lesson: {gymReflection.lesson || "-"}</p>
-              <p className="text-sm text-zinc-300">Change: {gymReflection.change || "-"}</p>
-            </section>
-          )}
-
-          <section className="mb-6 p-4 bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10">
-            <p className="text-xs text-zinc-400 uppercase mb-2">Eating Today</p>
-            {mealsToday.length === 0 ? (
-              <p className="text-sm text-zinc-600">No meal entries logged today.</p>
-            ) : (
-              <div className="space-y-2">
-                {mealsToday.map((m, idx) => (
-                  <div key={`${m.slot}-${idx}`} className="flex items-center justify-between border border-white/10 rounded p-2">
-                    <div>
-                      <p className="text-sm text-zinc-300 capitalize">{m.slot}</p>
-                      {m.notes && <p className="text-xs text-zinc-400">{m.notes}</p>}
-                    </div>
-                    <span className={`text-xs ${m.clean ? "text-emerald-400" : "text-red-400"}`}>
-                      {m.clean ? "clean" : "off-plan"}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
 
           <WeightChart weight={weight} />
 
           <ExerciseHistory
             exerciseProgress={exerciseProgress}
             workoutHistory={workouts.history}
-            allExercises={allExercises}
           />
         </div>
       </div>

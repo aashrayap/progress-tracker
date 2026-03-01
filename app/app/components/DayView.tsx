@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import SchedulerModal from "./SchedulerModal";
 import type { PlanEvent, HabitMap, Todo } from "../lib/types";
+import { HABIT_CONFIG } from "../lib/config";
 import { toDateStr, formatTime } from "../lib/utils";
 
 interface Props {
@@ -13,17 +14,6 @@ interface Props {
   todos?: Todo[];
   onTodosChange?: (todos: Todo[]) => void;
 }
-
-const HABIT_DISPLAY: Record<string, string> = {
-  weed: "No Weed",
-  lol: "No LoL",
-  poker: "No Poker",
-  gym: "Gym",
-  sleep: "Sleep",
-  meditate: "Meditate",
-  deep_work: "Deep Work",
-  ate_clean: "Ate Clean",
-};
 
 export default function DayView({ events, habits, focusDate, onRefresh, todos: externalTodos, onTodosChange }: Props) {
   const [editing, setEditing] = useState(false);
@@ -104,7 +94,7 @@ export default function DayView({ events, habits, focusDate, onRefresh, todos: e
               Habits
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {Object.entries(HABIT_DISPLAY).map(([key, label]) => {
+              {Object.entries(HABIT_CONFIG).map(([key, habit]) => {
                 if (dayHabits[key] === undefined) return null;
                 const isGood = dayHabits[key];
                 return (
@@ -115,7 +105,7 @@ export default function DayView({ events, habits, focusDate, onRefresh, todos: e
                     }`}
                   >
                     <span>{isGood ? "✓" : "✗"}</span>
-                    <span>{label}</span>
+                    <span>{habit.label}</span>
                   </div>
                 );
               })}

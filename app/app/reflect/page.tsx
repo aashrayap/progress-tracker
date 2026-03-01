@@ -66,6 +66,8 @@ export default function ReflectPage() {
   const [actionBusyKey, setActionBusyKey] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [promotedKeys, setPromotedKeys] = useState<Set<string>>(new Set());
+  const [archiveBusyKey, setArchiveBusyKey] = useState<string | null>(null);
+  const [archivedKeys, setArchivedKeys] = useState<Set<string>>(new Set());
 
   const handleTimeframeChange = (next: TimeframeKey) => {
     if (next === timeframe) return;
@@ -151,6 +153,40 @@ export default function ReflectPage() {
       setActionError("Could not add todo from reflection.");
     } finally {
       setActionBusyKey(null);
+    }
+  };
+
+  const handleArchive = async (
+    reflection: ReflectionEntry,
+    archiveKey: string,
+    indexInDomain: number
+  ) => {
+    setArchiveBusyKey(archiveKey);
+    setActionError(null);
+
+    try {
+      const res = await fetch("/api/reflections", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date: reflection.date,
+          domain: reflection.domain,
+          index: indexInDomain,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to archive");
+
+      setArchivedKeys((prev) => {
+        const next = new Set(prev);
+        next.add(archiveKey);
+        return next;
+      });
+    } catch (e) {
+      console.error(e);
+      setActionError("Could not archive reflection.");
+    } finally {
+      setArchiveBusyKey(null);
     }
   };
 
@@ -247,8 +283,16 @@ export default function ReflectPage() {
                 )}
                 {reflectionData.recent.slice(0, 10).map((r, i) => {
                   const promoteKey = `${r.date}:${r.domain}:${i}`;
+                  const archiveKey = `archive:${r.date}:${r.domain}:${i}`;
                   const promoted = promotedKeys.has(promoteKey);
                   const promoting = actionBusyKey === promoteKey;
+                  const archived = archivedKeys.has(archiveKey);
+                  const archiving = archiveBusyKey === archiveKey;
+                  if (archived) return null;
+                  const domainIndex = reflectionData.recent
+                    .slice(0, 10)
+                    .filter((x, j) => j < i && x.date === r.date && x.domain === r.domain)
+                    .length;
                   return (
                     <div key={`${r.date}-${i}`} className="border border-white/10 rounded p-2">
                       <p className="text-xs text-zinc-400 mb-1">
@@ -257,7 +301,7 @@ export default function ReflectPage() {
                       {r.win && <p className="text-sm text-zinc-300">Win: {r.win}</p>}
                       {r.lesson && <p className="text-sm text-zinc-300">Lesson: {r.lesson}</p>}
                       {r.change && <p className="text-sm text-zinc-300">Change: {r.change}</p>}
-                      <div className="mt-2">
+                      <div className="mt-2 flex gap-2">
                         <button
                           onClick={() => handlePromoteReflection(r, promoteKey)}
                           disabled={promoting || promoted}
@@ -272,6 +316,13 @@ export default function ReflectPage() {
                             : promoting
                               ? "Adding..."
                               : "Add to Todos"}
+                        </button>
+                        <button
+                          onClick={() => handleArchive(r, archiveKey, domainIndex)}
+                          disabled={archiving}
+                          className={`px-2 py-1 text-xs rounded border transition-colors bg-zinc-800 border-white/20 text-zinc-400 hover:text-red-300 hover:border-red-500/30 ${archiving ? "opacity-70" : ""}`}
+                        >
+                          {archiving ? "Archiving..." : "Archive"}
                         </button>
                       </div>
                     </div>

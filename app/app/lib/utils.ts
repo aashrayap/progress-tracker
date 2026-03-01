@@ -19,3 +19,29 @@ export function formatTime(t: number): string {
   const h = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
   return `${h}${min}${ampm}`;
 }
+
+const MONTHS = [
+  "",
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+export function fmtDate(dateStr: string): string {
+  const [, m, day] = dateStr.split("-");
+  return `${MONTHS[parseInt(m, 10)]} ${parseInt(day, 10)}`;
+}
+
+export function fmtDow(dateStr: string): string {
+  const date = new Date(dateStr + "T12:00:00");
+  return date.toLocaleDateString("en-US", { weekday: "short" });
+}

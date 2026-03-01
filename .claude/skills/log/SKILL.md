@@ -96,8 +96,10 @@ Format: `exercise weight×reps×sets` or `exercise weight×rep1,rep2,rep3`
 
 Infer workout letter from exercises:
 - A = squat/bench/lat_pulldown
-- B = squat/incline_bench/cable_row
-- C = squat/ohp/barbell_row
+- B = ohp/barbell_row/incline_bench
+- C = rdl/bench/pullup
+- D = front_squat/incline_bench/cable_row
+- E = lunges/ohp/pullup
 
 ## Behavior
 

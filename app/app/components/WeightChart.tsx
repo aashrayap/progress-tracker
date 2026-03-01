@@ -1,20 +1,8 @@
-interface WeightData {
-  current: number;
-  start: number;
-  goal: number;
-  deadline: string;
-  checkpoints: { month: string; target: number }[];
-  history: { date: string; value: number }[];
-}
+import type { WeightData } from "../lib/types";
+import { fmtDate } from "../lib/utils";
 
 interface WeightChartProps {
   weight: WeightData;
-}
-
-function fmtDate(d: string) {
-  const [, m, day] = d.split("-");
-  const months = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  return `${months[parseInt(m)]} ${parseInt(day)}`;
 }
 
 export default function WeightChart({ weight }: WeightChartProps) {

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { DragDropProvider } from "@dnd-kit/react";
 import Timeline from "./Timeline";
-import TodoPool from "./TodoPool";
+import TodoList from "./TodoList";
 import { config } from "../lib/config";
 import { toDateStr } from "../lib/utils";
 import type { Todo } from "../lib/types";
@@ -97,37 +97,6 @@ export default function SchedulerModal({ initialPlan, initialTodos, onClose, onT
     [today]
   );
 
-  const addTodo = useCallback(async (item: string) => {
-    const res = await fetch("/api/todos", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ item }),
-    });
-    if (!res.ok) throw new Error("Failed to create todo");
-    const entry = await res.json();
-    setTodos((prev) => [...prev, entry]);
-  }, []);
-
-  const toggleTodo = useCallback(async (id: number, done: boolean) => {
-    setTodos((prev) => prev.map((t) => (t.id === id ? { ...t, done: done ? 1 : 0 } : t)));
-    const res = await fetch("/api/todos", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, done: done ? 1 : 0 }),
-    });
-    if (!res.ok) console.error("Failed to update todo");
-  }, []);
-
-  const deleteTodo = useCallback(async (id: number) => {
-    setTodos((prev) => prev.filter((t) => t.id !== id));
-    const res = await fetch("/api/todos", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
-    if (!res.ok) console.error("Failed to delete todo");
-  }, []);
-
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       if (event.canceled) return;
@@ -183,13 +152,14 @@ export default function SchedulerModal({ initialPlan, initialTodos, onClose, onT
             <span className="text-xs text-zinc-600">{todos.filter(t => t.done === 0).length} pending</span>
           </button>
           <div className={`${todoPoolOpen ? "block" : "hidden"} lg:block`}>
-            <TodoPool
+            <TodoList
               todos={todos}
+              onTodosChange={setTodos}
               dailyTasks={config.dailyTasks}
               scheduledItems={scheduledItems}
-              onAdd={addTodo}
-              onToggle={toggleTodo}
-              onDelete={deleteTodo}
+              draggable
+              hideHeader
+              className="w-full lg:w-[24rem] border-t lg:border-t-0 lg:border-l border-white/10 flex flex-col bg-zinc-900/60 backdrop-blur-md/50 max-h-[50vh] lg:max-h-none overflow-y-auto"
             />
           </div>
         </div>

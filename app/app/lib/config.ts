@@ -1,31 +1,30 @@
-export interface ExerciseDef {
-  id: string;
-  name: string;
-  sets: number;
-  reps: string;
-}
+import type { DailyTaskConfig, ExerciseDef, HabitConfigEntry } from "./types";
 
-export interface WeeklySplitDay {
-  day: string;
-  kind: "lift" | "cardio" | "recovery";
+export interface RotationDay {
+  key: string;
+  kind: "lift" | "cardio";
   label: string;
   detail: string;
   minutes?: number;
-  workoutKey?: string;
 }
 
-export const WEEKDAY_ORDER = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
-
-export function getSplitForDate(date: Date): WeeklySplitDay {
-  return config.trainingPlan.weeklySplit[date.getDay()] || config.trainingPlan.weeklySplit[0];
-}
+export const HABIT_CONFIG = {
+  weed: { label: "No Weed", abbr: "W" },
+  lol: { label: "No LoL", abbr: "L" },
+  poker: { label: "No Poker", abbr: "P" },
+  gym: { label: "Gym", abbr: "G" },
+  sleep: { label: "Sleep", abbr: "S" },
+  meditate: { label: "Meditate", abbr: "M" },
+  deep_work: { label: "Deep Work", abbr: "D" },
+  ate_clean: { label: "Ate Clean", abbr: "E" },
+} satisfies Record<string, HabitConfigEntry>;
 
 const LEGACY_WORKOUT_ALIASES: Record<string, string> = {
-  A: "W1",
-  B: "W2",
-  C: "W3",
-  D: "W4",
-  E: "W5",
+  W1: "A",
+  W2: "B",
+  W3: "C",
+  W4: "D",
+  W5: "E",
 };
 
 function extractWorkoutToken(value: string): string {
@@ -104,7 +103,7 @@ export const config = {
     { id: "meditate", label: "Meditate", placeholder: "type/duration" },
     { id: "walk", label: "Dog Walk", placeholder: "duration" },
     { id: "facetime_basia", label: "Facetime Basia" },
-  ],
+  ] as DailyTaskConfig[],
 
   exercises: {
     push: [
@@ -133,34 +132,37 @@ export const config = {
   } as Record<string, ExerciseDef[]>,
 
   workoutTemplates: {
-    W1: ["squat", "bench", "lat_pulldown"],
-    W2: ["ohp", "lat_row", "incline_bench"],
-    W3: ["rdl", "bench", "pullup"],
-    W4: ["front_squat", "incline_bench", "lat_row"],
-    W5: ["lunges", "ohp", "pullup"],
+    A: ["squat", "bench", "lat_pulldown"],
+    B: ["ohp", "barbell_row", "incline_bench"],
+    C: ["rdl", "bench", "pullup"],
+    D: ["front_squat", "incline_bench", "cable_row"],
+    E: ["lunges", "ohp", "pullup"],
   } as Record<string, string[]>,
 
-  // Rotation cycle stays completion-based for gym logs.
-  workoutCycle: ["W1", "W2", "W3", "W4", "W5"],
+  cardioTemplates: {
+    F: { label: "Zone 2", detail: "Conversational pace", minutes: 45 },
+    G: { label: "Moderate Cardio", detail: "Bike, jog, or brisk walk", minutes: 25 },
+  } as Record<string, { label: string; detail: string; minutes: number }>,
+
+  workoutCycle: ["A", "B", "C", "D", "E", "F", "G"],
 
   trainingPlan: {
     option: "B",
-    liftDaysPerWeek: 5,
     liftSessionCardioFinisherMin: 5,
     homeDose: {
       pullupsPerDay: 6,
       pushupsPerDay: 20,
       guidance: "Same every day. Keep reps easy and never to failure.",
     },
-    weeklySplit: [
-      { day: "Sun", kind: "cardio", label: "Zone 2", detail: "Conversational pace", minutes: 45 },
-      { day: "Mon", kind: "lift", label: "Lift W1", detail: "Back Squat, Bench Press, Lat Pulldown + 5 min cardio", workoutKey: "W1" },
-      { day: "Tue", kind: "lift", label: "Lift W2", detail: "Overhead Press, Lat Row, Incline Bench Press + 5 min cardio", workoutKey: "W2" },
-      { day: "Wed", kind: "lift", label: "Lift W3", detail: "Romanian Deadlift, Bench Press, Pull-Up / Chin-Up + 5 min cardio", workoutKey: "W3" },
-      { day: "Thu", kind: "cardio", label: "Moderate Cardio", detail: "Bike, jog, or brisk walk", minutes: 25 },
-      { day: "Fri", kind: "lift", label: "Lift W4", detail: "Front Squat, Incline Bench Press, Lat Row + 5 min cardio", workoutKey: "W4" },
-      { day: "Sat", kind: "lift", label: "Lift W5", detail: "Dumbbell Lunges, Overhead Press, Pull-Up / Chin-Up + 5 min cardio", workoutKey: "W5" },
-    ] as WeeklySplitDay[],
+    rotation: [
+      { key: "A", kind: "lift", label: "Lift A", detail: "Back Squat, Bench Press, Lat Pulldown" },
+      { key: "B", kind: "lift", label: "Lift B", detail: "OHP, Barbell Row, Incline Bench" },
+      { key: "C", kind: "lift", label: "Lift C", detail: "RDL, Bench Press, Pull-Up" },
+      { key: "D", kind: "lift", label: "Lift D", detail: "Front Squat, Incline Bench, Cable Row" },
+      { key: "E", kind: "lift", label: "Lift E", detail: "Lunges, OHP, Pull-Up" },
+      { key: "F", kind: "cardio", label: "Zone 2", detail: "Conversational pace, 45 min", minutes: 45 },
+      { key: "G", kind: "cardio", label: "Moderate Cardio", detail: "Bike, jog, or brisk walk, 25 min", minutes: 25 },
+    ] as RotationDay[],
     masterList: {
       lower: ["squat", "front_squat", "lunges", "rdl", "trap_bar_deadlift"],
       push: ["bench", "incline_bench", "ohp"],

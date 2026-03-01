@@ -1,6 +1,7 @@
 "use client";
 
 import type { ZoomLevel, PlanEvent, HabitMap } from "../lib/types";
+import { HABIT_CONFIG } from "../lib/config";
 import { toDateStr, formatTime } from "../lib/utils";
 
 interface Props {
@@ -17,18 +18,7 @@ function getMonday(d: Date): Date {
   return date;
 }
 
-const HABIT_LABELS: Record<string, string> = {
-  weed: "W",
-  lol: "L",
-  poker: "P",
-  gym: "G",
-  sleep: "S",
-  meditate: "M",
-  deep_work: "D",
-  ate_clean: "E",
-};
-
-const HABIT_KEYS = Object.keys(HABIT_LABELS);
+const HABIT_KEYS = Object.keys(HABIT_CONFIG) as Array<keyof typeof HABIT_CONFIG>;
 
 export default function WeekView({ events, habits, focusDate, onNavigate }: Props) {
   const monday = getMonday(focusDate);
@@ -89,6 +79,7 @@ export default function WeekView({ events, habits, focusDate, onNavigate }: Prop
                   {HABIT_KEYS.map((key) => {
                     if (dayHabits[key] === undefined) return null;
                     const isGood = dayHabits[key];
+                    const habit = HABIT_CONFIG[key];
                     return (
                       <span
                         key={key}
@@ -97,9 +88,9 @@ export default function WeekView({ events, habits, focusDate, onNavigate }: Prop
                             ? "bg-emerald-500/20 text-emerald-400"
                             : "bg-red-500/20 text-red-400"
                         }`}
-                        title={`${key}: ${isGood ? "done" : "missed"}`}
+                        title={`${habit.label}: ${isGood ? "done" : "missed"}`}
                       >
-                        {HABIT_LABELS[key]}
+                        {habit.abbr}
                       </span>
                     );
                   })}

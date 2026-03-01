@@ -14,7 +14,7 @@ import {
   readTodos,
   type DailySignalEntry,
 } from "../../lib/csv";
-import { config, getSplitForDate } from "../../lib/config";
+import { config } from "../../lib/config";
 import { computeInsightResponse } from "../../lib/insight";
 
 function getNowWindow(): "morning" | "day" | "evening" {
@@ -85,8 +85,7 @@ export async function GET() {
 
     const todayStr = todayLocal();
     const gymToday = signals.some((e) => e.date === todayStr && e.signal === "gym" && e.value === "1");
-    const nextWorkout = getNextWorkout(signals, Object.keys(config.workoutTemplates));
-    const todaySplit = getSplitForDate(new Date());
+    const nextWorkout = getNextWorkout(signals, config.workoutCycle);
 
     const yesterdayChanges = reflections
       .filter((r) => r.date === yesterday && r.change.trim())
@@ -141,18 +140,22 @@ export async function GET() {
             cta: "Open Plan",
           }
         : !gymToday
-          ? {
-              label:
-                todaySplit.kind === "lift"
-                  ? `Train ${todaySplit.workoutKey || `Day ${nextWorkout}`} + ${config.trainingPlan.liftSessionCardioFinisherMin} min cardio`
-                  : `${todaySplit.label} (${todaySplit.minutes || 0} min)`,
-              reason:
-                todaySplit.kind === "lift"
-                  ? "Gym completion is one of your core compounding signals."
-                  : "Cardio days keep conditioning and recovery on track.",
-              href: "/health",
-              cta: "Open Health",
-            }
+          ? (() => {
+              const cardio = config.cardioTemplates[nextWorkout];
+              return cardio
+                ? {
+                    label: `${cardio.label} (${cardio.minutes} min)`,
+                    reason: "Cardio days keep conditioning and recovery on track.",
+                    href: "/health",
+                    cta: "Open Health",
+                  }
+                : {
+                    label: `Train Day ${nextWorkout} + ${config.trainingPlan.liftSessionCardioFinisherMin} min cardio`,
+                    reason: "Gym completion is one of your core compounding signals.",
+                    href: "/health",
+                    cta: "Open Health",
+                  };
+            })()
           : {
               label: "Review today's patterns",
               reason: "Use reflection analysis to set tomorrow's adjustments.",

@@ -5,7 +5,7 @@ import YearView from "../components/YearView";
 import MonthView from "../components/MonthView";
 import WeekView from "../components/WeekView";
 import DayView from "../components/DayView";
-import TodoSidebar from "../components/TodoSidebar";
+import TodoList from "../components/TodoList";
 import type { ZoomLevel, PlanEvent, HabitMap, Todo } from "../lib/types";
 import { toDateStr } from "../lib/utils";
 
@@ -286,7 +286,7 @@ export default function PlanPage() {
         />
       )}
       <div
-        className={`fixed right-0 top-0 bottom-0 w-80 bg-zinc-900/60 backdrop-blur-md border-l border-white/10 z-50 flex flex-col transform transition-transform ${
+        className={`fixed right-0 top-0 bottom-0 w-[40rem] max-w-[95vw] bg-zinc-900/60 backdrop-blur-md border-l border-white/10 z-50 flex flex-col transform transition-transform ${
           sidebarOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -300,7 +300,7 @@ export default function PlanPage() {
           </button>
         </div>
         <div className="flex-1 overflow-hidden">
-          <TodoSidebar todos={todos} onTodosChange={setTodos} hideHeader />
+          <TodoList todos={todos} onTodosChange={setTodos} hideHeader />
         </div>
       </div>
     </div>

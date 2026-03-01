@@ -1,8 +1,13 @@
 import fs from "fs";
 import path from "path";
-import type { DailySignalEntry, InboxEntry } from "./types";
+import type {
+  DailySignalEntry,
+  ExerciseProgressEntry,
+  InboxEntry,
+  WorkoutDay,
+} from "./types";
 import { daysAgoStr, todayStr } from "./utils";
-import { normalizeWorkoutKey } from "./config";
+import { config, normalizeWorkoutKey } from "./config";
 
 export type { DailySignalEntry, InboxEntry };
 
@@ -20,7 +25,7 @@ const INBOX_HEADER =
 const PLAN_HEADER = "date,start,end,item,done,notes";
 const TODOS_HEADER = "id,item,done,created";
 const WORKOUTS_HEADER = "date,workout,exercise,set,weight,reps,notes";
-const REFLECTIONS_HEADER = "date,domain,win,lesson,change";
+const REFLECTIONS_HEADER = "date,domain,win,lesson,change,archived";
 
 export interface PlanEntry {
   date: string;
@@ -54,6 +59,7 @@ export interface ReflectionEntry {
   win: string;
   lesson: string;
   change: string;
+  archived?: string;
 }
 
 function ensureFileWithHeader(filePath: string, header: string): void {
@@ -416,6 +422,76 @@ export function readWorkouts(): WorkoutSetEntry[] {
   });
 }
 
+export function groupWorkoutsByDay(entries: WorkoutSetEntry[]): WorkoutDay[] {
+  const allExercises = Object.values(config.exercises).flat();
+  const cycle = Object.keys(config.workoutTemplates);
+  const byDate: Record<string, WorkoutSetEntry[]> = {};
+
+  for (const entry of entries) {
+    if (!byDate[entry.date]) byDate[entry.date] = [];
+    byDate[entry.date].push(entry);
+  }
+
+  return Object.entries(byDate)
+    .map(([date, sets]) => {
+      const rawWorkout = sets[0]?.workout || "";
+      const workout = normalizeWorkoutKey(rawWorkout, cycle) || rawWorkout;
+      const byExercise: Record<string, WorkoutSetEntry[]> = {};
+
+      for (const set of sets) {
+        if (!byExercise[set.exercise]) byExercise[set.exercise] = [];
+        byExercise[set.exercise].push(set);
+      }
+
+      const exercises = Object.entries(byExercise).map(([exerciseId, exerciseSets]) => {
+        const def = allExercises.find((exercise) => exercise.id === exerciseId);
+        return {
+          name: def?.name || exerciseId,
+          id: exerciseId,
+          sets: exerciseSets
+            .sort((a, b) => a.set - b.set)
+            .map((set) => ({
+              set: set.set,
+              weight: set.weight,
+              reps: set.reps,
+              notes: set.notes,
+            })),
+        };
+      });
+
+      return { date, workout, exercises };
+    })
+    .sort((a, b) => b.date.localeCompare(a.date));
+}
+
+export function getExerciseProgress(
+  workoutDays: WorkoutDay[]
+): Record<string, ExerciseProgressEntry[]> {
+  const progress: Record<string, ExerciseProgressEntry[]> = {};
+  const chronological = [...workoutDays].reverse();
+
+  for (const day of chronological) {
+    for (const exercise of day.exercises) {
+      if (exercise.sets.length === 0) continue;
+      if (!progress[exercise.id]) progress[exercise.id] = [];
+
+      const bestSet = exercise.sets.reduce((best, set) => {
+        if (set.weight > best.weight) return set;
+        if (set.weight === best.weight && set.reps > best.reps) return set;
+        return best;
+      }, exercise.sets[0]);
+
+      progress[exercise.id].push({
+        date: day.date,
+        bestWeight: bestSet.weight,
+        bestReps: bestSet.reps,
+      });
+    }
+  }
+
+  return progress;
+}
+
 export function appendWorkouts(entries: WorkoutSetEntry[]): void {
   const lines = entries.map(
     (e) =>
@@ -426,25 +502,34 @@ export function appendWorkouts(entries: WorkoutSetEntry[]): void {
   appendLines(WORKOUTS_PATH, WORKOUTS_HEADER, lines);
 }
 
-const GYM_ROTATION = ["W1", "W2", "W3", "W4", "W5"] as const;
+const GYM_ROTATION = ["A", "B", "C", "D", "E", "F", "G"] as const;
+
+function parseWorkoutKey(entry: DailySignalEntry, cycle: string[]): string | null {
+  const source = `${entry.context || ""} ${entry.category || ""}`;
+  const dayMatch = source.match(/Day\s*([A-Za-z0-9_-]+)/i)?.[1];
+  const fallback = entry.category || "";
+  return normalizeWorkoutKey(dayMatch || fallback, cycle);
+}
 
 export function getNextWorkout(signals: DailySignalEntry[], cycle: string[] = [...GYM_ROTATION]): string {
   const gymDays = signals
     .filter((e) => e.signal === "gym" && e.value === "1")
     .sort((a, b) => b.date.localeCompare(a.date));
 
-  if (gymDays.length === 0) return cycle[0] || "W1";
+  if (gymDays.length === 0) return cycle[0] || "A";
 
-  const source = `${gymDays[0].context || ""} ${gymDays[0].category || ""}`;
-  const dayMatch = source.match(/Day\s*([A-Za-z0-9_-]+)/i)?.[1];
-  const fallback = gymDays[0].category || "";
-  const lastDay = normalizeWorkoutKey(dayMatch || fallback, cycle);
-  if (!lastDay) return cycle[0] || "W1";
+  // Walk backwards through gym days to find one with a parseable workout key
+  for (const day of gymDays) {
+    const lastDay = parseWorkoutKey(day, cycle);
+    if (!lastDay) continue;
 
-  const cycleUpper = cycle.map((item) => item.toUpperCase());
-  const lastIdx = cycleUpper.indexOf(lastDay.toUpperCase());
-  if (lastIdx === -1) return cycle[0] || "W1";
-  return cycle[(lastIdx + 1) % cycle.length];
+    const cycleUpper = cycle.map((item) => item.toUpperCase());
+    const lastIdx = cycleUpper.indexOf(lastDay.toUpperCase());
+    if (lastIdx === -1) continue;
+    return cycle[(lastIdx + 1) % cycle.length];
+  }
+
+  return cycle[0] || "A";
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -462,6 +547,7 @@ export function readReflections(): ReflectionEntry[] {
       win: clean[2] || "",
       lesson: clean[3] || "",
       change: clean[4] || "",
+      archived: clean[5] || "",
     };
   });
 }
@@ -469,8 +555,27 @@ export function readReflections(): ReflectionEntry[] {
 export function appendReflection(entry: ReflectionEntry): void {
   const line = `${entry.date},${entry.domain},${csvQuote(entry.win)},${csvQuote(entry.lesson)},${csvQuote(
     entry.change
-  )}`;
+  )},${entry.archived || ""}`;
   appendLines(REFLECTIONS_PATH, REFLECTIONS_HEADER, [line]);
+}
+
+export function archiveReflection(date: string, domain: string, index: number): void {
+  const all = readReflections();
+  let matchCount = 0;
+  for (let i = 0; i < all.length; i++) {
+    if (all[i].date === date && all[i].domain === domain && all[i].archived !== "1") {
+      if (matchCount === index) {
+        all[i].archived = "1";
+        break;
+      }
+      matchCount++;
+    }
+  }
+  const lines = all.map(
+    (r) =>
+      `${r.date},${r.domain},${csvQuote(r.win)},${csvQuote(r.lesson)},${csvQuote(r.change)},${r.archived || ""}`
+  );
+  writeAll(REFLECTIONS_PATH, REFLECTIONS_HEADER, lines);
 }
 
 export function getYesterdayChanges(reflections: ReflectionEntry[]): ReflectionEntry[] {

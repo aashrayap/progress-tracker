@@ -20,6 +20,27 @@ Non-negotiables:
 - Protein first
 - Move every day
 
+## Activity Priority Stack
+
+| Rank | Activity | Tier |
+|------|----------|------|
+| 1 | Sleep | **Fundamental** — highest leverage, cascades everything |
+| 2 | Eating clean | **Fundamental** — #1 health input, impacts all other habits |
+| 3 | Gym | **Fundamental** |
+| 4 | Meditation | **Fundamental** — hard to justify higher but high impact |
+| 5 | Deep work | **Fundamental** |
+| 6 | Todos / task clearance | **Fundamental** |
+| 7 | Walking Cooper | **Nice to have** |
+| 8 | FaceTiming Basia | **Nice to have** |
+| 9 | Hanging out with friends | **Nice to have** |
+| 10 | Scrolling X | **Nice to have** |
+| 11 | Live poker | **Enjoyable waste** |
+| 12 | Online poker | **Enjoyable waste** |
+| 13 | YouTube | **Enjoyable waste** |
+| 14 | League of Legends | **Harmful waste** |
+| 15 | Weed | **Harmful waste** |
+| 16 | Porn | **Harmful waste** |
+
 ## Weight and Fitness
 
 Current state:
