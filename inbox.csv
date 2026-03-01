@@ -21,3 +21,4 @@ voice-42,2026-02-27T00:00:00Z,voice,Are you getting this message test,archived,n
 voice-43,2026-03-01T00:00:00Z,voice,What's my workout today,logged,question,,
 voice-44,2026-03-01T00:00:00.000Z,voice,What's my workout today,logged,question,,
 voice-45,2026-03-01T00:00:00.000Z,voice,Can we remove pull-ups from the actual gym days since we're already doing them in the Home reps I'm not sure if you can do it now but ultimately I want to remove pull-ups for any gym exercises and replace them with either lat pulldown or other back,logged,todo,,
+voice-46,2026-03-01T00:00:00.000Z,voice,Next step is to make the actual voice notes trigger Claude to investigate and be able to actually make incremental improvements to the repository from the voice notes that I'm entering in,logged,todos,,

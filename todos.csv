@@ -23,3 +23,4 @@ id,item,done,created
 22,Clarify: Add 5min cardio to every gym session - start frictionless then expand later,1,2026-02-26
 23,"Rule: when getting takeout on Fri/Sat bring only enough for that night - no leftovers (Mezza Grille lesson)",0,2026-03-01
 24,"Replace pullups with lat_pulldown in gym Days C and E (pullups already covered by daily home reps)",0,2026-03-01
+25,"Feature: voice notes should trigger Claude to investigate and make incremental repo improvements autonomously",0,2026-03-01
