@@ -123,128 +123,235 @@ Keep issue comments minimal — just confirm what was logged.
 
 ## Push Notification (CRITICAL)
 
-After processing, you MUST write a push notification to `/tmp/voice-inbox-ntfy.txt`. This gets sent to the user's phone. The format depends on what was logged.
+After processing, you MUST write a push notification to `/tmp/voice-inbox-ntfy.json`. This gets sent to the user's phone via ntfy.sh with rich formatting.
 
-**Before writing the notification:** Read daily_signals.csv (and workouts.csv if gym-related) to compute context — streaks, trends, frequencies. Use this data to enrich the notification.
+**Before writing the notification:** Read daily_signals.csv, workouts.csv, reflections.csv, and config data to compute context — streaks, trends, frequencies, comparisons, and recent commitments. Use this data to enrich the notification.
+
+### JSON Format
+
+Write a JSON object to `/tmp/voice-inbox-ntfy.json`:
+```json
+{
+  "title": "Short title for lock screen (30 chars max)",
+  "body": "Main notification body with ✓ prefix and data",
+  "tags": "comma,separated,emoji_tags",
+  "priority": 3
+}
+```
+
+Fields:
+- `title` (required): Bold text shown on lock screen. Short category + key fact.
+- `body` (required): Full notification text. Supports **bold** markdown.
+- `tags` (optional): ntfy emoji tags — `white_check_mark`, `muscle`, `scales`, `brain`, `warning`, `pill`, `salad`, `zzz`, `lotus_position`
+- `priority` (optional): 1=min, 2=low, 3=default, 4=high, 5=urgent. Default 3.
 
 ### Notification Rules (global)
 - No praise, no moralizing, no exclamation marks
 - Clinical, calm tone
 - Never use words: "great", "awesome", "keep it up", "unfortunately", "just", "only"
-- Start with ✓ for confirmations
+- Body starts with ✓ for confirmations
+- Title is the glanceable headline; body has the detail
+
+### Data Intelligence Layer
+
+Before composing any notification, compute these context signals as relevant:
+
+1. **Exercise comparison**: For gym notifications, read workouts.csv to find the PREVIOUS session for each exercise logged today. Compare weight×reps.
+2. **Weight checkpoints**: Current month's target from config (`Feb:232, Mar:224, Apr:216, May:208, Jun:200`). Compute gap to checkpoint.
+3. **Recent reflections**: Read reflections.csv for same-domain entries from the last 3 days. If a `change` field exists, surface it as a reminder.
+4. **Co-occurring signals**: When logging triggers, also read today's other daily_signals to identify co-occurring risk factors (sleep miss, no gym, etc.)
+5. **Day quality score**: For MULTI logs, count habits hit out of 8 total. Compare to 7-day rolling average.
+6. **Dopamine reset progress**: For addiction metrics, compute days since 2026-01-30 (90-day reset start). Show "Day X of 90."
+7. **Next workout**: After gym completion, read last workout to compute next in A→B→C→D→E→F→G rotation and preview exercises.
 
 ### Category Templates
 
 **WEIGHT** (logged weight)
-Read last 7 days of weight entries. Compute trend.
+Read last 7 days of weight entries. Look up current month's checkpoint target.
+```json
+{
+  "title": "244 lbs — ↘ 1.2/wk",
+  "body": "✓ 244 lbs. Trend: ↘ -1.2 this week.\nMar target: 224 | 20 lbs behind, 30 days left.",
+  "tags": "scales",
+  "priority": 3
+}
 ```
-✓ 244 lbs. Trend: ↘ -1.2 this week.
-```
-- Never show delta from goal weight
 - Never use the word "gained"
-- If weight spiked 3+ lbs in a day: "Weight fluctuates daily — trend is what matters."
-- If new low this month, mention it
+- If weight spiked 3+ lbs in a day: add "Fluctuation — trend is what matters."
+- If new low this month, title becomes "New low: 241 lbs"
+- Show checkpoint gap only if behind target
 
 **GYM — MID-WORKOUT** (logged individual exercise sets to workouts.csv)
-Read today's existing workouts.csv entries. Check workout template (A-E) from config to show remaining.
+Read today's workouts.csv entries + template (A-E) for checklist + PREVIOUS session for this exercise.
+```json
+{
+  "title": "Bench 185×8 — Day A",
+  "body": "✓ Bench 185×8. Last: 185×6 (+2 reps).\nDone: squat ✓ bench ✓ lat_pulldown ✗ (2/3)",
+  "tags": "muscle",
+  "priority": 3
+}
 ```
-✓ Bench 185×8. Done: squat ✓ bench ✓ row ✗ (2/3)
-```
-- Mirror back what was logged — exercise, weight, reps
-- Show checklist of template exercises: ✓ done, ✗ remaining
-- 2 seconds scannable. No commentary.
+- Title: exercise + weight×reps + workout day
+- Body line 1: mirror what was logged + compare to last session for THAT exercise
+- Body line 2: checklist of template exercises (✓ done, ✗ remaining)
+- If this is a personal best (highest weight ever for this exercise), title gets "PB" suffix: "Squat 235×5 PB — Day A"
+- If no previous session exists for this exercise, skip the "Last:" comparison
+- 2 seconds scannable. No other commentary.
 
 **GYM — SESSION DONE** (logged gym:1 without specific sets, or all template exercises complete)
-Read daily_signals.csv for gym frequency this month.
-```
-✓ Day B done. 3 exercises, 9 sets. Workout #14 this month.
+Read daily_signals.csv for gym frequency + next workout in rotation + recent gym reflection.
+```json
+{
+  "title": "Day B done — #14 this month",
+  "body": "✓ 3 exercises, 9 sets.\nNext: Day C (rdl / bench / pullup)",
+  "tags": "muscle,white_check_mark",
+  "priority": 3
+}
 ```
 - Count exercises and sets from today's workouts.csv
-- Show monthly workout count
-- Never compare weights lifted to previous sessions
+- Show next workout in rotation with exercise names
+- If reflections.csv has a gym `change` entry from the last 3 days, append: `\nNote: "{change text}"`
+- For cardio days (F/G): show duration + type instead of exercise/set counts: `✓ Zone 2 — 45 min.`
 
-**HABIT** (sleep, meditate, deep_work)
+**HABIT** (sleep, meditate)
 Read last 7 days of that metric from daily_signals.csv.
+```json
+{
+  "title": "Sleep — 5 of 7",
+  "body": "✓ Sleep logged. 5 of last 7 days.",
+  "tags": "zzz",
+  "priority": 3
+}
 ```
-✓ Sleep logged. 5 of last 7 days.
-```
+- Title: habit name + frequency
 - Use "X of last 7 days" NOT streak counts
-- Only show the count if X >= 3 (below 3, just say "✓ Logged.")
-- Deep work: always just "✓ Deep work logged." (irregular by nature)
+- Only show the count if X >= 3 (below 3, title is just the habit name, body is "✓ Logged.")
+- Deep work: always "✓ Deep work logged." (irregular by nature)
+- Tags: `zzz` for sleep, `lotus_position` for meditate
 
 **FOOD** (ate_clean and/or calories)
-Read today's daily_signals.csv entries for calories and food-related notes. Read last 7 days of ate_clean.
+Read today's daily_signals.csv for calories. Read last 7 days of ate_clean.
+```json
+{
+  "title": "1,850 cal — clean 4/7",
+  "body": "✓ 1,850 cal logged. Clean eating: 4 of 7 days.",
+  "tags": "salad",
+  "priority": 3
+}
 ```
-✓ 1,850 cal logged. Clean eating: 4 of 7 days.
-```
-- If ate_clean:0, just "✓ Logged." — no commentary on unclean days
-- If calories logged, mirror the number back
+- If ate_clean:0, title is "Food logged", body is "✓ Logged." — no commentary on unclean days
 - Show clean eating frequency only if >= 3 of 7
 
 **ADDICTION CLEAN** (weed:1, lol:1, poker:1)
-Compute consecutive clean days from daily_signals.csv going backwards from today.
+Compute consecutive clean days. Compute days since dopamine reset start (2026-01-30).
+```json
+{
+  "title": "Weed-free day 47",
+  "body": "✓ Clean. Day 31 of 90-day reset.",
+  "tags": "white_check_mark",
+  "priority": 3
+}
 ```
-✓ Clean. Weed-free: day 47.
-```
-- ALWAYS show the day count — this is identity-based
-- Milestones at 7, 14, 30, 60, 90 get a short extra line: "Day 30. One third of the reset."
+- Title ALWAYS shows the substance + day count
+- Body shows dopamine reset progress (Day X of 90)
+- Milestones at 7, 14, 30, 60, 90 get priority:4 and extra line: "Day 30. One third of the reset."
 - Never say "keep it up" — implies fragility
 
 **TRIGGER** (trigger logged)
-Read all previous trigger entries from daily_signals.csv. Count frequency. Check what followed previous similar triggers.
+Read all previous trigger entries. Count frequency. Read TODAY's other signals for co-occurring risk factors.
+```json
+{
+  "title": "Trigger: evening boredom",
+  "body": "✓ 3rd this week. Previous: relapse within 24h (2/3).\nToday: sleep ✗, gym ✗.",
+  "tags": "warning",
+  "priority": 4
+}
 ```
-✓ Trigger noted: evening boredom. 3rd this week. Previous pattern: relapse within 24h (2/3 times).
-```
-- "Naming it is the skill." — only on first/second trigger
+- Title: "Trigger: {description}"
+- Body: frequency + historical outcome pattern + today's co-occurring signals
+- "Naming it is the skill." — only on first/second trigger of this type
 - Show pattern frequency only if >= 3 occurrences
-- If known high-risk trigger (poker, late night + friends), note recognition
-- Never offer coping advice in the notification
+- If today has negative co-occurring signals (sleep:0, gym:0, ate_clean:0), list them
+- If known high-risk trigger from config.knownTriggers, show the pattern
+- Never offer coping advice
+- Priority 4 (high) for triggers — they need attention
 
 **RELAPSE** (relapse logged, or weed:0, lol:0, poker:0)
 DO NOT read historical data. DO NOT mention broken streaks.
-```
-✓ Logged. One data point, not a verdict.
+```json
+{
+  "title": "Logged",
+  "body": "✓ One data point, not a verdict.",
+  "tags": "pencil",
+  "priority": 2
+}
 ```
 - NEVER mention the broken streak
 - NEVER mention the 90-day reset
 - NEVER offer advice
-- Alternate messages: "Noted. Logging it is what matters." / "Logged. Reset when you're ready."
-- Shortest category. 10 words max.
+- Alternate body messages: "Noted. Logging it is what matters." / "Reset when ready."
+- Shortest category. 10 words max in body.
+- Priority 2 (low) — don't draw attention
 
 **DEEP WORK** (logged a deep work session)
-Read daily_signals.csv for deep_work entries today and this week.
+Read daily_signals.csv for deep_work entries this week.
+```json
+{
+  "title": "Deep work — 90min",
+  "body": "✓ API routes. This week: 5 sessions.",
+  "tags": "brain",
+  "priority": 3
+}
 ```
-✓ 90min on API routes. This week: 5 sessions.
-```
-- Mirror topic and duration from daily_signals.csv context
-- Show weekly session count
+- Title: "Deep work — {duration}"
+- Body: topic + weekly session count
 
 **QUESTION** (user asked something about their data/progress)
-Read whatever CSVs are relevant to answer the question. Compute the answer.
-```
-Down 3 lbs this month. Gym 4/5 this week. Weed: day 47.
+Read whatever CSVs are relevant. Compute the answer.
+```json
+{
+  "title": "Answer",
+  "body": "Down 3 lbs this month. Gym 4/5 this week. Weed: day 47.",
+  "tags": "mag",
+  "priority": 3
+}
 ```
 - Answer the question asked, nothing more
-- 15-30 words max
+- 15-30 words max in body
 - No spin — if the data is bad, state the data
 
 **NOTE** (freeform note)
+```json
+{
+  "title": "Saved",
+  "body": "✓ Saved.",
+  "tags": "memo",
+  "priority": 2
+}
 ```
-✓ Saved.
-```
-- 2 words. Do not summarize or analyze the note.
+- 2 words in body. Do not summarize or analyze the note. Priority 2.
 
 **MULTI** (bulk "log day" with multiple metrics)
-Summarize all logged metrics in one notification.
+Compute day quality: how many of 8 habits hit. Compare to 7-day rolling average.
+```json
+{
+  "title": "5/8 habits — trending ↗",
+  "body": "✓ gym ✓ sleep ✓ clean ✗ meditate ✗ | weed ✓ lol ✓ poker ✓\n7-day avg: 4.3/8. Weed-free: day 5.",
+  "tags": "bar_chart",
+  "priority": 3
+}
 ```
-✓ 6 metrics logged. gym ✓ sleep ✓ clean ✗ | weed ✓ lol ✓ poker ✓ | Gym: 4/7 days. Weed-free: day 5.
-```
+- Title: "{X}/8 habits" + trend arrow (↗ if today > 7-day avg, ↘ if below, → if same)
+- Body line 1: checklist of all habits
+- Body line 2: 7-day average + top addiction streak
+- If 3+ habits missed AND below 7-day average: priority 4
 
 ### Writing the notification
 
 After all CSV writes and git operations, as your FINAL step:
-1. Compose the notification following the category rules above
-2. Write it to `/tmp/voice-inbox-ntfy.txt` using: `echo "your notification text" > /tmp/voice-inbox-ntfy.txt`
+1. Compute context data (comparisons, streaks, trends) by reading CSVs
+2. Compose the notification JSON following the category rules above
+3. Write it using: `cat > /tmp/voice-inbox-ntfy.json << 'NTFY_EOF'\n{...json...}\nNTFY_EOF`
 
 ## Important
 - Be concise in issue comments

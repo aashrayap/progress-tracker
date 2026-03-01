@@ -59,7 +59,7 @@ echo "$issues" | jq -c '.[]' | while read -r issue; do
   system_prompt=$(cat "$PROJECT_DIR/.claude/prompts/voice-inbox.md")
 
   # Clean up previous notification
-  rm -f /tmp/voice-inbox-ntfy.txt
+  rm -f /tmp/voice-inbox-ntfy.json
 
   # Run Claude Code with the voice-inbox prompt
   claude --print \
@@ -77,16 +77,25 @@ Steps:
 4. Run: git add daily_signals.csv inbox.csv workouts.csv reflections.csv todos.csv && git commit -m 'voice: process issue #$number'
 5. Run: gh issue comment $number --repo $REPO --body '<your summary>'
 6. Run: gh issue close $number --repo $REPO
-7. Write push notification to /tmp/voice-inbox-ntfy.txt (see prompt for format rules)" \
+7. Write push notification JSON to /tmp/voice-inbox-ntfy.json (see prompt for format rules)" \
     2>> "$LOG_FILE" || log "ERROR processing issue #$number"
 
-  # Send push notification from temp file
-  if [ -f /tmp/voice-inbox-ntfy.txt ]; then
-    ntfy_msg=$(cat /tmp/voice-inbox-ntfy.txt)
-    if [ -n "$ntfy_msg" ]; then
-      curl -s -d "$ntfy_msg" "ntfy.sh/$NTFY_TOPIC" > /dev/null 2>&1 || log "ntfy push failed"
+  # Send rich push notification from JSON file
+  if [ -f /tmp/voice-inbox-ntfy.json ]; then
+    ntfy_body=$(jq -r '.body // empty' /tmp/voice-inbox-ntfy.json 2>/dev/null)
+    if [ -n "$ntfy_body" ]; then
+      ntfy_title=$(jq -r '.title // empty' /tmp/voice-inbox-ntfy.json 2>/dev/null)
+      ntfy_tags=$(jq -r '.tags // empty' /tmp/voice-inbox-ntfy.json 2>/dev/null)
+      ntfy_priority=$(jq -r '.priority // empty' /tmp/voice-inbox-ntfy.json 2>/dev/null)
+
+      curl_args=(-s -H "Markdown: yes")
+      [ -n "$ntfy_title" ] && curl_args+=(-H "Title: $ntfy_title")
+      [ -n "$ntfy_tags" ] && curl_args+=(-H "Tags: $ntfy_tags")
+      [ -n "$ntfy_priority" ] && curl_args+=(-H "Priority: $ntfy_priority")
+
+      curl "${curl_args[@]}" -d "$ntfy_body" "ntfy.sh/$NTFY_TOPIC" > /dev/null 2>&1 || log "ntfy push failed"
     fi
-    rm -f /tmp/voice-inbox-ntfy.txt
+    rm -f /tmp/voice-inbox-ntfy.json
   else
     log "No notification file generated for issue #$number"
   fi
