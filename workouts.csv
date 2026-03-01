@@ -20,3 +20,6 @@ date,workout,exercise,set,weight,reps,notes
 2026-02-27,,bench,3,165,6,
 2026-03-01,C,rdl,1,60,10,warmup
 2026-03-01,C,bench,1,135,7,
+2026-03-01,C,rdl,2,110,10,
+2026-03-01,C,bench,2,185,5,
+2026-03-01,C,lat_pulldown,1,143,9,
