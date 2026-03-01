@@ -14,7 +14,7 @@ import {
   readTodos,
   type DailySignalEntry,
 } from "../../lib/csv";
-import { config } from "../../lib/config";
+import { config, HABIT_CONFIG } from "../../lib/config";
 import { computeInsightResponse } from "../../lib/insight";
 
 function getNowWindow(): "morning" | "day" | "evening" {
@@ -125,6 +125,20 @@ export async function GET() {
       days: habitDates.map((date) => getHabitsForDate(signals, date)),
     };
 
+    const habitTrendDates = Array.from({ length: 90 }, (_, i) => daysAgoStr(89 - i));
+    const habitKeys = Object.keys(HABIT_CONFIG);
+    const habitTrends = habitKeys.reduce<Record<string, { date: string; value: boolean | null }[]>>(
+      (acc, key) => {
+        acc[key] = habitTrendDates.map((date) => {
+          const habitsForDate = getHabitsForDate(signals, date);
+          const value = key in habitsForDate ? habitsForDate[key] : null;
+          return { date, value };
+        });
+        return acc;
+      },
+      {}
+    );
+
     const nowHour = new Date().getHours() + new Date().getMinutes() / 60;
     const nextPlan = todaysPlan
       .filter((p) => p.done !== "1")
@@ -205,6 +219,7 @@ export async function GET() {
       insight,
       todayHabits,
       habitTracker,
+      habitTrends,
       nextAction,
     });
   } catch (e) {

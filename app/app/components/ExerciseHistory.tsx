@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import type { ExerciseProgressEntry, WorkoutDay } from "../lib/types";
 import { fmtDate, fmtDow } from "../lib/utils";
+import LineTrendChart, { type TrendPoint } from "./LineTrendChart";
+import TrendModal from "./TrendModal";
 
 interface ExerciseHistoryProps {
   exerciseProgress: Record<string, ExerciseProgressEntry[]>;
@@ -16,6 +18,8 @@ export default function ExerciseHistory({
   const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
   const [expandedExercises, setExpandedExercises] = useState<Set<string>>(new Set());
   const [showDetails, setShowDetails] = useState(false);
+  const [activeExerciseId, setActiveExerciseId] = useState<string | null>(null);
+  const [graphMetric, setGraphMetric] = useState<"bestWeight" | "estimated1RM">("bestWeight");
 
   const exerciseNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -33,6 +37,47 @@ export default function ExerciseHistory({
     () => Object.entries(exerciseProgress),
     [exerciseProgress]
   );
+
+  const activeExerciseEntries = useMemo<ExerciseProgressEntry[]>(
+    () => (activeExerciseId ? exerciseProgress[activeExerciseId] || [] : []),
+    [activeExerciseId, exerciseProgress]
+  );
+
+  const activeExerciseName = useMemo(() => {
+    if (!activeExerciseId) return "";
+    return exerciseNameById.get(activeExerciseId) || activeExerciseId;
+  }, [activeExerciseId, exerciseNameById]);
+
+  const activeExercisePoints = useMemo<TrendPoint[]>(() => {
+    return activeExerciseEntries.map((entry) => ({
+      date: entry.date,
+      value:
+        graphMetric === "bestWeight"
+          ? entry.bestWeight
+          : Math.round(entry.bestWeight * (1 + entry.bestReps / 30)),
+    }));
+  }, [activeExerciseEntries, graphMetric]);
+
+  const activeSummary = useMemo(() => {
+    if (activeExerciseEntries.length === 0) return null;
+    const first = activeExerciseEntries[0];
+    const latest = activeExerciseEntries[activeExerciseEntries.length - 1];
+    const firstValue =
+      graphMetric === "bestWeight"
+        ? first.bestWeight
+        : Math.round(first.bestWeight * (1 + first.bestReps / 30));
+    const latestValue =
+      graphMetric === "bestWeight"
+        ? latest.bestWeight
+        : Math.round(latest.bestWeight * (1 + latest.bestReps / 30));
+    return {
+      firstValue,
+      latestValue,
+      delta: latestValue - firstValue,
+      firstDate: first.date,
+      latestDate: latest.date,
+    };
+  }, [activeExerciseEntries, graphMetric]);
 
   const toggleDay = (date: string) => {
     setExpandedDays((prev) => {
@@ -83,25 +128,36 @@ export default function ExerciseHistory({
                     key={exerciseId}
                     className="bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10 overflow-hidden"
                   >
-                    <button
-                      onClick={() => toggleExercise(exerciseId)}
-                      className="w-full p-3 flex justify-between items-center text-left"
-                    >
-                      <span className="text-sm font-medium">{name}</span>
-                      <div className="flex items-center gap-2">
-                        {latest && (
-                          <span className="font-mono text-sm text-zinc-300">
-                            {latest.bestWeight}lbs
-                          </span>
-                        )}
-                        {improved && entries.length > 1 && (
-                          <span className="text-xs text-emerald-400">
-                            +{latest.bestWeight - first.bestWeight}
-                          </span>
-                        )}
-                        <span className="text-zinc-600 text-xs">{isExpanded ? "▼" : "▶"}</span>
-                      </div>
-                    </button>
+                    <div className="flex items-center gap-2 p-2.5">
+                      <button
+                        onClick={() => toggleExercise(exerciseId)}
+                        className="flex-1 px-1 py-0.5 flex justify-between items-center text-left"
+                      >
+                        <span className="text-sm font-medium">{name}</span>
+                        <div className="flex items-center gap-2">
+                          {latest && (
+                            <span className="font-mono text-sm text-zinc-300">
+                              {latest.bestWeight}lbs
+                            </span>
+                          )}
+                          {improved && entries.length > 1 && (
+                            <span className="text-xs text-emerald-400">
+                              +{latest.bestWeight - first.bestWeight}
+                            </span>
+                          )}
+                          <span className="text-zinc-600 text-xs">{isExpanded ? "▼" : "▶"}</span>
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setGraphMetric("bestWeight");
+                          setActiveExerciseId(exerciseId);
+                        }}
+                        className="px-2.5 py-1 rounded-md border border-white/15 bg-zinc-800 text-xs text-zinc-300 hover:text-zinc-100 hover:border-white/30"
+                      >
+                        Graph
+                      </button>
+                    </div>
 
                     {isExpanded && (
                       <div className="px-3 pb-3 space-y-1 border-t border-white/10 pt-2">
@@ -208,6 +264,82 @@ export default function ExerciseHistory({
           </div>
         </div>
       )}
+
+      <TrendModal
+        open={Boolean(activeExerciseId)}
+        onClose={() => setActiveExerciseId(null)}
+        title={activeExerciseName}
+        subtitle="Progression over time"
+      >
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="inline-flex rounded-lg border border-white/10 bg-zinc-900 p-1">
+              <button
+                onClick={() => setGraphMetric("bestWeight")}
+                className={`rounded-md px-3 py-1.5 text-xs ${
+                  graphMetric === "bestWeight"
+                    ? "bg-blue-500/20 text-blue-300"
+                    : "text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                Best Weight
+              </button>
+              <button
+                onClick={() => setGraphMetric("estimated1RM")}
+                className={`rounded-md px-3 py-1.5 text-xs ${
+                  graphMetric === "estimated1RM"
+                    ? "bg-emerald-500/20 text-emerald-300"
+                    : "text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                Est. 1RM
+              </button>
+            </div>
+            <p className="text-xs text-zinc-500">{activeExerciseEntries.length} sessions</p>
+          </div>
+
+          <LineTrendChart
+            points={activeExercisePoints}
+            color={graphMetric === "bestWeight" ? "#60a5fa" : "#34d399"}
+            valueFormatter={(value) => `${Math.round(value)} lbs`}
+          />
+
+          {activeSummary ? (
+            <div className="grid grid-cols-3 gap-2">
+              <div className="rounded-lg border border-white/10 bg-zinc-900/60 p-3">
+                <p className="text-[11px] uppercase tracking-wide text-zinc-500">Start</p>
+                <p className="mt-1 font-mono text-sm text-zinc-200">
+                  {activeSummary.firstValue} lbs
+                </p>
+                <p className="mt-1 text-xs text-zinc-500">{fmtDate(activeSummary.firstDate)}</p>
+              </div>
+              <div className="rounded-lg border border-white/10 bg-zinc-900/60 p-3">
+                <p className="text-[11px] uppercase tracking-wide text-zinc-500">Latest</p>
+                <p className="mt-1 font-mono text-sm text-zinc-100">
+                  {activeSummary.latestValue} lbs
+                </p>
+                <p className="mt-1 text-xs text-zinc-500">{fmtDate(activeSummary.latestDate)}</p>
+              </div>
+              <div className="rounded-lg border border-white/10 bg-zinc-900/60 p-3">
+                <p className="text-[11px] uppercase tracking-wide text-zinc-500">Delta</p>
+                <p
+                  className={`mt-1 font-mono text-sm ${
+                    activeSummary.delta > 0
+                      ? "text-emerald-400"
+                      : activeSummary.delta < 0
+                        ? "text-red-400"
+                        : "text-zinc-300"
+                  }`}
+                >
+                  {activeSummary.delta > 0 ? "+" : ""}
+                  {activeSummary.delta} lbs
+                </p>
+                <p className="mt-1 text-xs text-zinc-500">First vs latest</p>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </TrendModal>
     </section>
   );
 }

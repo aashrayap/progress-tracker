@@ -1,8 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import DailyInsight, { InsightData } from "./components/DailyInsight";
+import LineTrendChart from "./components/LineTrendChart";
+import TrendModal from "./components/TrendModal";
+import { HABIT_CONFIG } from "./lib/config";
 
 interface WeightData {
   current: number;
@@ -50,8 +53,21 @@ interface AppData {
     dates: string[];
     days: Record<string, boolean>[];
   };
+  habitTrends: Record<string, { date: string; value: boolean | null }[]>;
   nextAction: NextAction;
 }
+
+const HABIT_ORDER = [
+  "sleep",
+  "gym",
+  "weed",
+  "ate_clean",
+  "deep_work",
+  "meditate",
+  "lol",
+  "poker",
+] as const;
+type HabitKey = keyof typeof HABIT_CONFIG;
 
 function clamp(n: number, min = 0, max = 1): number {
   return Math.min(max, Math.max(min, n));
@@ -68,6 +84,7 @@ function formatHour(v: number): string {
 export default function Home() {
   const [data, setData] = useState<AppData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeHabitKey, setActiveHabitKey] = useState<HabitKey | null>(null);
 
   const fetchData = useCallback(() => {
     fetch("/api/hub")
@@ -88,6 +105,60 @@ export default function Home() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const activeHabitTrendSeries = useMemo(() => {
+    if (!data || !activeHabitKey) return [];
+    return data.habitTrends[activeHabitKey] || [];
+  }, [activeHabitKey, data]);
+
+  const activeHabitTrendPoints = useMemo(() => {
+    return activeHabitTrendSeries.map((entry, index) => {
+      const windowStart = Math.max(0, index - 6);
+      const window = activeHabitTrendSeries
+        .slice(windowStart, index + 1)
+        .filter((point) => point.value !== null);
+
+      if (window.length === 0) {
+        return { date: entry.date, value: null };
+      }
+
+      const done = window.filter((point) => point.value === true).length;
+      return {
+        date: entry.date,
+        value: Number(((done / window.length) * 100).toFixed(1)),
+      };
+    });
+  }, [activeHabitTrendSeries]);
+
+  const activeHabitSummary = useMemo(() => {
+    if (!activeHabitKey || activeHabitTrendSeries.length === 0) return null;
+
+    const loggedDays = activeHabitTrendSeries.filter((point) => point.value !== null).length;
+    const doneDays = activeHabitTrendSeries.filter((point) => point.value === true).length;
+    const adherence = loggedDays === 0 ? 0 : Math.round((doneDays / loggedDays) * 100);
+
+    const recent = activeHabitTrendSeries.slice(-14).filter((point) => point.value !== null);
+    const recentDone = recent.filter((point) => point.value === true).length;
+    const recentAdherence = recent.length === 0 ? 0 : Math.round((recentDone / recent.length) * 100);
+
+    let currentStreak = 0;
+    for (let i = activeHabitTrendSeries.length - 1; i >= 0; i--) {
+      const value = activeHabitTrendSeries[i].value;
+      if (value === true) {
+        currentStreak++;
+        continue;
+      }
+      if (value === null) continue;
+      break;
+    }
+
+    return {
+      loggedDays,
+      adherence,
+      recentAdherence,
+      currentStreak,
+    };
+  }, [activeHabitKey, activeHabitTrendSeries]);
 
   if (loading) {
     return (
@@ -213,21 +284,14 @@ export default function Home() {
           <section className="p-4 bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl">
             <p className="text-xs text-zinc-400 uppercase mb-2">Daily Habits — 14 Days</p>
             <div className="space-y-2">
-              {[
-                { key: "sleep", label: "Sleep" },
-                { key: "gym", label: "Gym" },
-                { key: "weed", label: "No Weed" },
-                { key: "ate_clean", label: "Eat Clean" },
-                { key: "deep_work", label: "Deep Work" },
-                { key: "meditate", label: "Meditate" },
-                { key: "lol", label: "No LoL" },
-                { key: "poker", label: "No Poker" },
-              ].map((habit) => (
-                <div key={habit.key} className="flex items-center gap-2.5">
-                  <span className="text-xs text-zinc-400 w-[4.5rem] shrink-0 text-right truncate">{habit.label}</span>
+              {HABIT_ORDER.map((habitKey) => (
+                <div key={habitKey} className="flex items-center gap-2.5">
+                  <span className="text-xs text-zinc-400 w-[4.5rem] shrink-0 text-right truncate">
+                    {HABIT_CONFIG[habitKey].label}
+                  </span>
                   <div className="flex gap-1">
                     {data.habitTracker.days.map((day, i) => {
-                      const val = day[habit.key];
+                      const val = day[habitKey];
                       const isToday = i === data.habitTracker.days.length - 1;
                       return (
                         <div
@@ -243,6 +307,12 @@ export default function Home() {
                       );
                     })}
                   </div>
+                  <button
+                    onClick={() => setActiveHabitKey(habitKey)}
+                    className="ml-auto px-2 py-1 rounded-md border border-white/15 bg-zinc-800 text-[11px] text-zinc-300 hover:text-zinc-100 hover:border-white/30"
+                  >
+                    Trend
+                  </button>
                 </div>
               ))}
             </div>
@@ -302,6 +372,46 @@ export default function Home() {
           </section>
         </div>
       </div>
+
+      <TrendModal
+        open={Boolean(activeHabitKey)}
+        onClose={() => setActiveHabitKey(null)}
+        title={activeHabitKey ? HABIT_CONFIG[activeHabitKey].label : "Habit Trend"}
+        subtitle="Rolling 7-day adherence"
+      >
+        <div className="space-y-4">
+          <LineTrendChart
+            points={activeHabitTrendPoints}
+            minY={0}
+            maxY={100}
+            color="#34d399"
+            valueFormatter={(value) => `${Math.round(value)}%`}
+            emptyLabel="No habit logs available for this period."
+          />
+
+          {activeHabitSummary ? (
+            <div className="grid grid-cols-3 gap-2">
+              <div className="rounded-lg border border-white/10 bg-zinc-900/60 p-3">
+                <p className="text-[11px] uppercase tracking-wide text-zinc-500">Logged Days</p>
+                <p className="mt-1 font-mono text-sm text-zinc-100">{activeHabitSummary.loggedDays}</p>
+                <p className="mt-1 text-xs text-zinc-500">Last 90 days</p>
+              </div>
+              <div className="rounded-lg border border-white/10 bg-zinc-900/60 p-3">
+                <p className="text-[11px] uppercase tracking-wide text-zinc-500">Adherence</p>
+                <p className="mt-1 font-mono text-sm text-emerald-300">{activeHabitSummary.adherence}%</p>
+                <p className="mt-1 text-xs text-zinc-500">Overall completion</p>
+              </div>
+              <div className="rounded-lg border border-white/10 bg-zinc-900/60 p-3">
+                <p className="text-[11px] uppercase tracking-wide text-zinc-500">Current Streak</p>
+                <p className="mt-1 font-mono text-sm text-zinc-100">{activeHabitSummary.currentStreak}d</p>
+                <p className="mt-1 text-xs text-zinc-500">
+                  Last 14d: {activeHabitSummary.recentAdherence}%
+                </p>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </TrendModal>
     </div>
   );
 }
