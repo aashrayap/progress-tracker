@@ -26,3 +26,8 @@ date,workout,exercise,set,weight,reps,notes
 2026-03-01,C,rdl,2,110,12,
 2026-03-01,C,bench,2,175,5,
 2026-03-01,C,lat_pulldown,2,148,9,
+2026-03-01,C,rdl,3,135,11,final set
+2026-03-01,C,lat_pulldown,3,145,8,final set
+2026-03-01,C,bench,3,175,5,final set
+2026-03-01,C,leg_raises,1,,10,accessory
+2026-03-01,C,stair_stepper,1,,0,5 min cardio
