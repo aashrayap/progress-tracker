@@ -158,3 +158,11 @@ date,signal,value,unit,context,source,capture_id,category
 2026-03-01,ate_clean,0,bool,mezza grille leftovers from saturday,chat,,habits
 2026-03-01,gym,1,bool,Day C,voice,voice-48,C
 2026-03-01,deep_work,1,bool,,chat,,habits
+2026-03-01,lol,0,bool,4hrs league 9:30pm-1am - heavy session - hard to moderate,chat,,habits
+2026-03-01,sleep,0,bool,stayed up til 1am playing league,chat,,habits
+2026-03-01,weed,1,bool,,chat,,habits
+2026-03-01,poker,1,bool,,chat,,habits
+2026-03-02,sleep_time,2:00,time,bed at 2am woke 7:30am - 5.5hrs,chat,,sleep
+2026-03-02,wake_time,7:30,time,,chat,,sleep
+2026-03-02,weed,1,bool,clean day 6 - using discipline from not smoking as anchor,voice,voice-61,addiction
+2026-03-02,ate_clean,0,bool,Chick-fil-A breakfast bowl - knows its not healthy but cant resist impulse,voice,voice-61,habits
