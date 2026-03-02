@@ -87,21 +87,121 @@ After writing CSV rows, comment with concise summary:
 - which files were updated
 
 ## Push Notification (required)
-After processing, write JSON to `/tmp/voice-inbox-ntfy.json`:
+After processing, write JSON to `/tmp/voice-inbox-ntfy.json`.
+
+Every notification must include: `type`, `title`, `body`, `tags`, `priority`.
+- `body` must start with `✓`
+- `title` must be ≤ 50 chars
+- `type` must be one of: `weight`, `workout`, `addiction`, `habit`, `reflection`, `todo`, `idea`, `multi`
+- `priority` is `3` unless specified otherwise below
+- calm factual tone, no motivational language
+
+Use the schema matching the routing category. Compute metrics from the CSV data you already read.
+
+### type: "weight"
 ```json
 {
-  "title": "short headline",
-  "body": "✓ concise summary",
-  "tags": "comma,separated,tags",
+  "type": "weight",
+  "title": "Weight: {value} {unit}",
+  "body": "✓ {value}{unit} — {delta with direction} from last ({days_ago}d ago)",
+  "tags": "weight",
+  "priority": 3
+}
+```
+Delta = difference from most recent prior weight row in daily_signals.csv. If no prior row, omit delta and just show the value.
+
+### type: "workout"
+```json
+{
+  "type": "workout",
+  "title": "{workout_label} logged",
+  "body": "✓ {exercise_count} exercises, {total_sets} sets\n{heaviest_set_per_exercise}\nGym streak: {consecutive_gym_1_days}",
+  "tags": "muscle",
+  "priority": 3
+}
+```
+Gym streak = count of consecutive days with `gym,1` in daily_signals.csv ending today. Heaviest set per exercise = `exercise weight×reps` for the top set of each.
+
+### type: "addiction" (weed/lol/poker signals)
+Clean day (value=1):
+```json
+{
+  "type": "addiction",
+  "title": "{signal}: day {streak}",
+  "body": "✓ Clean day {streak}.{context_if_provided}",
+  "tags": "{signal},white_check_mark",
+  "priority": 3
+}
+```
+Relapse (value=0):
+```json
+{
+  "type": "addiction",
+  "title": "{signal}: reset",
+  "body": "✓ Logged. Streak was {previous_streak}.{context_if_provided}",
+  "tags": "{signal},warning",
+  "priority": 4
+}
+```
+Streak = consecutive days with `{signal},1` in daily_signals.csv before today. Context = user's words if they gave a reason.
+
+### type: "habit" (gym/sleep/meditate/deep_work/ate_clean/calories)
+```json
+{
+  "type": "habit",
+  "title": "{signal}: {done|missed}",
+  "body": "✓ {signal}={done|missed}.{context_if_any}\nLast 7d: {count}/7",
+  "tags": "{signal}",
+  "priority": 3
+}
+```
+Last 7d = count of `{signal},1` rows in the 7 calendar days ending today.
+
+### type: "reflection"
+```json
+{
+  "type": "reflection",
+  "title": "Reflection: {domain}",
+  "body": "✓ Lesson: {lesson}\nChange: {change}",
+  "tags": "memo,{domain}",
+  "priority": 3
+}
+```
+Show lesson and change only. Do not include win — the notification reinforces the forward-looking action.
+
+### type: "todo"
+```json
+{
+  "type": "todo",
+  "title": "Todo added",
+  "body": "✓ {item}\nOpen todos: {count_where_done=0}",
+  "tags": "clipboard",
   "priority": 3
 }
 ```
 
-Notification rules:
-- calm factual tone
-- no motivational language
-- body starts with `✓`
-- include the most useful single context point when available (trend, streak, or next step)
+### type: "idea"
+```json
+{
+  "type": "idea",
+  "title": "Idea captured",
+  "body": "✓ Routed to idea pipeline: {first_30_chars}...",
+  "tags": "bulb",
+  "priority": 3
+}
+```
+
+### type: "multi" (voice note hit multiple categories)
+```json
+{
+  "type": "multi",
+  "title": "Logged {n} items",
+  "body": "✓ {category}: {one-line summary}\n✓ {category}: {one-line summary}",
+  "tags": "{first_category_tag}",
+  "priority": 3
+}
+```
+Use the most specific type's tag. Each line follows that type's body pattern but condensed to one line. If an addiction relapse is among them, priority = 4.
 
 ## Final Check
 Before finishing, verify:

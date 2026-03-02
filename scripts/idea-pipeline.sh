@@ -387,7 +387,15 @@ if [ "$status" = "shipped" ]; then
 $raw_text" \
     "ntfy.sh/$NTFY_TOPIC" > /dev/null 2>&1 || log "ntfy push failed"
 elif [ "$status" = "failed" ]; then
-  log "Idea $capture_id was not viable"
+  log "Idea $capture_id was not viable: $error_text"
+  curl -s \
+    -H "Title: Idea skipped" \
+    -H "Tags: bulb,no_entry_sign" \
+    -H "Priority: 3" \
+    -H "Markdown: yes" \
+    -d "✓ Not viable: ${error_text:-no reason given}
+${raw_text}" \
+    "ntfy.sh/$NTFY_TOPIC" > /dev/null 2>&1 || log "ntfy push failed"
 fi
 
 # Push inbox.csv updates (status changes happen on main)

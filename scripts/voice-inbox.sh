@@ -124,25 +124,48 @@ Steps:
 7. Write push notification JSON to /tmp/voice-inbox-ntfy.json (see prompt for format rules)" \
     2>> "$LOG_FILE" || log "ERROR processing issue #$number"
 
-  # Send rich push notification from JSON file
+  # Validate and send push notification
+  ntfy_valid=0
   if [ -f /tmp/voice-inbox-ntfy.json ]; then
+    # Validate required schema fields
+    ntfy_type=$(jq -r '.type // empty' /tmp/voice-inbox-ntfy.json 2>/dev/null)
+    ntfy_title=$(jq -r '.title // empty' /tmp/voice-inbox-ntfy.json 2>/dev/null)
     ntfy_body=$(jq -r '.body // empty' /tmp/voice-inbox-ntfy.json 2>/dev/null)
-    if [ -n "$ntfy_body" ]; then
-      ntfy_title=$(jq -r '.title // empty' /tmp/voice-inbox-ntfy.json 2>/dev/null)
-      ntfy_tags=$(jq -r '.tags // empty' /tmp/voice-inbox-ntfy.json 2>/dev/null)
-      ntfy_priority=$(jq -r '.priority // empty' /tmp/voice-inbox-ntfy.json 2>/dev/null)
+    ntfy_tags=$(jq -r '.tags // empty' /tmp/voice-inbox-ntfy.json 2>/dev/null)
+    ntfy_priority=$(jq -r '.priority // empty' /tmp/voice-inbox-ntfy.json 2>/dev/null)
 
-      curl_args=(-s -H "Markdown: yes")
-      [ -n "$ntfy_title" ] && curl_args+=(-H "Title: $ntfy_title")
-      [ -n "$ntfy_tags" ] && curl_args+=(-H "Tags: $ntfy_tags")
-      [ -n "$ntfy_priority" ] && curl_args+=(-H "Priority: $ntfy_priority")
+    # Validate: type is known, body starts with ✓, all required fields present
+    case "$ntfy_type" in
+      weight|workout|addiction|habit|reflection|todo|idea|multi) ;;
+      *) ntfy_type="" ;;
+    esac
 
-      curl "${curl_args[@]}" -d "$ntfy_body" "ntfy.sh/$NTFY_TOPIC" > /dev/null 2>&1 || log "ntfy push failed"
+    if [ -n "$ntfy_type" ] && [ -n "$ntfy_title" ] && [ -n "$ntfy_body" ] && [ -n "$ntfy_tags" ] && echo "$ntfy_body" | grep -q '^✓'; then
+      # Truncate title to 50 chars
+      ntfy_title="${ntfy_title:0:50}"
+      ntfy_valid=1
+    else
+      log "Invalid notification schema for issue #$number (type=$ntfy_type, has_title=$([ -n "$ntfy_title" ] && echo y || echo n), body_prefix=$(echo "$ntfy_body" | head -c2))"
     fi
     rm -f /tmp/voice-inbox-ntfy.json
   else
     log "No notification file generated for issue #$number"
   fi
+
+  # Fallback if validation failed or no file
+  if [ "$ntfy_valid" = "0" ]; then
+    ntfy_title="Voice note processed"
+    ntfy_body="✓ Logged from issue #$number"
+    ntfy_tags="inbox"
+    ntfy_priority="3"
+  fi
+
+  # Send notification (always fires — either validated or fallback)
+  curl_args=(-s -H "Markdown: yes")
+  curl_args+=(-H "Title: $ntfy_title")
+  curl_args+=(-H "Tags: $ntfy_tags")
+  [ -n "$ntfy_priority" ] && curl_args+=(-H "Priority: $ntfy_priority")
+  curl "${curl_args[@]}" -d "$ntfy_body" "ntfy.sh/$NTFY_TOPIC" > /dev/null 2>&1 || log "ntfy push failed"
 
   release_writer_lock
   log "Done with issue #$number"
