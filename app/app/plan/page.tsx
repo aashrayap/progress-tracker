@@ -173,7 +173,7 @@ export default function PlanPage() {
   return (
     <div className="min-h-screen bg-black text-zinc-100">
       <div className="p-4 sm:p-6">
-        <div className="max-w-6xl mx-auto">
+        <div className={zoom === "year" ? "" : "max-w-6xl mx-auto"}>
           {/* Breadcrumb */}
           <div className="flex items-center gap-1 text-sm mb-2">
             {breadcrumbs.map((bc, i) => (

@@ -106,7 +106,7 @@ export default function MonthView({ events, habits, focusDate, onNavigate }: Pro
                     className={`text-[10px] truncate px-1 rounded ${
                       e.start === 0 && e.end === 0
                         ? "bg-purple-500/10 text-purple-300"
-                        : "text-zinc-400"
+                        : "bg-zinc-800 text-zinc-300"
                     }`}
                   >
                     {e.item}

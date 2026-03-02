@@ -47,14 +47,10 @@ export default function YearView({ events, habits, focusDate, onNavigate }: Prop
   }
 
   return (
-    <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+    <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 min-h-[calc(100vh-10rem)]">
       {MONTH_NAMES.map((name, i) => {
         const monthEvents = eventsByMonth[i] || [];
         const visibleMonthEvents = monthEvents.filter((e) => e.item.trim() !== "PTO - B Schedule");
-        const allDayEvents = visibleMonthEvents.filter(
-          (e) => e.start === 0 && e.end === 0
-        );
-        const timedCount = visibleMonthEvents.length - allDayEvents.length;
         const habitData = habitsByMonth[i];
         const isCurrent = i === currentMonth && year === currentYear;
 
@@ -89,25 +85,33 @@ export default function YearView({ events, habits, focusDate, onNavigate }: Prop
               )}
             </div>
 
-            {visibleMonthEvents.length > 0 && (
+            {visibleMonthEvents.length > 0 && visibleMonthEvents.length > 4 && (
               <p className="text-xs text-zinc-400 mb-2">
-                {timedCount > 0 &&
-                  `${timedCount} event${timedCount > 1 ? "s" : ""}`}
-                {timedCount > 0 && allDayEvents.length > 0 && " · "}
-                {allDayEvents.length > 0 &&
-                  `${allDayEvents.length} all-day`}
+                {visibleMonthEvents.length} events
               </p>
             )}
 
             <div className="space-y-1">
-              {allDayEvents.slice(0, 3).map((e, idx) => (
-                <div
-                  key={`${e.date}-${e.start}-${e.end}-${e.item}-${idx}`}
-                  className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20 truncate"
-                >
-                  {e.item}
-                </div>
-              ))}
+              {visibleMonthEvents.slice(0, 4).map((e, idx) => {
+                const isAllDay = e.start === 0 && e.end === 0;
+                return (
+                  <div
+                    key={`${e.date}-${e.start}-${e.end}-${e.item}-${idx}`}
+                    className={`text-[10px] px-1.5 py-0.5 rounded truncate ${
+                      isAllDay
+                        ? "bg-purple-500/10 text-purple-300 border border-purple-500/20"
+                        : "bg-zinc-800 text-zinc-300 border border-zinc-700"
+                    }`}
+                  >
+                    {e.item}
+                  </div>
+                );
+              })}
+              {visibleMonthEvents.length > 4 && (
+                <p className="text-[10px] text-zinc-500">
+                  +{visibleMonthEvents.length - 4} more
+                </p>
+              )}
             </div>
           </div>
         );
