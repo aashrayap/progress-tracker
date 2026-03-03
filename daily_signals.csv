@@ -166,3 +166,67 @@ date,signal,value,unit,context,source,capture_id,category
 2026-03-02,wake_time,7:30,time,,chat,,sleep
 2026-03-02,weed,1,bool,clean day 6 - using discipline from not smoking as anchor,voice,voice-61,addiction
 2026-03-02,ate_clean,0,bool,Chick-fil-A breakfast bowl - knows its not healthy but cant resist impulse,voice,voice-61,habits
+2026-03-02,gym,0,bool,slept late - bad decisions,chat,,habits
+2026-03-02,meditate,0,bool,,chat,,habits
+2026-03-02,lol,0,bool,played league,chat,,addiction
+2026-03-02,deep_work,1,bool,,chat,,habits
+2026-03-02,poker,1,bool,,chat,,addiction
+2026-03-03,gym,1,bool,Day D - 6am morning session,voice,voice-66,habits
+2026-01-05,clarity,0,bool,,backfill,,addiction
+2026-01-06,clarity,0,bool,,backfill,,addiction
+2026-01-07,clarity,0,bool,,backfill,,addiction
+2026-01-08,clarity,0,bool,,backfill,,addiction
+2026-01-09,clarity,0,bool,,backfill,,addiction
+2026-01-10,clarity,0,bool,,backfill,,addiction
+2026-01-11,clarity,0,bool,,backfill,,addiction
+2026-01-12,clarity,0,bool,,backfill,,addiction
+2026-01-13,clarity,0,bool,,backfill,,addiction
+2026-01-14,clarity,0,bool,,backfill,,addiction
+2026-01-15,clarity,0,bool,,backfill,,addiction
+2026-01-16,clarity,0,bool,,backfill,,addiction
+2026-01-17,clarity,0,bool,,backfill,,addiction
+2026-01-18,clarity,0,bool,,backfill,,addiction
+2026-01-19,clarity,0,bool,,backfill,,addiction
+2026-01-20,clarity,0,bool,,backfill,,addiction
+2026-01-21,clarity,0,bool,,backfill,,addiction
+2026-01-22,clarity,0,bool,,backfill,,addiction
+2026-01-23,clarity,0,bool,,backfill,,addiction
+2026-01-24,clarity,0,bool,,backfill,,addiction
+2026-01-25,clarity,0,bool,,backfill,,addiction
+2026-01-26,clarity,0,bool,,backfill,,addiction
+2026-01-27,clarity,0,bool,,backfill,,addiction
+2026-01-28,clarity,0,bool,,backfill,,addiction
+2026-01-29,clarity,0,bool,,backfill,,addiction
+2026-01-30,clarity,0,bool,,backfill,,addiction
+2026-01-31,clarity,0,bool,,backfill,,addiction
+2026-02-01,clarity,0,bool,,backfill,,addiction
+2026-02-02,clarity,0,bool,,backfill,,addiction
+2026-02-03,clarity,0,bool,,backfill,,addiction
+2026-02-04,clarity,0,bool,,backfill,,addiction
+2026-02-05,clarity,0,bool,,backfill,,addiction
+2026-02-06,clarity,0,bool,,backfill,,addiction
+2026-02-07,clarity,0,bool,,backfill,,addiction
+2026-02-08,clarity,0,bool,,backfill,,addiction
+2026-02-09,clarity,0,bool,,backfill,,addiction
+2026-02-10,clarity,0,bool,,backfill,,addiction
+2026-02-11,clarity,0,bool,,backfill,,addiction
+2026-02-12,clarity,0,bool,,backfill,,addiction
+2026-02-13,clarity,0,bool,,backfill,,addiction
+2026-02-14,clarity,0,bool,,backfill,,addiction
+2026-02-15,clarity,0,bool,,backfill,,addiction
+2026-02-16,clarity,0,bool,,backfill,,addiction
+2026-02-17,clarity,0,bool,,backfill,,addiction
+2026-02-18,clarity,0,bool,,backfill,,addiction
+2026-02-19,clarity,0,bool,,backfill,,addiction
+2026-02-20,clarity,0,bool,,backfill,,addiction
+2026-02-21,clarity,0,bool,,backfill,,addiction
+2026-02-22,clarity,0,bool,,backfill,,addiction
+2026-02-23,clarity,0,bool,,backfill,,addiction
+2026-02-24,clarity,0,bool,,backfill,,addiction
+2026-02-25,clarity,0,bool,,backfill,,addiction
+2026-02-26,clarity,0,bool,,backfill,,addiction
+2026-02-27,clarity,0,bool,,backfill,,addiction
+2026-02-28,clarity,0,bool,,backfill,,addiction
+2026-03-01,clarity,0,bool,,backfill,,addiction
+2026-03-02,clarity,1,bool,,chat,,addiction
+2026-03-02,sleep,1,bool,bed by 10pm,chat,,habits

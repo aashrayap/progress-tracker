@@ -12,6 +12,7 @@ export const HABIT_CONFIG = {
   weed: { label: "No Weed", abbr: "W" },
   lol: { label: "No LoL", abbr: "L" },
   poker: { label: "No Poker", abbr: "P" },
+  clarity: { label: "Clarity", abbr: "C" },
   gym: { label: "Gym", abbr: "G" },
   sleep: { label: "Sleep", abbr: "S" },
   meditate: { label: "Meditate", abbr: "M" },
@@ -118,6 +119,7 @@ export const config = {
       // Legacy IDs retained so historical logs still resolve to display names.
       { id: "cable_row", name: "Cable Row", sets: 3, reps: "6-10" },
       { id: "barbell_row", name: "Barbell Row", sets: 3, reps: "6-10" },
+      { id: "machine_bicep_curl", name: "Machine Bicep Curl", sets: 3, reps: "8-12" },
     ],
     legs: [
       { id: "squat", name: "Back Squat", sets: 3, reps: "5-8" },
@@ -137,6 +139,7 @@ export const config = {
     C: ["rdl", "bench", "pullup"],
     D: ["front_squat", "incline_bench", "cable_row"],
     E: ["lunges", "ohp", "pullup"],
+    G: ["machine_bicep_curl"],
   } as Record<string, string[]>,
 
   cardioTemplates: {
@@ -161,7 +164,7 @@ export const config = {
       { key: "D", kind: "lift", label: "Lift D", detail: "Front Squat, Incline Bench, Cable Row" },
       { key: "E", kind: "lift", label: "Lift E", detail: "Lunges, OHP, Pull-Up" },
       { key: "F", kind: "cardio", label: "Zone 2", detail: "Conversational pace, 45 min", minutes: 45 },
-      { key: "G", kind: "cardio", label: "Moderate Cardio", detail: "Bike, jog, or brisk walk, 25 min", minutes: 25 },
+      { key: "G", kind: "cardio", label: "Moderate Cardio", detail: "Bike, jog, or brisk walk, 25 min + Machine Bicep Curl", minutes: 25 },
     ] as RotationDay[],
     masterList: {
       lower: ["squat", "front_squat", "lunges", "rdl", "trap_bar_deadlift"],

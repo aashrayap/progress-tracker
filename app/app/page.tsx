@@ -72,6 +72,7 @@ const HABIT_ORDER = [
   "meditate",
   "lol",
   "poker",
+  "clarity",
 ] as const;
 type HabitKey = keyof typeof HABIT_CONFIG;
 

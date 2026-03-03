@@ -145,3 +145,34 @@ export interface DailyTaskConfig {
   label: string;
   placeholder?: string;
 }
+
+export interface GroceryEntry {
+  item: string;
+  section: string;
+  done: number;
+  added: string;
+}
+
+export interface QuoteEntry {
+  id: number;
+  text: string;
+  author: string;
+  source: string;
+  added: string;
+}
+
+export interface MindLoopEntry {
+  date: string;
+  trigger: string;
+  autopilotAction: string;
+  updatedAction: string;
+  response: string;
+  lens: string;
+  emotionBefore: number;
+  emotionAfter: number;
+  bodySensation: string;
+  thoughtPattern: string;
+  valueTarget: string;
+  source: string;
+  captureId: string;
+}

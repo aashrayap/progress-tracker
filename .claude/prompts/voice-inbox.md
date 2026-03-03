@@ -6,6 +6,7 @@ Canonical files:
 - `workouts.csv` (set-level gym data)
 - `reflections.csv` (win/lesson/change)
 - `todos.csv` (action backlog)
+- `groceries.csv` (rolling grocery checklist)
 
 ## Objective
 Classify the issue body and write structured rows to canonical CSVs.
@@ -16,7 +17,8 @@ Primary routing categories:
 3. reflection
 4. codebase idea
 5. actionable todo
-6. unresolved note (todo with clarify prefix)
+6. grocery item(s)
+7. unresolved note (todo with clarify prefix)
 
 A single issue may map to multiple categories.
 
@@ -28,7 +30,7 @@ A single issue may map to multiple categories.
 ## Daily Signal Detection
 Log entries for common signals:
 - `weight`, `gym`, `sleep`, `meditate`, `deep_work`, `ate_clean`, `calories`
-- addiction signals: `weed`, `lol`, `poker`
+- addiction signals: `weed`, `lol`, `poker`, `clarity`
 - event signals: `trigger`, `relapse`, `reset`
 
 Conventions:
@@ -68,6 +70,13 @@ If the voice note is a **codebase improvement idea** — feature request, app en
 
 **Routing**: Set `suggested_destination=idea` in inbox.csv. Do NOT also append to `todos.csv`. The idea pipeline daemon will handle investigation and implementation.
 
+## Grocery Routing
+If text mentions buying food, groceries, "pick up", "need from store", or lists food items to buy:
+- Append one row per item to `groceries.csv`
+- Map each item to a section: `produce`, `bakery`, `deli`, `meat`, `dairy`, `frozen`, `beverages`, `canned`, `pasta_rice`, `baking`, `cereal`, `snacks`, `condiments`, `household`, `health`
+- `done=0`, `added=today`
+- Do NOT also add to `todos.csv`
+
 ## Todo Routing
 - Actionable requests (NOT codebase ideas) -> append todo (`done=0`, `created=today`)
 - Unclear but important -> todo prefixed with `Clarify:`
@@ -92,7 +101,7 @@ After processing, write JSON to `/tmp/voice-inbox-ntfy.json`.
 Every notification must include: `type`, `title`, `body`, `tags`, `priority`.
 - `body` must start with `✓`
 - `title` must be ≤ 50 chars
-- `type` must be one of: `weight`, `workout`, `addiction`, `habit`, `reflection`, `todo`, `idea`, `multi`
+- `type` must be one of: `weight`, `workout`, `addiction`, `habit`, `reflection`, `todo`, `idea`, `grocery`, `multi`
 - `priority` is `3` unless specified otherwise below
 - calm factual tone, no motivational language
 
@@ -187,6 +196,17 @@ Show lesson and change only. Do not include win — the notification reinforces 
   "title": "Idea captured",
   "body": "✓ Routed to idea pipeline: {first_30_chars}...",
   "tags": "bulb",
+  "priority": 3
+}
+```
+
+### type: "grocery"
+```json
+{
+  "type": "grocery",
+  "title": "Grocery: {n} items added",
+  "body": "✓ {item1}, {item2}, ...\nTotal on list: {count_where_done=0}",
+  "tags": "shopping_cart",
   "priority": 3
 }
 ```

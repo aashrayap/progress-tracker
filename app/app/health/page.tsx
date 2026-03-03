@@ -1,24 +1,42 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import type { HealthData } from "../lib/types";
+import type { HealthData, GroceryEntry } from "../lib/types";
 import { toDateStr } from "../lib/utils";
 import WorkoutCard from "../components/WorkoutCard";
 import WeightChart from "../components/WeightChart";
 import ExerciseHistory from "../components/ExerciseHistory";
+import GroceryCard from "../components/GroceryCard";
+
+interface GroceryData {
+  sections: { name: string; items: GroceryEntry[] }[];
+  totalItems: number;
+  doneItems: number;
+}
 
 export default function HealthPage() {
   const [data, setData] = useState<HealthData | null>(null);
+  const [groceryData, setGroceryData] = useState<GroceryData | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const fetchGroceries = useCallback(() => {
+    fetch("/api/groceries")
+      .then((res) => res.json())
+      .then(setGroceryData)
+      .catch((err) => console.error("Failed to load groceries:", err));
+  }, []);
+
   const fetchData = useCallback(() => {
-    fetch("/api/health")
-      .then((res) => {
+    Promise.all([
+      fetch("/api/health").then((res) => {
         if (!res.ok) throw new Error("Failed to fetch health data");
         return res.json();
-      })
-      .then((nextData) => {
-        setData(nextData);
+      }),
+      fetch("/api/groceries").then((res) => res.json()).catch(() => null),
+    ])
+      .then(([healthData, groceries]) => {
+        setData(healthData);
+        if (groceries) setGroceryData(groceries);
         setLoading(false);
       })
       .catch((err) => {
@@ -89,6 +107,33 @@ export default function HealthPage() {
     fetchData();
   };
 
+  const handleGroceryToggle = async (item: string, done: number) => {
+    await fetch("/api/groceries", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ item, done }),
+    });
+    fetchGroceries();
+  };
+
+  const handleGroceryDelete = async (item: string) => {
+    await fetch("/api/groceries", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ item }),
+    });
+    fetchGroceries();
+  };
+
+  const handleClearDone = async () => {
+    await fetch("/api/groceries", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clear: true }),
+    });
+    fetchGroceries();
+  };
+
   return (
     <div className="min-h-screen bg-black text-zinc-100">
       <div className="p-4 sm:p-6">
@@ -135,6 +180,17 @@ export default function HealthPage() {
             exerciseProgress={exerciseProgress}
             workoutHistory={workouts.history}
           />
+
+          {groceryData && (
+            <GroceryCard
+              sections={groceryData.sections}
+              totalItems={groceryData.totalItems}
+              doneItems={groceryData.doneItems}
+              onToggle={handleGroceryToggle}
+              onDelete={handleGroceryDelete}
+              onClearDone={handleClearDone}
+            />
+          )}
         </div>
       </div>
     </div>

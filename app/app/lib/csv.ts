@@ -3,7 +3,10 @@ import path from "path";
 import type {
   DailySignalEntry,
   ExerciseProgressEntry,
+  GroceryEntry,
   InboxEntry,
+  MindLoopEntry,
+  QuoteEntry,
   WorkoutDay,
 } from "./types";
 import { daysAgoStr, todayStr } from "./utils";
@@ -26,6 +29,13 @@ const PLAN_HEADER = "date,start,end,item,done,notes";
 const TODOS_HEADER = "id,item,done,created";
 const WORKOUTS_HEADER = "date,workout,exercise,set,weight,reps,notes";
 const REFLECTIONS_HEADER = "date,domain,win,lesson,change,archived";
+const MIND_LOOPS_PATH = path.join(ROOT, "mind_loops.csv");
+const MIND_LOOPS_HEADER =
+  "date,trigger,autopilot_action,updated_action,response,lens,emotion_before,emotion_after,body_sensation,thought_pattern,value_target,source,capture_id";
+const GROCERIES_PATH = path.join(ROOT, "groceries.csv");
+const GROCERIES_HEADER = "item,section,done,added";
+const QUOTES_PATH = path.join(ROOT, "quotes.csv");
+const QUOTES_HEADER = "id,text,author,source,added";
 
 export interface PlanEntry {
   date: string;
@@ -586,4 +596,120 @@ export function archiveReflection(date: string, domain: string, index: number): 
 export function getYesterdayChanges(reflections: ReflectionEntry[]): ReflectionEntry[] {
   const yesterday = daysAgoStr(1);
   return reflections.filter((r) => r.date === yesterday && r.change.trim());
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Mind Loops
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function readMindLoops(): MindLoopEntry[] {
+  if (!fs.existsSync(MIND_LOOPS_PATH)) return [];
+  const lines = readDataLines(MIND_LOOPS_PATH);
+  return lines.map((line) => {
+    const c = parseCSVLine(line);
+    return {
+      date: c[0] || "",
+      trigger: c[1] || "",
+      autopilotAction: c[2] || "",
+      updatedAction: c[3] || "",
+      response: c[4] || "",
+      lens: c[5] || "",
+      emotionBefore: parseFloat(c[6]) || 0,
+      emotionAfter: parseFloat(c[7]) || 0,
+      bodySensation: c[8] || "",
+      thoughtPattern: c[9] || "",
+      valueTarget: c[10] || "",
+      source: c[11] || "",
+      captureId: c[12] || "",
+    };
+  });
+}
+
+export function appendMindLoop(entry: MindLoopEntry): void {
+  const line = [
+    entry.date,
+    csvQuote(entry.trigger),
+    csvQuote(entry.autopilotAction),
+    csvQuote(entry.updatedAction),
+    csvQuote(entry.response),
+    csvQuote(entry.lens),
+    String(entry.emotionBefore),
+    String(entry.emotionAfter),
+    csvQuote(entry.bodySensation),
+    csvQuote(entry.thoughtPattern),
+    csvQuote(entry.valueTarget),
+    csvQuote(entry.source || ""),
+    csvQuote(entry.captureId || ""),
+  ].join(",");
+  appendLines(MIND_LOOPS_PATH, MIND_LOOPS_HEADER, [line]);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Groceries
+// ─────────────────────────────────────────────────────────────────────────────
+
+function serializeGrocery(g: GroceryEntry): string {
+  return `${csvQuote(g.item)},${csvQuote(g.section)},${g.done},${g.added}`;
+}
+
+function writeGroceries(groceries: GroceryEntry[]): void {
+  const lines = groceries.map(serializeGrocery);
+  writeAll(GROCERIES_PATH, GROCERIES_HEADER, lines);
+}
+
+export function readGroceries(): GroceryEntry[] {
+  if (!fs.existsSync(GROCERIES_PATH)) return [];
+  const lines = readDataLines(GROCERIES_PATH);
+  return lines.map((line) => {
+    const c = parseCSVLine(line);
+    return {
+      item: c[0] || "",
+      section: c[1] || "",
+      done: parseInt(c[2], 10) || 0,
+      added: c[3] || "",
+    };
+  });
+}
+
+export function appendGrocery(item: string, section: string): GroceryEntry {
+  const entry: GroceryEntry = { item, section, done: 0, added: todayStr() };
+  appendLines(GROCERIES_PATH, GROCERIES_HEADER, [serializeGrocery(entry)]);
+  return entry;
+}
+
+export function updateGrocery(item: string, updates: Partial<Pick<GroceryEntry, "done">>): void {
+  const groceries = readGroceries();
+  const idx = groceries.findIndex((g) => g.item === item);
+  if (idx === -1) return;
+  if (updates.done !== undefined) groceries[idx].done = updates.done;
+  writeGroceries(groceries);
+}
+
+export function deleteGrocery(item: string): void {
+  const groceries = readGroceries().filter((g) => g.item !== item);
+  writeGroceries(groceries);
+}
+
+export function clearDoneGroceries(): void {
+  const groceries = readGroceries().filter((g) => g.done !== 1);
+  writeGroceries(groceries);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Quotes
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function readQuotes(): QuoteEntry[] {
+  if (!fs.existsSync(QUOTES_PATH)) return [];
+  const lines = readDataLines(QUOTES_PATH);
+  return lines.map((line) => {
+    const c = parseCSVLine(line);
+    return {
+      id: parseInt(c[0], 10) || 0,
+      text: c[1] || "",
+      author: c[2] || "",
+      source: c[3] || "",
+      added: c[4] || "",
+    };
+  });
 }

@@ -27,7 +27,7 @@ date,signal,value,unit,context,source,capture_id,category
 - `/log workout <exercise> <weight>x<reps>x<sets> [...]`
 
 ## Metric Conventions
-- Addiction signals (`lol`, `weed`, `poker`): `0=relapse`, `1=clean`
+- Addiction signals (`lol`, `weed`, `poker`, `clarity`): `0=relapse`, `1=clean`
 - Habit signals (`gym`, `sleep`, `meditate`, `deep_work`, `ate_clean`): `0=missed`, `1=done`
 - Numeric metrics (`weight`, `calories`, `steps`) store number values
 

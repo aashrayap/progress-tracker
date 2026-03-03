@@ -31,3 +31,12 @@ date,workout,exercise,set,weight,reps,notes
 2026-03-01,C,bench,3,175,5,final set
 2026-03-01,C,leg_raises,1,,10,accessory
 2026-03-01,C,stair_stepper,1,,0,5 min cardio
+2026-03-03,D,front_squat,1,90,10,6am session
+2026-03-03,D,front_squat,2,90,10,
+2026-03-03,D,front_squat,3,90,10,
+2026-03-03,D,incline_bench,1,155,8,
+2026-03-03,D,incline_bench,2,165,5,
+2026-03-03,D,incline_bench,3,155,7,
+2026-03-03,D,cable_row,1,121,10,
+2026-03-03,D,cable_row,2,121,10,
+2026-03-03,D,cable_row,3,121,6,

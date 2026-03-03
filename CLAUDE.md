@@ -33,6 +33,8 @@ nvm use 22.14.0
 - `plan.csv`
 - `todos.csv`
 - `reflections.csv`
+- `mind_loops.csv`
+- `groceries.csv`
 - `inbox.csv`
 
 ## Skills
