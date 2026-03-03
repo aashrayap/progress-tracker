@@ -56,6 +56,11 @@ interface AppData {
   habitTrends: Record<string, { date: string; value: boolean | null }[]>;
   nextAction: NextAction;
   ideas: { total: number; shipped: number; pending: number };
+  meditation: {
+    streak: number;
+    sessions30d: number;
+    recent: { date: string; context: string }[];
+  };
 }
 
 const HABIT_ORDER = [
@@ -296,6 +301,25 @@ export default function Home() {
                 </div>
               </div>
             </Link>
+          )}
+
+          {(data.meditation.streak > 0 || data.meditation.sessions30d > 0) && (
+            <section className="p-4 bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl">
+              <p className="text-xs text-zinc-400 uppercase">Meditation</p>
+              <div className="flex items-end justify-between mt-2">
+                <p className="text-2xl font-semibold text-zinc-100">
+                  {data.meditation.streak}d streak
+                </p>
+                <p className="text-xs text-zinc-400">
+                  {data.meditation.sessions30d} sessions / 30d
+                </p>
+              </div>
+              {data.meditation.recent.length > 0 && data.meditation.recent[0].context && (
+                <p className="mt-2 text-sm text-zinc-400 line-clamp-2">
+                  {data.meditation.recent[0].context}
+                </p>
+              )}
+            </section>
           )}
 
           <DailyInsight data={data.insight} />

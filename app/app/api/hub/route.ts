@@ -183,6 +183,17 @@ export async function GET() {
               cta: "Open Reflect",
             };
 
+    // Meditation stats
+    const meditateStreak = getStreak(signals, "meditate");
+    const thirtyDaysAgo = daysAgoStr(30);
+    const meditateSessions = signals.filter(
+      (e) => e.signal === "meditate" && e.value === "1" && e.date >= thirtyDaysAgo
+    );
+    const recentMeditations = meditateSessions
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, 3)
+      .map((e) => ({ date: e.date, context: e.context || "" }));
+
     return NextResponse.json({
       nowWindow: getNowWindow(),
       gymToday,
@@ -228,6 +239,11 @@ export async function GET() {
       habitTrends,
       nextAction,
       ideas: { total: ideaCount, shipped: ideaShipped, pending: ideaPending },
+      meditation: {
+        streak: meditateStreak,
+        sessions30d: meditateSessions.length,
+        recent: recentMeditations,
+      },
     });
   } catch (e) {
     console.error("GET /api/hub error:", e);
