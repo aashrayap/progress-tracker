@@ -64,6 +64,15 @@ Sections follow HEB store walk order:
 - `done`: `0|1`
 - Clear completed items after each shopping trip
 
+## resources.csv
+```
+title,author,type,domain,status,notes
+```
+
+- `type`: `book`, `essay`, `article`, `video`, `podcast`
+- `domain`: freeform life area — `spirituality`, `tech`, `fitness`, `addiction`, `finance`, `nutrition`, `psychology`, etc.
+- `status`: `unread`, `reading`, `done`
+
 ## Relationship Notes
 - `gym=1` in `daily_signals.csv` can have supporting set data in `workouts.csv`.
 - `meditate=1` in `daily_signals.csv` can have supporting loop data in `mind_loops.csv`.

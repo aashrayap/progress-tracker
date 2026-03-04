@@ -7,6 +7,7 @@ import type {
   InboxEntry,
   MindLoopEntry,
   QuoteEntry,
+  ResourceEntry,
   WorkoutDay,
 } from "./types";
 import { daysAgoStr, todayStr } from "./utils";
@@ -36,6 +37,8 @@ const GROCERIES_PATH = path.join(ROOT, "groceries.csv");
 const GROCERIES_HEADER = "item,section,done,added";
 const QUOTES_PATH = path.join(ROOT, "quotes.csv");
 const QUOTES_HEADER = "id,text,author,source,added";
+const RESOURCES_PATH = path.join(ROOT, "resources.csv");
+const RESOURCES_HEADER = "title,author,type,domain,status,notes";
 
 export interface PlanEntry {
   date: string;
@@ -698,6 +701,33 @@ export function clearDoneGroceries(): void {
 // ─────────────────────────────────────────────────────────────────────────────
 // Quotes
 // ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Resources
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function readResources(): ResourceEntry[] {
+  if (!fs.existsSync(RESOURCES_PATH)) return [];
+  const lines = readDataLines(RESOURCES_PATH);
+  return lines.map((line) => {
+    const c = parseCSVLine(line);
+    return {
+      title: c[0] || "",
+      author: c[1] || "",
+      type: c[2] || "",
+      domain: c[3] || "",
+      status: c[4] || "",
+      notes: c[5] || "",
+    };
+  });
+}
+
+export function addResource(entry: ResourceEntry): void {
+  const line = [entry.title, entry.author, entry.type, entry.domain, entry.status, entry.notes]
+    .map((v) => (v.includes(",") || v.includes('"') ? `"${v.replace(/"/g, '""')}"` : v))
+    .join(",");
+  appendLines(RESOURCES_PATH, RESOURCES_HEADER, [line]);
+}
 
 export function readQuotes(): QuoteEntry[] {
   if (!fs.existsSync(QUOTES_PATH)) return [];

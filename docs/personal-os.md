@@ -22,6 +22,7 @@ Reduce decision friction by converting raw life input into clear, evidence-backe
 2. Shared business logic lives in `app/app/lib` and `app/app/api`.
 3. Surfaces execute; they do not redefine semantics.
 4. Insights should map to an action path when possible.
+5. Navigation stays flat: primary product areas should be top-level routes, with secondary detail handled inside the page (tabs, sidebars, modals).
 
 ## Decision Quality Bar
 A recommendation should be:

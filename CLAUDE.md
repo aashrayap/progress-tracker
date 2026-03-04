@@ -51,3 +51,4 @@ nvm use 22.14.0
 - Minimal by default.
 - Delete obsolete code/docs instead of commenting out.
 - Voice + text both flow through the same inbox pipeline.
+- Keep navigation flat: use top-level routes for primary surfaces; avoid secondary route trees and prefer in-page tabs/sidebars/modals for depth.

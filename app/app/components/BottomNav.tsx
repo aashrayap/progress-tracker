@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const tabs = [
+  { href: "/vision", label: "Vision" },
   { href: "/", label: "Hub" },
   { href: "/plan", label: "Plan" },
   { href: "/health", label: "Health" },
@@ -11,6 +12,7 @@ const tabs = [
   { href: "/reflect", label: "Reflect" },
   { href: "/ideas", label: "Ideas" },
   { href: "/quotes", label: "Quotes" },
+  { href: "/resources", label: "Resources" },
 ] as const;
 
 export default function TopNav() {

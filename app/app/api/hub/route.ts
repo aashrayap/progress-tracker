@@ -64,7 +64,7 @@ export async function GET() {
     const dopamineDates = [
       ...new Set(
         signals
-          .filter((e) => ["lol", "weed", "poker", "gym", "sleep", "meditate", "deep_work", "ate_clean"].includes(e.signal))
+          .filter((e) => ["lol", "weed", "poker", "clarity", "gym", "sleep", "meditate", "deep_work", "ate_clean"].includes(e.signal))
           .map((e) => e.date)
       ),
     ].sort();
@@ -86,6 +86,7 @@ export async function GET() {
         meditate: get("meditate"),
         deepWork: get("deep_work"),
         ateClean: get("ate_clean"),
+        clarity: get("clarity"),
       };
     });
 
@@ -215,6 +216,7 @@ export async function GET() {
           lol: getStreak(signals, "lol"),
           weed: getStreak(signals, "weed"),
           poker: getStreak(signals, "poker"),
+          clarity: getStreak(signals, "clarity"),
         },
       },
       todaysPlan: todaysPlan.map((p) => ({

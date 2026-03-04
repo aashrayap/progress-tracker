@@ -8,6 +8,12 @@ Three-layer model:
 
 Core rule: UI surfaces consume read models and trigger actions; semantics are owned by shared logic.
 
+## Navigation Protocol
+- Keep product information architecture flat: primary surfaces must be top-level routes.
+- Do not add secondary route trees for core product areas (for example: `/health/...`, `/plan/...`, `/reflect/...`).
+- If a surface needs additional depth, use in-page UI state (tabs, sidebars, modals, drawers) instead of new URL routes.
+- When consolidating features, merge into an existing top-level route or replace with a new top-level route.
+
 ## Canonical Data Layer
 - `inbox.csv`: append-only raw capture audit
 - `daily_signals.csv`: daily facts and habits
@@ -19,12 +25,16 @@ Core rule: UI surfaces consume read models and trigger actions; semantics are ow
 ## App Layer
 `app/` contains the Next.js app.
 
-Main routes:
+Current top-level routes:
 - `/` Hub
+- `/vision` Vision
 - `/plan` Plan
 - `/health` Health
+- `/mind` Mind
 - `/reflect` Reflect
-- `/ideas` Ideas (voice idea pipeline status)
+- `/ideas` Ideas
+- `/quotes` Quotes
+- `/resources` Resources
 
 ## Voice + Text Intake Pipeline
 Both iOS shortcuts (voice and text) flow through one processor:

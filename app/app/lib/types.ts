@@ -161,6 +161,15 @@ export interface QuoteEntry {
   added: string;
 }
 
+export interface ResourceEntry {
+  title: string;
+  author: string;
+  type: string;
+  domain: string;
+  status: string;
+  notes: string;
+}
+
 export interface MindLoopEntry {
   date: string;
   trigger: string;

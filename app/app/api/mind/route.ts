@@ -4,6 +4,48 @@ import { todayStr, daysAgoStr } from "../../lib/utils";
 import type { MindLoopEntry } from "../../lib/types";
 
 const VALID_LENSES = ["CBT", "DBT", "IFS", "ACT", "somatic", ""];
+const ITEM_LIMIT = 8;
+
+interface CountStat {
+  label: string;
+  count: number;
+}
+
+interface LensStat {
+  lens: string;
+  count: number;
+  avgRelief: number;
+}
+
+function normalize(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function round(value: number, precision = 1): number {
+  const factor = 10 ** precision;
+  return Math.round(value * factor) / factor;
+}
+
+function splitMultiValueField(value: string): string[] {
+  return value
+    .split(/[+,/;|]/)
+    .map((part) => normalize(part))
+    .filter(Boolean);
+}
+
+function topCounts(values: string[], limit = ITEM_LIMIT): CountStat[] {
+  const counts: Record<string, number> = {};
+  for (const v of values) {
+    counts[v] = (counts[v] || 0) + 1;
+  }
+  return Object.entries(counts)
+    .map(([label, count]) => ({ label, count }))
+    .sort((a, b) => {
+      if (b.count !== a.count) return b.count - a.count;
+      return a.label.localeCompare(b.label);
+    })
+    .slice(0, limit);
+}
 
 export async function GET() {
   try {
@@ -13,7 +55,7 @@ export async function GET() {
     // Streak: consecutive days with at least one loop
     const datesWithLoops = new Set(loops.map((l) => l.date));
     let streak = 0;
-    let checkDate = new Date(today + "T12:00:00");
+    const checkDate = new Date(today + "T12:00:00");
     while (true) {
       const ds = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, "0")}-${String(checkDate.getDate()).padStart(2, "0")}`;
       if (datesWithLoops.has(ds)) {
@@ -26,49 +68,120 @@ export async function GET() {
 
     // 30d sessions
     const thirtyDaysAgo = daysAgoStr(30);
-    const totalSessions30d = loops.filter((l) => l.date >= thirtyDaysAgo).length;
+    const last30d = loops.filter((l) => l.date >= thirtyDaysAgo);
+    const totalSessions30d = last30d.length;
 
-    // Recent 5
-    const recentLoops = [...loops].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
+    // Recent sessions
+    const recentLoops = loops
+      .map((loop, idx) => ({ loop, idx }))
+      .sort((a, b) => {
+        const dateCmp = b.loop.date.localeCompare(a.loop.date);
+        if (dateCmp !== 0) return dateCmp;
+        return b.idx - a.idx;
+      })
+      .slice(0, 12)
+      .map((entry) => entry.loop);
 
-    // 7d trigger frequency
+    // 7d summary + patterns
     const sevenDaysAgo = daysAgoStr(7);
     const last7d = loops.filter((l) => l.date >= sevenDaysAgo);
-    const triggerCounts: Record<string, number> = {};
-    for (const l of last7d) {
-      if (!l.trigger) continue;
-      const key = l.trigger.toLowerCase().trim();
-      triggerCounts[key] = (triggerCounts[key] || 0) + 1;
-    }
-    const topTriggers = Object.entries(triggerCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10)
-      .map(([trigger, count]) => ({ trigger, count }));
 
-    // 7d top actions by avg emotion improvement
-    const actionDeltas: Record<string, number[]> = {};
+    let totalBefore = 0;
+    let totalAfter = 0;
+    let improved = 0;
+    let unchanged = 0;
+    let worsened = 0;
+    const triggerTokens: string[] = [];
+    const thoughtPatternTokens: string[] = [];
+    const valueTargetTokens: string[] = [];
+    const actionDeltas: Record<string, { action: string; deltas: number[] }> = {};
+    const lensDeltas: Record<string, { lens: string; deltas: number[] }> = {};
+
     for (const l of last7d) {
+      totalBefore += l.emotionBefore;
+      totalAfter += l.emotionAfter;
+      const relief = l.emotionBefore - l.emotionAfter;
+
+      if (relief > 0) improved++;
+      else if (relief < 0) worsened++;
+      else unchanged++;
+
+      triggerTokens.push(...splitMultiValueField(l.trigger));
+      thoughtPatternTokens.push(...splitMultiValueField(l.thoughtPattern));
+      valueTargetTokens.push(...splitMultiValueField(l.valueTarget));
+
       const action = l.updatedAction || l.autopilotAction;
-      if (!action) continue;
-      const key = action.toLowerCase().trim();
-      if (!actionDeltas[key]) actionDeltas[key] = [];
-      actionDeltas[key].push(l.emotionAfter - l.emotionBefore);
+      if (action.trim()) {
+        const key = normalize(action);
+        if (!actionDeltas[key]) {
+          actionDeltas[key] = { action, deltas: [] };
+        }
+        actionDeltas[key].deltas.push(relief);
+      }
     }
+
+    for (const l of last30d) {
+      const lens = l.lens.trim() || "unlabeled";
+      const key = normalize(lens);
+      if (!lensDeltas[key]) {
+        lensDeltas[key] = { lens, deltas: [] };
+      }
+      lensDeltas[key].deltas.push(l.emotionBefore - l.emotionAfter);
+    }
+
+    const topTriggers = topCounts(triggerTokens).map((entry) => ({
+      trigger: entry.label,
+      count: entry.count,
+    }));
+    const topThoughtPatterns = topCounts(thoughtPatternTokens);
+    const topValueTargets = topCounts(valueTargetTokens);
+
     const topActions = Object.entries(actionDeltas)
-      .map(([action, deltas]) => ({
-        action,
-        avgDelta: deltas.reduce((s, d) => s + d, 0) / deltas.length,
-        count: deltas.length,
+      .map(([, data]) => ({
+        action: data.action.trim(),
+        avgRelief: round(data.deltas.reduce((s, d) => s + d, 0) / data.deltas.length),
+        count: data.deltas.length,
       }))
-      .sort((a, b) => b.avgDelta - a.avgDelta)
-      .slice(0, 10);
+      .sort((a, b) => {
+        if (b.avgRelief !== a.avgRelief) return b.avgRelief - a.avgRelief;
+        return b.count - a.count;
+      })
+      .slice(0, ITEM_LIMIT);
+
+    const lensBreakdown: LensStat[] = Object.entries(lensDeltas)
+      .map(([, data]) => ({
+        lens: data.lens,
+        count: data.deltas.length,
+        avgRelief: round(data.deltas.reduce((s, d) => s + d, 0) / data.deltas.length),
+      }))
+      .sort((a, b) => {
+        if (b.count !== a.count) return b.count - a.count;
+        return b.avgRelief - a.avgRelief;
+      });
+
+    const has7d = last7d.length > 0;
+    const summary7d = {
+      startDate: sevenDaysAgo,
+      endDate: today,
+      totalLoops: last7d.length,
+      avgIntensityBefore: has7d ? round(totalBefore / last7d.length) : 0,
+      avgIntensityAfter: has7d ? round(totalAfter / last7d.length) : 0,
+      avgRelief: has7d ? round((totalBefore - totalAfter) / last7d.length) : 0,
+      improved,
+      unchanged,
+      worsened,
+    };
 
     return NextResponse.json({
       streak,
       totalSessions30d,
+      summary7d,
       recentLoops,
       topTriggers,
       topActions,
+      topThoughtPatterns,
+      topValueTargets,
+      lensBreakdown,
     });
   } catch (e) {
     console.error("GET /api/mind error:", e);

@@ -21,6 +21,7 @@ interface DopamineDay {
   weed: boolean | null;
   lol: boolean | null;
   poker: boolean | null;
+  clarity: boolean | null;
   gym: boolean | null;
   sleep: boolean | null;
   meditate: boolean | null;
@@ -44,7 +45,7 @@ interface AppData {
     dayNumber: number;
     days: number;
     log: DopamineDay[];
-    streaks: { lol: number; weed: number; poker: number };
+    streaks: { lol: number; weed: number; poker: number; clarity: number };
   };
   todaysPlan: { start: number; end: number; item: string; done: string; notes: string }[];
   todos: { id: number; item: string; done: number; created: string }[];
@@ -92,6 +93,7 @@ export default function Home() {
   const [data, setData] = useState<AppData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeHabitKey, setActiveHabitKey] = useState<HabitKey | null>(null);
+  const [hoveredDay, setHoveredDay] = useState<number | null>(null);
 
   const fetchData = useCallback(() => {
     fetch("/api/hub")
@@ -275,7 +277,7 @@ export default function Home() {
                 Day {resetDay}/{data.dopamineReset.days}
               </p>
               <p className="mt-2 text-xs text-zinc-400">
-                {data.dopamineReset.streaks.weed}d weed · {data.dopamineReset.streaks.lol}d lol · {data.dopamineReset.streaks.poker}d poker
+                {data.dopamineReset.streaks.weed}d weed · {data.dopamineReset.streaks.lol}d lol · {data.dopamineReset.streaks.poker}d poker · {data.dopamineReset.streaks.clarity}d clarity
               </p>
               <div className="mt-3 h-2 bg-zinc-800 rounded-full overflow-hidden">
                 <div
@@ -367,51 +369,84 @@ export default function Home() {
               <span className="text-xs text-zinc-400 uppercase tracking-wide">90-Day Reset</span>
               <span className="text-xs text-zinc-600">Day {resetDay}</span>
             </div>
-            <div className="flex flex-wrap -m-0.5">
-              {Array.from({ length: 90 }, (_, i) => {
-                const dayNum = i + 1;
-                const [year, month, day] = data.dopamineReset.startDate.split("-").map(Number);
-                const dayDate = new Date(year, month - 1, day + i);
-                const dateStr = `${dayDate.getFullYear()}-${String(dayDate.getMonth() + 1).padStart(2, "0")}-${String(dayDate.getDate()).padStart(2, "0")}`;
+            <div className="relative">
+              <div className="flex flex-wrap -m-0.5">
+                {Array.from({ length: 90 }, (_, i) => {
+                  const dayNum = i + 1;
+                  const [year, month, day] = data.dopamineReset.startDate.split("-").map(Number);
+                  const dayDate = new Date(year, month - 1, day + i);
+                  const dateStr = `${dayDate.getFullYear()}-${String(dayDate.getMonth() + 1).padStart(2, "0")}-${String(dayDate.getDate()).padStart(2, "0")}`;
 
-                const logEntry = data.dopamineReset.log.find((l) => l.date === dateStr);
-                const isToday = dayNum === resetDay;
-                const isFuture = dayNum > resetDay;
+                  const logEntry = data.dopamineReset.log.find((l) => l.date === dateStr);
+                  const isToday = dayNum === resetDay;
+                  const isFuture = dayNum > resetDay;
 
-                let color = "bg-zinc-800";
-                if (logEntry) {
-                  const coreLogged = logEntry.weed !== null || logEntry.lol !== null;
-                  const coreClean = (logEntry.weed ?? true) && (logEntry.lol ?? true);
-                  const habits = [
-                    logEntry.gym,
-                    logEntry.sleep,
-                    logEntry.meditate,
-                    logEntry.deepWork,
-                    logEntry.ateClean,
-                  ];
-                  const habitsDone = habits.filter(Boolean).length;
+                  let color = "bg-zinc-800";
+                  if (logEntry && !isFuture) {
+                    const coreVices = [logEntry.weed, logEntry.lol, logEntry.clarity];
+                    const coreLogged = coreVices.some((v) => v !== null);
+                    const coreFailed = coreVices.some((v) => v === false);
+                    const habits = [logEntry.gym, logEntry.sleep, logEntry.meditate, logEntry.deepWork, logEntry.ateClean];
+                    const habitsDone = habits.filter(Boolean).length;
 
-                  if (coreLogged && !coreClean) color = "bg-red-500";
-                  else if (!coreLogged) color = habitsDone > 0 ? "bg-zinc-600" : "bg-zinc-800";
-                  else if (habitsDone <= 2) color = "bg-yellow-500";
-                  else if (habitsDone <= 4) color = "bg-teal-500";
-                  else color = "bg-emerald-400";
-                }
+                    if (coreFailed) color = "bg-red-500";
+                    else if (!coreLogged) color = habitsDone > 0 ? "bg-zinc-600" : "bg-zinc-800";
+                    else if (habitsDone <= 2) color = "bg-orange-500";
+                    else if (habitsDone <= 4) color = "bg-lime-500";
+                    else color = "bg-emerald-400";
+                  }
 
-                if (isFuture) color = "bg-zinc-800";
-
-                return (
-                  <div key={dayNum} className="p-0.5">
-                    <div className={`w-3.5 h-6 rounded-sm ${color} ${isToday ? "ring-2 ring-white" : ""}`} />
-                  </div>
-                );
-              })}
+                  return (
+                    <div
+                      key={dayNum}
+                      className="p-0.5 relative"
+                      onMouseEnter={() => setHoveredDay(i)}
+                      onMouseLeave={() => setHoveredDay(null)}
+                      onClick={() => setHoveredDay(hoveredDay === i ? null : i)}
+                    >
+                      <div className={`w-3.5 h-6 rounded-sm ${color} ${isToday ? "ring-2 ring-white" : ""}`} />
+                      {hoveredDay === i && logEntry && !isFuture && (
+                        <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-zinc-800 border border-white/20 rounded-lg shadow-xl whitespace-nowrap text-xs pointer-events-none">
+                          <p className="font-medium text-zinc-200 mb-1">
+                            {dayDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })} · Day {dayNum}
+                          </p>
+                          <div className="space-y-0.5 text-zinc-400">
+                            {([
+                              ["Weed", logEntry.weed],
+                              ["LoL", logEntry.lol],
+                              ["Clarity", logEntry.clarity],
+                              ["Gym", logEntry.gym],
+                              ["Sleep", logEntry.sleep],
+                              ["Meditate", logEntry.meditate],
+                              ["Deep Work", logEntry.deepWork],
+                              ["Ate Clean", logEntry.ateClean],
+                            ] as [string, boolean | null][]).map(([label, val]) => (
+                              <p key={label}>
+                                <span className={val === true ? "text-emerald-400" : val === false ? "text-red-400" : "text-zinc-600"}>
+                                  {val === true ? "✓" : val === false ? "✗" : "–"}
+                                </span>{" "}
+                                {label}
+                              </p>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
             <div className="flex justify-between text-xs text-zinc-600 mt-2">
               <span>Day 1</span>
               <span>Day 30</span>
               <span>Day 60</span>
               <span>Day 90</span>
+            </div>
+            <div className="flex items-center gap-3 mt-2 text-[10px] text-zinc-500">
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-red-500 inline-block" /> Relapse</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-orange-500 inline-block" /> ≤2 habits</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-lime-500 inline-block" /> 3-4 habits</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-emerald-400 inline-block" /> All 5</span>
             </div>
           </section>
         </div>

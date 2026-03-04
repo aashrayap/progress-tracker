@@ -11,6 +11,12 @@ Single reference for behavioral rules and constraints across core life domains.
 - Money and long-term compounding
 - Travel planning (Poland focus)
 
+## Daily Structure
+- **Work:** ~8:00–4:00 (flexible 7:30–8:30 start, 3:30–4:30 end)
+- **WFH** — remote full-time
+- **Gym:** morning (5:30–6:30 AM) or midday (11:00 AM) if missed
+- **Deep work:** minimum 2 blocks/day during work hours
+
 ## Operating Priorities
 1. Sleep and recovery quality
 2. Eating clean and protein-first defaults
@@ -46,3 +52,11 @@ Single reference for behavioral rules and constraints across core life domains.
 ## Travel Protocol
 - Plan windows ahead of time, track costs, and attach decisions to calendar blocks.
 - Keep planned trips visible in `plan.csv` and related todos.
+
+## Resources
+
+### Books
+- "The Perfume of Silence" — Francis Lucille
+
+### Essays
+- "Machines of Loving Grace" — Dario Amodei
