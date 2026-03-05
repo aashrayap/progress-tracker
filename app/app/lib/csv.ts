@@ -16,28 +16,29 @@ import { config, normalizeWorkoutKey } from "./config";
 export type { DailySignalEntry, InboxEntry };
 
 const ROOT = path.join(process.cwd(), "..");
-const DAILY_SIGNALS_PATH = path.join(ROOT, "daily_signals.csv");
-const INBOX_PATH = path.join(ROOT, "inbox.csv");
-const PLAN_PATH = path.join(ROOT, "plan.csv");
-const TODOS_PATH = path.join(ROOT, "todos.csv");
-const WORKOUTS_PATH = path.join(ROOT, "workouts.csv");
-const REFLECTIONS_PATH = path.join(ROOT, "reflections.csv");
+const DATA_ROOT = path.join(ROOT, "data");
+const DAILY_SIGNALS_PATH = path.join(DATA_ROOT, "daily_signals.csv");
+const INBOX_PATH = path.join(DATA_ROOT, "inbox.csv");
+const PLAN_PATH = path.join(DATA_ROOT, "plan.csv");
+const TODOS_PATH = path.join(DATA_ROOT, "todos.csv");
+const WORKOUTS_PATH = path.join(DATA_ROOT, "workouts.csv");
+const REFLECTIONS_PATH = path.join(DATA_ROOT, "reflections.csv");
 
 const DAILY_SIGNALS_HEADER = "date,signal,value,unit,context,source,capture_id,category";
 const INBOX_HEADER =
   "capture_id,captured_at,source,raw_text,status,suggested_destination,normalized_text,error";
-const PLAN_HEADER = "date,start,end,item,done,notes";
-const TODOS_HEADER = "id,item,done,created";
+const PLAN_HEADER = "date,start,end,item,done,notes,domain";
+const TODOS_HEADER = "id,item,done,created,domain";
 const WORKOUTS_HEADER = "date,workout,exercise,set,weight,reps,notes";
 const REFLECTIONS_HEADER = "date,domain,win,lesson,change,archived";
-const MIND_LOOPS_PATH = path.join(ROOT, "mind_loops.csv");
+const MIND_LOOPS_PATH = path.join(DATA_ROOT, "mind_loops.csv");
 const MIND_LOOPS_HEADER =
   "date,trigger,autopilot_action,updated_action,response,lens,emotion_before,emotion_after,body_sensation,thought_pattern,value_target,source,capture_id";
-const GROCERIES_PATH = path.join(ROOT, "groceries.csv");
+const GROCERIES_PATH = path.join(DATA_ROOT, "groceries.csv");
 const GROCERIES_HEADER = "item,section,done,added";
-const QUOTES_PATH = path.join(ROOT, "quotes.csv");
+const QUOTES_PATH = path.join(DATA_ROOT, "quotes.csv");
 const QUOTES_HEADER = "id,text,author,source,added";
-const RESOURCES_PATH = path.join(ROOT, "resources.csv");
+const RESOURCES_PATH = path.join(DATA_ROOT, "resources.csv");
 const RESOURCES_HEADER = "title,author,type,domain,status,notes";
 
 export interface PlanEntry {
@@ -47,6 +48,7 @@ export interface PlanEntry {
   item: string;
   done: string; // "1" | "0" | ""
   notes: string;
+  domain?: string;
 }
 
 export interface TodoEntry {
@@ -54,6 +56,7 @@ export interface TodoEntry {
   item: string;
   done: number; // 0 | 1
   created: string;
+  domain?: string;
 }
 
 export interface WorkoutSetEntry {
@@ -77,6 +80,7 @@ export interface ReflectionEntry {
 
 function ensureFileWithHeader(filePath: string, header: string): void {
   if (!fs.existsSync(filePath)) {
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
     fs.writeFileSync(filePath, header + "\n");
   }
 }
@@ -134,6 +138,7 @@ function appendLines(filePath: string, header: string, lines: string[]): void {
 function writeAll(filePath: string, header: string, lines: string[]): void {
   const content = header + "\n" + lines.join("\n") + (lines.length ? "\n" : "");
   const dir = path.dirname(filePath);
+  fs.mkdirSync(dir, { recursive: true });
   const base = path.basename(filePath);
   const tmpPath = path.join(dir, `.${base}.tmp-${process.pid}-${Date.now()}`);
   fs.writeFileSync(tmpPath, content);
@@ -316,12 +321,15 @@ export function readTodos(): TodoEntry[] {
       item: clean[1] || "",
       done: parseInt(clean[2], 10) || 0,
       created: clean[3] || "",
+      domain: clean[4] || "",
     };
   });
 }
 
 function writeTodos(todos: TodoEntry[]): void {
-  const lines = todos.map((t) => `${t.id},${csvQuote(t.item)},${t.done},${t.created}`);
+  const lines = todos.map(
+    (t) => `${t.id},${csvQuote(t.item)},${t.done},${t.created},${csvQuote(t.domain || "")}`
+  );
   writeAll(TODOS_PATH, TODOS_HEADER, lines);
 }
 
@@ -333,6 +341,7 @@ export function appendTodo(item: string): TodoEntry {
     item,
     done: 0,
     created: todayStr(),
+    domain: "",
   };
   todos.push(entry);
   writeTodos(todos);
@@ -369,6 +378,7 @@ export function readPlan(): PlanEntry[] {
       item: clean[3] || "",
       done: clean[4] || "",
       notes: clean[5] || "",
+      domain: clean[6] || "",
     };
   });
 }
@@ -382,7 +392,10 @@ export function getTodaysPlan(plan: PlanEntry[]): PlanEntry[] {
 
 function writePlan(entries: PlanEntry[]): void {
   const lines = entries.map(
-    (p) => `${p.date},${p.start},${p.end},${csvQuote(p.item)},${p.done},${csvQuote(p.notes || "")}`
+    (p) =>
+      `${p.date},${p.start},${p.end},${csvQuote(p.item)},${p.done},${csvQuote(p.notes || "")},${csvQuote(
+        p.domain || ""
+      )}`
   );
   writeAll(PLAN_PATH, PLAN_HEADER, lines);
 }
@@ -390,7 +403,7 @@ function writePlan(entries: PlanEntry[]): void {
 export function upsertPlanEntry(entry: PlanEntry): void {
   const all = readPlan();
   const idx = all.findIndex((p) => p.date === entry.date && p.item === entry.item);
-  if (idx >= 0) all[idx] = entry;
+  if (idx >= 0) all[idx] = { ...all[idx], ...entry, domain: entry.domain ?? all[idx].domain ?? "" };
   else all.push(entry);
   writePlan(all);
 }
@@ -410,7 +423,7 @@ export function getPlanForDateRange(plan: PlanEntry[], start: string, end: strin
 }
 
 export function getHabitsForDate(signals: DailySignalEntry[], date: string): Record<string, boolean> {
-  const habitMetrics = ["weed", "lol", "poker", "gym", "sleep", "meditate", "deep_work", "ate_clean"];
+  const habitMetrics = ["weed", "lol", "poker", "clarity", "gym", "sleep", "meditate", "deep_work", "ate_clean"];
   const dayEntries = signals.filter((e) => e.date === date && habitMetrics.includes(e.signal));
   const habits: Record<string, boolean> = {};
   for (const entry of dayEntries) {

@@ -1,12 +1,12 @@
 You are processing a phone capture that arrived as a GitHub Issue.
 
 Canonical files:
-- `inbox.csv` (append-only audit)
-- `daily_signals.csv` (daily facts)
-- `workouts.csv` (set-level gym data)
-- `reflections.csv` (win/lesson/change)
-- `todos.csv` (action backlog)
-- `groceries.csv` (rolling grocery checklist)
+- `data/inbox.csv` (append-only audit)
+- `data/daily_signals.csv` (daily facts)
+- `data/workouts.csv` (set-level gym data)
+- `data/reflections.csv` (win/lesson/change)
+- `data/todos.csv` (action backlog)
+- `data/groceries.csv` (rolling grocery checklist)
 
 ## Objective
 Classify the issue body and write structured rows to canonical CSVs.
@@ -23,7 +23,7 @@ Primary routing categories:
 A single issue may map to multiple categories.
 
 ## Required Write Order
-1. Append raw capture to `inbox.csv` first (`status=logged`)
+1. Append raw capture to `data/inbox.csv` first (`status=logged`)
 2. Append normalized rows to target CSVs
 3. Keep auditability: do not erase raw text context
 
@@ -39,9 +39,9 @@ Conventions:
 
 ## Workout Detection
 If text includes exercise + weight/reps/sets:
-- append one row per set to `workouts.csv`
+- append one row per set to `data/workouts.csv`
 - infer workout label when possible from exercise mix
-- also append `gym=1` to `daily_signals.csv`
+- also append `gym=1` to `data/daily_signals.csv`
 
 Known exercise ids:
 - `squat`, `bench`, `lat_pulldown`
@@ -49,14 +49,14 @@ Known exercise ids:
 - `rdl`, `pullup`, `front_squat`, `lunges`, `cable_row`
 
 ## Reflection Detection
-If text includes lessons/takeaways/next-time wording, append to `reflections.csv`:
+If text includes lessons/takeaways/next-time wording, append to `data/reflections.csv`:
 - `date,domain,win,lesson,change,archived`
 - domain should be one of: `gym`, `addiction`, `deep_work`, `eating`, `sleep`
 - set `archived` empty for new captures
 
 If deep work session + reflection are both present:
-- log `deep_work=1` in `daily_signals.csv`
-- log reflection row in `reflections.csv`
+- log `deep_work=1` in `data/daily_signals.csv`
+- log reflection row in `data/reflections.csv`
 
 ## Idea Detection
 
@@ -69,14 +69,14 @@ If the voice note is a **codebase improvement idea** — feature request, app en
 - Suggests new functionality or improvements to existing features
 - Proposes architectural or workflow changes
 
-**Routing**: Set `suggested_destination=idea` in inbox.csv. Do NOT also append to `todos.csv`. The idea pipeline daemon will handle investigation and implementation.
+**Routing**: Set `suggested_destination=idea` in data/inbox.csv. Do NOT also append to `data/todos.csv`. The idea pipeline daemon will handle investigation and implementation.
 
 ## Grocery Routing
 If text mentions buying food, groceries, "pick up", "need from store", or lists food items to buy:
-- Append one row per item to `groceries.csv`
+- Append one row per item to `data/groceries.csv`
 - Map each item to a section: `produce`, `bakery`, `deli`, `meat`, `dairy`, `frozen`, `beverages`, `canned`, `pasta_rice`, `baking`, `cereal`, `snacks`, `condiments`, `household`, `health`
 - `done=0`, `added=today`
-- Do NOT also add to `todos.csv`
+- Do NOT also add to `data/todos.csv`
 
 ## Todo Routing
 - Actionable requests (NOT codebase ideas) -> append todo (`done=0`, `created=today`)
@@ -118,7 +118,7 @@ Use the schema matching the routing category. Compute metrics from the CSV data 
   "priority": 3
 }
 ```
-Delta = difference from most recent prior weight row in daily_signals.csv. If no prior row, omit delta and just show the value.
+Delta = difference from most recent prior weight row in data/daily_signals.csv. If no prior row, omit delta and just show the value.
 
 ### type: "workout"
 ```json
@@ -130,7 +130,7 @@ Delta = difference from most recent prior weight row in daily_signals.csv. If no
   "priority": 3
 }
 ```
-Gym streak = count of consecutive days with `gym,1` in daily_signals.csv ending today. Heaviest set per exercise = `exercise weight×reps` for the top set of each.
+Gym streak = count of consecutive days with `gym,1` in data/daily_signals.csv ending today. Heaviest set per exercise = `exercise weight×reps` for the top set of each.
 
 ### type: "addiction" (weed/lol/poker signals)
 Clean day (value=1):
@@ -153,7 +153,7 @@ Relapse (value=0):
   "priority": 4
 }
 ```
-Streak = consecutive days with `{signal},1` in daily_signals.csv before today. Context = user's words if they gave a reason.
+Streak = consecutive days with `{signal},1` in data/daily_signals.csv before today. Context = user's words if they gave a reason.
 
 ### type: "habit" (gym/sleep/meditate/deep_work/ate_clean/calories)
 ```json
@@ -226,6 +226,6 @@ Use the most specific type's tag. Each line follows that type's body pattern but
 
 ## Final Check
 Before finishing, verify:
-1. `inbox.csv` has the raw capture row
+1. `data/inbox.csv` has the raw capture row
 2. All routed rows landed in expected files
 3. Notification JSON exists at `/tmp/voice-inbox-ntfy.json`

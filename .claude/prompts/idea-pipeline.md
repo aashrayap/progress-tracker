@@ -27,7 +27,7 @@ Identify which stage(s) of the runtime loop this idea strengthens:
 
 ### Investigation Output
 
-After scanning the codebase, update `inbox.csv`:
+After scanning the codebase, update `data/inbox.csv`:
 - Set `status` → `investigating`
 - Set `normalized_text` → a concise summary of what you'll implement (2-3 sentences)
 
@@ -65,7 +65,7 @@ Create a PR with this exact format:
 {small/medium/large} — {one line}
 ```
 
-### Update inbox.csv
+### Update data/inbox.csv
 
 After PR is created:
 - Set `status` → `shipped`
@@ -92,4 +92,4 @@ docs/                     ← architecture, schemas, features
 - If implementation requires multiple independent changes, pick the smallest useful increment
 - Test by reading the affected files after changes to verify correctness
 - Do NOT push directly to main — always use a branch + PR
-- Do NOT stage or commit CSV data files (`inbox.csv`, `daily_signals.csv`, etc.) in idea PRs
+- Do NOT stage or commit CSV data files (`data/inbox.csv`, `data/daily_signals.csv`, etc.) in idea PRs

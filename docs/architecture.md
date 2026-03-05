@@ -1,12 +1,19 @@
 # Architecture
 
 ## System Overview
-Three-layer model:
-1. Data layer: canonical CSV files at repo root
-2. Intelligence layer: shared logic in `app/app/lib` + API routes in `app/app/api`
-3. Surface layer: Next.js pages/components for execution
 
-Core rule: UI surfaces consume read models and trigger actions; semantics are owned by shared logic.
+Four-layer model (see CLAUDE.md > System Vocabulary for full definitions):
+
+| Layer | Name | Contains |
+|-------|------|----------|
+| L0 | Core Docs | `CLAUDE.md`, `docs/*.md` — defines the system |
+| L1 | Core Data | `data/*.csv` — records evidence |
+| L2 | Intelligence | `app/app/lib/` + `app/app/api/` — computes meaning |
+| L3 | Surfaces | Next.js pages + components — renders for the user |
+
+**Foundation** = L0 + L1. **Backend** = L0–L2. Each layer depends only downward.
+
+Core rule: Surfaces consume read models and trigger actions; semantics are owned by Intelligence. Intelligence reads Foundation. Foundation is self-contained.
 
 ## Navigation Protocol
 - Keep product information architecture flat: primary surfaces must be top-level routes.
@@ -15,12 +22,12 @@ Core rule: UI surfaces consume read models and trigger actions; semantics are ow
 - When consolidating features, merge into an existing top-level route or replace with a new top-level route.
 
 ## Canonical Data Layer
-- `inbox.csv`: append-only raw capture audit
-- `daily_signals.csv`: daily facts and habits
-- `workouts.csv`: set-level training logs
-- `reflections.csv`: win/lesson/change memory
-- `plan.csv`: time blocks
-- `todos.csv`: action backlog
+- `data/inbox.csv`: append-only raw capture audit
+- `data/daily_signals.csv`: daily facts and habits
+- `data/workouts.csv`: set-level training logs
+- `data/reflections.csv`: win/lesson/change memory
+- `data/plan.csv`: time blocks
+- `data/todos.csv`: action backlog
 
 ## App Layer
 `app/` contains the Next.js app.
@@ -52,7 +59,7 @@ Both iOS shortcuts (voice and text) flow through one processor:
 Phone (voice/text — "idea: add dark mode")
   │
   ▼
-voice-inbox.sh (detects idea keywords → inbox.csv with suggested_destination=idea)
+voice-inbox.sh (detects idea keywords → data/inbox.csv with suggested_destination=idea)
   │
   ▼
 idea-pipeline.sh (60s poll via launchd)

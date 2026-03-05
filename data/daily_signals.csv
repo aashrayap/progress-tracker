@@ -255,3 +255,4 @@ date,signal,value,unit,context,source,capture_id,category
 2026-03-04,poker,0,bool,played,chat,,addiction
 2026-03-04,clarity,1,bool,,chat,,addiction
 2026-03-05,gym,1,bool,Day E - went after earlier skip,voice,voice-81,habits
+2026-03-05,clarity,1,bool,,chat,,addiction

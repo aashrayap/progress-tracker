@@ -8,12 +8,12 @@ description: Summarize recent activity across canonical CSVs.
 Read-only summary across tracker data for a selected period.
 
 ## Data Sources
-- `~/Documents/2026/tracker/daily_signals.csv`
-- `~/Documents/2026/tracker/workouts.csv`
-- `~/Documents/2026/tracker/reflections.csv`
-- `~/Documents/2026/tracker/plan.csv`
-- `~/Documents/2026/tracker/todos.csv`
-- `~/Documents/2026/tracker/inbox.csv`
+- `~/Documents/2026/tracker/data/daily_signals.csv`
+- `~/Documents/2026/tracker/data/workouts.csv`
+- `~/Documents/2026/tracker/data/reflections.csv`
+- `~/Documents/2026/tracker/data/plan.csv`
+- `~/Documents/2026/tracker/data/todos.csv`
+- `~/Documents/2026/tracker/data/inbox.csv`
 
 ## Commands
 - `/review-notes` (default: last 7 days)

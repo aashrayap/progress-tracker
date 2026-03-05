@@ -107,7 +107,7 @@ export default function ResourcesPage() {
                 <div className="bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl p-4 text-center">
                   <p className="text-zinc-400 text-sm">
                     {resources.length === 0
-                      ? "No resources yet. Add them to resources.csv."
+                      ? "No resources yet. Add them to data/resources.csv."
                       : "No resources match this filter."}
                   </p>
                 </div>
@@ -153,7 +153,7 @@ export default function ResourcesPage() {
             <>
               {quotes.length === 0 && (
                 <div className="bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl p-4 text-center">
-                  <p className="text-zinc-400 text-sm">No quotes yet. Add them to quotes.csv.</p>
+                  <p className="text-zinc-400 text-sm">No quotes yet. Add them to data/quotes.csv.</p>
                 </div>
               )}
 

@@ -8,9 +8,9 @@ description: Structured data entry into canonical CSVs. Use for log requests lik
 Write structured entries to tracker CSVs.
 
 ## Canonical Files
-- `~/Documents/2026/tracker/daily_signals.csv`
-- `~/Documents/2026/tracker/workouts.csv`
-- `~/Documents/2026/tracker/todos.csv`
+- `~/Documents/2026/tracker/data/daily_signals.csv`
+- `~/Documents/2026/tracker/data/workouts.csv`
+- `~/Documents/2026/tracker/data/todos.csv`
 
 ## Daily Signals Header
 ```
@@ -32,9 +32,9 @@ date,signal,value,unit,context,source,capture_id,category
 - Numeric metrics (`weight`, `calories`, `steps`) store number values
 
 ## Workout Logging
-Append one row per set to `workouts.csv`.
+Append one row per set to `data/workouts.csv`.
 
-When workout sets are logged, also append `gym=1` to `daily_signals.csv` for that date.
+When workout sets are logged, also append `gym=1` to `data/daily_signals.csv` for that date.
 
 ## Behavior
 1. Parse command

@@ -8,7 +8,7 @@ description: Capture daily micro-reflections (win/lesson/change) by domain.
 Capture concise end-of-day reflection entries.
 
 ## Canonical File
-- `~/Documents/2026/tracker/reflections.csv`
+- `~/Documents/2026/tracker/data/reflections.csv`
 
 ## Header
 ```

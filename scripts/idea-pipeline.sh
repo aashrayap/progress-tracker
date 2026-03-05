@@ -1,5 +1,5 @@
 #!/bin/bash
-# idea-pipeline.sh — polls inbox.csv for ideas, investigates + implements via Claude Code
+# idea-pipeline.sh — polls data/inbox.csv for ideas, investigates + implements via Claude Code
 # Runs via launchd every 60 seconds
 
 set -euo pipefail
@@ -8,6 +8,8 @@ unset CLAUDECODE 2>/dev/null || true
 
 REPO="aashrayap/progress-tracker"
 PROJECT_DIR="$HOME/Documents/2026/tracker"
+DATA_DIR="$PROJECT_DIR/data"
+INBOX_CSV="$DATA_DIR/inbox.csv"
 LOCK_FILE="/tmp/idea-pipeline.lock"
 WRITER_LOCK_DIR="/tmp/tracker-csv-writer.lock.d"
 WORKTREE_ROOT="$HOME/.local/state/tracker-idea-worktrees"
@@ -68,7 +70,7 @@ cleanup() {
 }
 
 find_next_logged_idea() {
-  node - "$PROJECT_DIR/inbox.csv" <<'NODE'
+  node - "$INBOX_CSV" <<'NODE'
 const fs = require("fs");
 const file = process.argv[2];
 if (!file || !fs.existsSync(file)) process.exit(0);
@@ -177,7 +179,7 @@ update_root_inbox_entry() {
   local status="$2"
   local normalized_text="$3"
   local error_text="$4"
-  node - "$PROJECT_DIR/inbox.csv" "$capture_id" "$status" "$normalized_text" "$error_text" <<'NODE'
+  node - "$INBOX_CSV" "$capture_id" "$status" "$normalized_text" "$error_text" <<'NODE'
 const fs = require("fs");
 const [file, captureId, status, normalizedText, errorText] = process.argv.slice(2);
 if (!file || !captureId || !fs.existsSync(file)) process.exit(2);
@@ -282,7 +284,7 @@ if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
   exit 0
 fi
 
-if [ ! -f "$PROJECT_DIR/inbox.csv" ]; then
+if [ ! -f "$INBOX_CSV" ]; then
   exit 0
 fi
 
@@ -326,7 +328,8 @@ if ! git -C "$PROJECT_DIR" worktree add --quiet -b "$WORKTREE_BRANCH" "$WORKTREE
   exit 1
 fi
 
-cp "$PROJECT_DIR/inbox.csv" "$WORKTREE_DIR/inbox.csv"
+mkdir -p "$WORKTREE_DIR/data"
+cp "$INBOX_CSV" "$WORKTREE_DIR/data/inbox.csv"
 system_prompt=$(cat "$WORKTREE_DIR/.claude/prompts/idea-pipeline.md")
 
 cd "$WORKTREE_DIR"
@@ -340,25 +343,25 @@ Raw idea text: $raw_text
 Repo: $REPO
 
 Steps:
-1. Read inbox.csv and update this entry's status to 'investigating'
+1. Read data/inbox.csv and update this entry's status to 'investigating'
 2. Scan the codebase — read relevant files to understand current patterns
 3. Assess against 3 layers (Data/Logic/Surface) and runtime loop stages
-4. Update inbox.csv normalized_text with your investigation summary
+4. Update data/inbox.csv normalized_text with your investigation summary
 5. If the idea is viable:
    a. Use the existing branch idea-$capture_id (already checked out)
    b. Implement the change following existing patterns
    c. Run: git add <specific changed code files only> && git commit -m 'feat: <description>'
    d. Run: git push -u origin idea-$capture_id
    e. Create PR with structured notes (runtime loop stage, layer impact, risk)
-   f. Update inbox.csv: status=shipped, error=<PR URL>
+   f. Update data/inbox.csv: status=shipped, error=<PR URL>
 6. If the idea is NOT viable:
-   a. Update inbox.csv: status=failed, error=<reason>
-7. Do NOT stage or commit CSV data files (especially inbox.csv)." \
+   a. Update data/inbox.csv: status=failed, error=<reason>
+7. Do NOT stage or commit CSV data files (especially data/inbox.csv)." \
   2>> "$LOG_FILE" || {
     log "ERROR processing idea $capture_id"
   }
 
-idea_state_json=$(read_idea_state "$WORKTREE_DIR/inbox.csv" "$capture_id" || true)
+idea_state_json=$(read_idea_state "$WORKTREE_DIR/data/inbox.csv" "$capture_id" || true)
 status=$(echo "$idea_state_json" | jq -r '.status // empty')
 normalized_text=$(echo "$idea_state_json" | jq -r '.normalizedText // ""')
 error_text=$(echo "$idea_state_json" | jq -r '.error // ""')
@@ -398,12 +401,12 @@ ${raw_text}" \
     "ntfy.sh/$NTFY_TOPIC" > /dev/null 2>&1 || log "ntfy push failed"
 fi
 
-# Push inbox.csv updates (status changes happen on main)
+# Push data/inbox.csv updates (status changes happen on main)
 cd "$PROJECT_DIR"
-if git diff --quiet inbox.csv 2>/dev/null; then
+if git diff --quiet data/inbox.csv 2>/dev/null; then
   :
 else
-  git add inbox.csv && git commit -m "idea: update inbox status for $capture_id" && git push --quiet 2>/dev/null || log "Push failed"
+  git add data/inbox.csv && git commit -m "idea: update inbox status for $capture_id" && git push --quiet 2>/dev/null || log "Push failed"
 fi
 
 release_writer_lock

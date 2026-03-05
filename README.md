@@ -14,19 +14,19 @@ At any time, the system should answer:
 `Capture -> Normalize -> Decide -> Execute -> Reflect -> Adapt`
 
 Rules:
-- CSVs at repo root are canonical truth.
+- CSVs in `data/` are canonical truth.
 - Shared interpretation/mutation logic lives in `app/app/lib` and `app/app/api`.
 - UI surfaces consume read models and trigger actions; they do not invent semantics.
 
 ## Canonical Data Files
 | File | Purpose |
 |---|---|
-| `daily_signals.csv` | Daily facts (habits, metrics, events) |
-| `workouts.csv` | Set-level workout detail |
-| `plan.csv` | Time blocks and completion |
-| `todos.csv` | Action backlog |
-| `reflections.csv` | Win/lesson/change memory |
-| `inbox.csv` | Raw capture audit log |
+| `data/daily_signals.csv` | Daily facts (habits, metrics, events) |
+| `data/workouts.csv` | Set-level workout detail |
+| `data/plan.csv` | Time blocks and completion |
+| `data/todos.csv` | Action backlog |
+| `data/reflections.csv` | Win/lesson/change memory |
+| `data/inbox.csv` | Raw capture audit log |
 
 ## Product Surfaces
 | Route | Role |
@@ -45,7 +45,7 @@ Redirects:
 
 ## Voice + Text Pipeline
 Phone capture (voice or text) is sent through GitHub Issues and processed by `scripts/voice-inbox.sh`:
-1. Append raw capture to `inbox.csv`
+1. Append raw capture to `data/inbox.csv`
 2. Route normalized data to canonical CSVs
 3. Commit changes
 4. Comment + close issue

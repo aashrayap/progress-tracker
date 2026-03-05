@@ -1,10 +1,53 @@
 # Progress Tracker
 
-Personal life execution system for weight, addiction recovery, fitness, money, and travel.
+Personal life execution system for health, addiction, mental, career, relationships, finances, fun, and personal_growth.
 
 ## Objective
 
 Turn daily inputs into reliable next actions using canonical CSV data.
+
+## Canonical Domain Taxonomy (8 domains)
+
+Use these exact IDs anywhere a life area/domain/category is referenced:
+
+| Domain ID         | Covers                                         |
+| ----------------- | ---------------------------------------------- |
+| `health`          | body comp, training, nutrition, meals          |
+| `addiction`       | sobriety, triggers, relapse, streaks           |
+| `mental`          | sleep, meditation, emotional regulation        |
+| `career`          | deep work, output, visibility, skills          |
+| `relationships`   | partner, friends, family, social               |
+| `finances`        | income, net worth, spending, compounding       |
+| `fun`             | hobbies, play, positive-sum leisure            |
+| `personal_growth` | reading, reflection, philosophy, learning      |
+
+Travel is a sub-concern (`finances` + `fun` + `relationships`), not a standalone domain.
+
+## System Vocabulary
+
+Use these terms consistently in docs, specs, code comments, and conversation:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ Layer 0: Core Docs       (defines the system)           │
+│ Layer 1: Core Data       (records evidence)             │ ← Foundation
+├─────────────────────────────────────────────────────────┤
+│ Layer 2: Intelligence    (lib + api — computes meaning) │ ← Backend = L0-L2
+├─────────────────────────────────────────────────────────┤
+│ Layer 3: Surfaces        (pages + components — UI)      │
+└─────────────────────────────────────────────────────────┘
+```
+
+| Term | Layers | Contains | When to use |
+|------|--------|----------|-------------|
+| **Core Docs** | L0 | `CLAUDE.md`, `docs/*.md` | "Does this align with core docs?" |
+| **Core Data** | L1 | `data/*.csv`, `insights.csv` | "What does core data say?" |
+| **Foundation** | L0 + L1 | Core Docs + Core Data | "Bring the UI in line with foundation" |
+| **Intelligence** | L2 | `app/app/lib/`, `app/app/api/` | "This logic belongs in intelligence, not surfaces" |
+| **Backend** | L0-L2 | Foundation + Intelligence | "Is this a backend or surface change?" |
+| **Surfaces** | L3 | `app/app/*/page.tsx`, `app/app/components/` | "Surfaces consume, they don't define" |
+
+Core rule: each layer only depends downward. Surfaces consume Intelligence. Intelligence reads Foundation. Foundation is self-contained.
 
 ## Read Before Editing
 
@@ -16,6 +59,7 @@ Turn daily inputs into reliable next actions using canonical CSV data.
 | `docs/personal-os.md`   | Runtime loop and decision quality            |
 | `docs/life-playbook.md` | Domain protocols and constraints             |
 | `docs/app-intent.md`   | Product direction, health metrics, decisions  |
+| `docs/feature-spec-template.md` | Feature spec + verification protocol (read before any feature work) |
 
 ## Commands
 
@@ -34,14 +78,14 @@ nvm use 22.14.0
 
 ## Canonical Data Files
 
-- `daily_signals.csv`
-- `workouts.csv`
-- `plan.csv`
-- `todos.csv`
-- `reflections.csv`
-- `mind_loops.csv`
-- `groceries.csv`
-- `inbox.csv`
+- `data/daily_signals.csv`
+- `data/workouts.csv`
+- `data/plan.csv`
+- `data/todos.csv`
+- `data/reflections.csv`
+- `data/mind_loops.csv`
+- `data/groceries.csv`
+- `data/inbox.csv`
 
 ## Skills
 
@@ -72,7 +116,7 @@ In addition to root-level escalation rules, ask before:
 - Adding business logic to page components instead of `lib/` or `api/`.
 - Creating a new CSV file when an existing one can hold the data.
 - Adding config values to `config.ts` that are really runtime data (belongs in CSV).
-- Breaking the 3-layer boundary: CSV (data) → lib+api (intelligence) → pages (surface).
+- Breaking the layer boundary: Foundation (L0-L1) → Intelligence (L2) → Surfaces (L3).
 
 ## Verification (Project-Specific)
 

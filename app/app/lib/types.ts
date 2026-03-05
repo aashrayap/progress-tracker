@@ -3,6 +3,7 @@ export interface Todo {
   item: string;
   done: number;
   created: string;
+  domain?: string;
 }
 
 export interface PlanEvent {
@@ -12,6 +13,7 @@ export interface PlanEvent {
   item: string;
   done: string;
   notes: string;
+  domain?: string;
 }
 
 export interface DailySignalEntry {

@@ -3,11 +3,11 @@ import { upsertPlanEntry, deletePlanEntry } from "../../lib/csv";
 
 export async function POST(request: Request) {
   try {
-    const { date, start, end, item, done, notes } = await request.json();
+    const { date, start, end, item, done, notes, domain } = await request.json();
     if (!date || start === undefined || end === undefined || !item) {
       return NextResponse.json({ error: "date, start, end, item required" }, { status: 400 });
     }
-    upsertPlanEntry({ date, start, end, item, done: done ?? "", notes: notes ?? "" });
+    upsertPlanEntry({ date, start, end, item, done: done ?? "", notes: notes ?? "", domain: domain ?? "" });
     return NextResponse.json({ success: true });
   } catch (e) {
     console.error("POST /api/plan error:", e);
