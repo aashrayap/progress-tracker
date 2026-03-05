@@ -50,8 +50,9 @@ Known exercise ids:
 
 ## Reflection Detection
 If text includes lessons/takeaways/next-time wording, append to `reflections.csv`:
-- `date,domain,win,lesson,change`
+- `date,domain,win,lesson,change,archived`
 - domain should be one of: `gym`, `addiction`, `deep_work`, `eating`, `sleep`
+- set `archived` empty for new captures
 
 If deep work session + reflection are both present:
 - log `deep_work=1` in `daily_signals.csv`

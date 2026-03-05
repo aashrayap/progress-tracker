@@ -342,6 +342,7 @@ export default function Home() {
                       return (
                         <div
                           key={data.habitTracker.dates[i]}
+                          title={data.habitTracker.dates[i]}
                           className={`w-6 h-6 rounded ${
                             val === true
                               ? "bg-emerald-500"

@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import type { MindLoopEntry } from "../lib/types";
+import ReflectPanel from "../components/ReflectPanel";
 
-type MindView = "overview" | "patterns" | "sessions";
+type MindView = "overview" | "patterns" | "sessions" | "reflect";
 
 interface CountItem {
   label: string;
@@ -317,8 +318,8 @@ export default function MindPage() {
             </section>
 
             <nav className="rounded-xl border border-white/10 bg-zinc-900/60 p-1.5">
-              <div className="grid grid-cols-3 gap-1">
-                {(["overview", "patterns", "sessions"] as MindView[]).map((view) => (
+              <div className="grid grid-cols-4 gap-1">
+                {(["overview", "patterns", "sessions", "reflect"] as MindView[]).map((view) => (
                   <button
                     key={view}
                     onClick={() => setActiveView(view)}
@@ -335,7 +336,7 @@ export default function MindPage() {
             </nav>
           </header>
 
-          {empty && (
+          {empty && activeView !== "reflect" && (
             <div className="rounded-xl border border-white/10 bg-zinc-900/60 p-4 text-center">
               <p className="text-sm text-zinc-400">No loops yet. Log your first mind loop via the API.</p>
               <p className="text-zinc-500 text-xs mt-2">
@@ -343,6 +344,8 @@ export default function MindPage() {
               </p>
             </div>
           )}
+
+          {activeView === "reflect" && <ReflectPanel />}
 
           {!empty && activeView === "overview" && (
             <section className="grid gap-3 sm:grid-cols-2">

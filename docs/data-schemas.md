@@ -33,8 +33,10 @@ id,item,done,created
 
 ## reflections.csv
 ```
-date,domain,win,lesson,change
+date,domain,win,lesson,change,archived
 ```
+
+- `archived`: `0|1` style flag used by the reflections API (`1` means hidden from active views); leave empty for new rows unless archiving.
 
 ## inbox.csv
 ```

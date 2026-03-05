@@ -248,4 +248,10 @@ date,signal,value,unit,context,source,capture_id,category
 2026-03-05,poker,0,bool,played at 3pm - won a few hundred,voice,voice-74,addiction
 2026-03-05,meditate,0,bool,,voice,voice-74,habits
 2026-03-04,deep_work,1,bool,intention: understand and improve AI usage — 4-layer context engineering maturity model (prompt craft → context eng → intent eng → specification eng),cli,,productivity
+2026-03-04,weed,1,bool,clean,chat,,addiction
+2026-03-04,ate_clean,1,bool,,chat,,habits
+2026-03-04,meditate,0,bool,,chat,,habits
+2026-03-04,lol,1,bool,clean,chat,,addiction
+2026-03-04,poker,0,bool,played,chat,,addiction
+2026-03-04,clarity,1,bool,,chat,,addiction
 2026-03-05,gym,1,bool,Day E - went after earlier skip,voice,voice-81,habits

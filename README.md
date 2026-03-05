@@ -34,8 +34,14 @@ Rules:
 | `/` | Hub: priority and next action |
 | `/plan` | Calendar execution + todo scheduling |
 | `/health` | Training and body metrics |
-| `/reflect` | Reflection evidence and lesson loops |
-| `/ideas` | Alias redirect to Reflect |
+| `/mind` | Mind loops + reflection analysis |
+| `/ideas` | Idea pipeline status |
+| `/resources` | Library surface (resources + quotes) |
+| `/vision` | Optional standalone strategy view |
+
+Redirects:
+- `/reflect` -> `/mind`
+- `/quotes` -> `/resources`
 
 ## Voice + Text Pipeline
 Phone capture (voice or text) is sent through GitHub Issues and processed by `scripts/voice-inbox.sh`:

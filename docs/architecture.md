@@ -27,14 +27,16 @@ Core rule: UI surfaces consume read models and trigger actions; semantics are ow
 
 Current top-level routes:
 - `/` Hub
-- `/vision` Vision
 - `/plan` Plan
 - `/health` Health
 - `/mind` Mind
-- `/reflect` Reflect
 - `/ideas` Ideas
-- `/quotes` Quotes
 - `/resources` Resources
+- `/vision` Vision (optional standalone)
+
+Consolidated redirects:
+- `/reflect` → `/mind`
+- `/quotes` → `/resources`
 
 ## Voice + Text Intake Pipeline
 Both iOS shortcuts (voice and text) flow through one processor:
@@ -78,11 +80,15 @@ Logs: `~/.local/log/idea-pipeline.log`
 - `/api/hub`
 - `/api/daily-signals`
 - `/api/health`
+- `/api/mind`
 - `/api/reflections`
 - `/api/plan`
 - `/api/plan/range`
 - `/api/todos`
 - `/api/ideas`
+- `/api/groceries`
+- `/api/resources`
+- `/api/quotes`
 
 ## Known Constraints
 - CSV writes use atomic temp+rename but no cross-process file locks

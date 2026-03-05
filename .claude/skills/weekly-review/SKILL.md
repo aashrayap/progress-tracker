@@ -8,11 +8,11 @@ description: Weekly accountability review using tracker CSV data.
 Run a data-backed weekly review and set next-week priorities.
 
 ## Core Sources
-- `~/Documents/tracker/daily_signals.csv`
-- `~/Documents/tracker/workouts.csv`
-- `~/Documents/tracker/reflections.csv`
-- `~/Documents/tracker/plan.csv`
-- `~/Documents/tracker/todos.csv`
+- `~/Documents/2026/tracker/daily_signals.csv`
+- `~/Documents/2026/tracker/workouts.csv`
+- `~/Documents/2026/tracker/reflections.csv`
+- `~/Documents/2026/tracker/plan.csv`
+- `~/Documents/2026/tracker/todos.csv`
 
 ## Structure
 1. Metrics (targets vs actuals)

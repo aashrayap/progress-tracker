@@ -13,16 +13,27 @@ Web execution surface for the Progress Tracker.
 | `/` | Hub: current priority + next action |
 | `/plan` | Calendar/time-block execution |
 | `/health` | Training + body metrics |
-| `/reflect` | Reflection analysis + action promotion |
-| `/ideas` | Redirect alias to `/reflect` |
+| `/mind` | Mind loops + reflection analysis |
+| `/resources` | Library (resources + quotes) |
+| `/ideas` | Idea pipeline status |
+| `/vision` | Optional standalone strategy view |
+
+Redirects:
+- `/reflect` -> `/mind`
+- `/quotes` -> `/resources`
 
 ## Core APIs
 - `/api/hub`
 - `/api/daily-signals`
 - `/api/health`
+- `/api/mind`
 - `/api/reflections`
 - `/api/plan`, `/api/plan/range`
 - `/api/todos`
+- `/api/ideas`
+- `/api/groceries`
+- `/api/resources`
+- `/api/quotes`
 
 ## Data Location
 Canonical CSVs live at repo root (`../`).

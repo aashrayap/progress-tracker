@@ -8,9 +8,9 @@ description: Structured data entry into canonical CSVs. Use for log requests lik
 Write structured entries to tracker CSVs.
 
 ## Canonical Files
-- `~/Documents/tracker/daily_signals.csv`
-- `~/Documents/tracker/workouts.csv`
-- `~/Documents/tracker/todos.csv`
+- `~/Documents/2026/tracker/daily_signals.csv`
+- `~/Documents/2026/tracker/workouts.csv`
+- `~/Documents/2026/tracker/todos.csv`
 
 ## Daily Signals Header
 ```

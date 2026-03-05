@@ -7,7 +7,7 @@ set -euo pipefail
 unset CLAUDECODE 2>/dev/null || true
 
 REPO="aashrayap/progress-tracker"
-PROJECT_DIR="$HOME/Documents/tracker"
+PROJECT_DIR="$HOME/Documents/2026/tracker"
 LOCK_FILE="/tmp/idea-pipeline.lock"
 WRITER_LOCK_DIR="/tmp/tracker-csv-writer.lock.d"
 WORKTREE_ROOT="$HOME/.local/state/tracker-idea-worktrees"

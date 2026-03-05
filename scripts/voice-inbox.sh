@@ -10,7 +10,7 @@ unset CLAUDECODE 2>/dev/null || true
 unset GITHUB_TOKEN 2>/dev/null || true
 
 REPO="aashrayap/progress-tracker"
-PROJECT_DIR="$HOME/Documents/tracker"
+PROJECT_DIR="$HOME/Documents/2026/tracker"
 LOCK_FILE="/tmp/voice-inbox.lock"
 WRITER_LOCK_DIR="/tmp/tracker-csv-writer.lock.d"
 LOG_FILE="$HOME/.local/log/voice-inbox.log"
