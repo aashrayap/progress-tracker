@@ -160,6 +160,7 @@ export interface QuoteEntry {
   text: string;
   author: string;
   source: string;
+  domain: string;
   added: string;
 }
 

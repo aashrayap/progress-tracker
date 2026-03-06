@@ -8,6 +8,7 @@ interface TrendModalProps {
   subtitle?: string;
   onClose: () => void;
   children: ReactNode;
+  sidebar?: ReactNode;
   footer?: ReactNode;
 }
 
@@ -17,6 +18,7 @@ export default function TrendModal({
   subtitle,
   onClose,
   children,
+  sidebar,
   footer,
 }: TrendModalProps) {
   useEffect(() => {
@@ -45,7 +47,7 @@ export default function TrendModal({
         onClick={onClose}
         className="absolute inset-0 bg-black/75 backdrop-blur-sm"
       />
-      <div className="relative mx-auto flex h-full max-w-3xl items-end p-2 sm:items-center sm:p-6">
+      <div className={`relative mx-auto flex h-full items-end p-2 sm:items-center sm:p-6 ${sidebar ? "max-w-5xl" : "max-w-3xl"}`}>
         <section
           role="dialog"
           aria-modal="true"
@@ -64,7 +66,16 @@ export default function TrendModal({
               Close
             </button>
           </header>
-          <div className="overflow-y-auto px-4 py-4 sm:px-5">{children}</div>
+          {sidebar ? (
+            <div className="flex flex-col sm:flex-row overflow-hidden flex-1 min-h-0">
+              <div className="overflow-y-auto px-4 py-4 sm:px-5 flex-1">{children}</div>
+              <div className="border-t sm:border-t-0 sm:border-l border-white/10 overflow-y-auto px-4 py-4 sm:px-5 sm:w-80 max-h-[50vh] sm:max-h-none">
+                {sidebar}
+              </div>
+            </div>
+          ) : (
+            <div className="overflow-y-auto px-4 py-4 sm:px-5">{children}</div>
+          )}
           {footer ? (
             <footer className="border-t border-white/10 px-4 py-3 text-xs text-zinc-400 sm:px-5">
               {footer}

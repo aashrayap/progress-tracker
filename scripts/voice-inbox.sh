@@ -92,7 +92,14 @@ while read -r issue; do
   title=$(echo "$issue" | jq -r '.title')
   body=$(echo "$issue" | jq -r '.body')
   created=$(echo "$issue" | jq -r '.createdAt')
-  date_str=$(echo "$created" | cut -d'T' -f1)
+  # Convert GitHub UTC timestamp to local timezone before extracting date
+  # GitHub returns ISO 8601 UTC (Z suffix). Parse as UTC (-u), get epoch, convert to local.
+  local_epoch=$(date -j -u -f "%Y-%m-%dT%H:%M:%SZ" "$created" "+%s" 2>/dev/null)
+  if [ -n "$local_epoch" ]; then
+    date_str=$(date -j -f "%s" "$local_epoch" "+%Y-%m-%d")
+  else
+    date_str=$(echo "$created" | cut -d'T' -f1)
+  fi
 
   if ! acquire_writer_lock; then
     log "Shared writer lock busy, deferring issue #$number"

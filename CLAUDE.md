@@ -95,6 +95,7 @@ nvm use 22.14.0
 | `/reflect`       | Daily micro-reflection capture          | `reflect`, `what did I learn`          |
 | `/weekly-review` | Weekly accountability and planning      | `weekly review`, `plan the week`       |
 | `/review-notes`  | Cross-CSV activity summary              | `review notes`, `what happened`        |
+| `/checkin`       | Guided daily/weekly/monthly check-in     | `checkin`, `check in`, `morning check-in` |
 
 ## Guardrails
 

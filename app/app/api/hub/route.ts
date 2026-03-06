@@ -4,16 +4,14 @@ import {
   readDailySignals,
   getDaysSince,
   getHabitsForDate,
-  getLatestValue,
-  getMetricHistory,
-  getNextWorkout,
   getStreak,
   getTodaysPlan,
-  readInbox,
   readPlan,
   readReflections,
   readTodos,
+  readWorkouts,
   type DailySignalEntry,
+  type WorkoutSetEntry,
 } from "../../lib/csv";
 import { config, HABIT_CONFIG } from "../../lib/config";
 import { computeInsightResponse } from "../../lib/insight";
@@ -34,31 +32,133 @@ function getBool(
   return row.value === "1";
 }
 
+// Compact reflections: group by domain, prioritize change > lesson > win, max 5 bullets
+function buildReflectionsSummary(
+  reflections: { date: string; domain: string; win: string; lesson: string; change: string; archived?: string }[]
+): { domain: string; insight: string }[] {
+  const sevenDaysAgo = daysAgoStr(7);
+  const recent = reflections.filter((r) => r.date >= sevenDaysAgo && r.archived !== "1");
+
+  const bullets: { domain: string; insight: string; priority: number }[] = [];
+  for (const r of recent) {
+    if (r.change.trim()) {
+      bullets.push({ domain: r.domain, insight: r.change.trim(), priority: 0 });
+    } else if (r.lesson.trim()) {
+      bullets.push({ domain: r.domain, insight: r.lesson.trim(), priority: 1 });
+    } else if (r.win.trim()) {
+      bullets.push({ domain: r.domain, insight: r.win.trim(), priority: 2 });
+    }
+  }
+
+  bullets.sort((a, b) => a.priority - b.priority);
+
+  const seen = new Set<string>();
+  const result: { domain: string; insight: string }[] = [];
+  for (const b of bullets) {
+    if (seen.has(b.domain)) continue;
+    seen.add(b.domain);
+    result.push({ domain: b.domain, insight: b.insight });
+    if (result.length >= 5) break;
+  }
+
+  return result;
+}
+
+interface HabitLogEntry {
+  date: string;
+  value: boolean | null;
+  context: string;
+  workoutSummary?: string;
+}
+
+function buildHabitLogs(
+  signals: DailySignalEntry[],
+  workoutSets: WorkoutSetEntry[],
+  ninetyDayDates: string[]
+): Record<string, HabitLogEntry[]> {
+  const habitSignals = Object.keys(HABIT_CONFIG);
+  const allExercises = Object.values(config.exercises).flat();
+
+  // Pre-index workout sets by date for gym summaries
+  const workoutsByDate: Record<string, WorkoutSetEntry[]> = {};
+  for (const ws of workoutSets) {
+    if (!workoutsByDate[ws.date]) workoutsByDate[ws.date] = [];
+    workoutsByDate[ws.date].push(ws);
+  }
+
+  // Pre-index signals by date+signal
+  const signalIndex: Record<string, DailySignalEntry> = {};
+  for (const s of signals) {
+    if (habitSignals.includes(s.signal)) {
+      signalIndex[`${s.date}:${s.signal}`] = s;
+    }
+  }
+
+  const result: Record<string, HabitLogEntry[]> = {};
+
+  for (const key of habitSignals) {
+    const entries: HabitLogEntry[] = [];
+    for (const date of ninetyDayDates) {
+      const sig = signalIndex[`${date}:${key}`];
+      if (!sig) continue; // omit days with no log
+
+      const entry: HabitLogEntry = {
+        date,
+        value: sig.value === "1" ? true : sig.value === "0" ? false : null,
+        context: sig.context || "",
+      };
+
+      // For gym, add compact workout summary
+      if (key === "gym" && sig.value === "1") {
+        const daySets = workoutsByDate[date];
+        if (daySets && daySets.length > 0) {
+          const byExercise: Record<string, WorkoutSetEntry[]> = {};
+          for (const s of daySets) {
+            if (!byExercise[s.exercise]) byExercise[s.exercise] = [];
+            byExercise[s.exercise].push(s);
+          }
+          const parts: string[] = [];
+          for (const [exId, sets] of Object.entries(byExercise)) {
+            const best = sets.reduce((b, s) => {
+              if (s.weight > b.weight) return s;
+              if (s.weight === b.weight && s.reps > b.reps) return s;
+              return b;
+            }, sets[0]);
+            const def = allExercises.find((e) => e.id === exId);
+            const name = def?.name || exId;
+            if (best.weight > 0) {
+              parts.push(`${name} ${best.weight}x${best.reps}`);
+            } else if (best.reps > 0) {
+              parts.push(`${name} x${best.reps}`);
+            } else {
+              parts.push(name);
+            }
+          }
+          entry.workoutSummary = parts.join(", ");
+        }
+      }
+
+      entries.push(entry);
+    }
+    // Most recent first
+    entries.reverse();
+    result[key] = entries;
+  }
+
+  return result;
+}
+
 export async function GET() {
   try {
     const signals = readDailySignals();
     const plan = readPlan();
     const reflections = readReflections();
     const todos = readTodos();
-    const inbox = readInbox();
-    const ideas = inbox.filter((e) => e.suggestedDestination === "idea");
-    const ideaCount = ideas.length;
-    const ideaShipped = ideas.filter((e) => e.status === "shipped").length;
-    const ideaPending = ideas.filter((e) => e.status === "logged" || e.status === "investigating").length;
     const todaysPlan = getTodaysPlan(plan);
     const yesterday = daysAgoStr(1);
     const yesterdaysPlan = plan
       .filter((p) => p.date === yesterday)
       .sort((a, b) => a.start - b.start);
-
-    const weightHistory = getMetricHistory(signals, "weight").map((w) => ({
-      date: w.date,
-      value: parseFloat(w.value),
-    }));
-
-    const currentWeight = parseFloat(getLatestValue(signals, "weight") || "0");
-    const weightEntries = getMetricHistory(signals, "weight");
-    const startWeight = weightEntries.length > 0 ? parseFloat(weightEntries[0].value) : config.weight.start;
 
     const dayNumber = getDaysSince(config.dopamineReset.startDate) + 1;
     const dopamineDates = [
@@ -91,8 +191,6 @@ export async function GET() {
     });
 
     const todayStr = todayLocal();
-    const gymToday = signals.some((e) => e.date === todayStr && e.signal === "gym" && e.value === "1");
-    const nextWorkout = getNextWorkout(signals, config.workoutCycle);
 
     const yesterdayChanges = reflections
       .filter((r) => r.date === yesterday && r.change.trim())
@@ -125,13 +223,14 @@ export async function GET() {
       ateClean: getBool(todayEntries, "ate_clean"),
     };
 
-    // 14-day habit tracker: today - 13 days → today
+    // 14-day habit tracker: today - 13 days -> today
     const habitDates = Array.from({ length: 14 }, (_, i) => daysAgoStr(13 - i));
     const habitTracker = {
       dates: habitDates,
       days: habitDates.map((date) => getHabitsForDate(signals, date)),
     };
 
+    const workoutSets = readWorkouts();
     const habitTrendDates = Array.from({ length: 90 }, (_, i) => daysAgoStr(89 - i));
     const habitKeys = Object.keys(HABIT_CONFIG);
     const habitTrends = habitKeys.reduce<Record<string, { date: string; value: boolean | null }[]>>(
@@ -146,67 +245,21 @@ export async function GET() {
       {}
     );
 
-    const nowHour = new Date().getHours() + new Date().getMinutes() / 60;
-    const nextPlan = todaysPlan
-      .filter((p) => p.done !== "1")
-      .sort((a, b) => a.start - b.start)
-      .find((p) => p.end >= nowHour) || todaysPlan.filter((p) => p.done !== "1").sort((a, b) => a.start - b.start)[0];
+    const habitLogs = buildHabitLogs(signals, workoutSets, habitTrendDates);
 
-    const nextAction =
-      nextPlan
-        ? {
-            label: `Start: ${nextPlan.item}`,
-            reason: "Next scheduled block is the highest priority execution step.",
-            href: "/plan",
-            cta: "Open Plan",
-          }
-        : !gymToday
-          ? (() => {
-              const cardio = config.cardioTemplates[nextWorkout];
-              return cardio
-                ? {
-                    label: `${cardio.label} (${cardio.minutes} min)`,
-                    reason: "Cardio days keep conditioning and recovery on track.",
-                    href: "/health",
-                    cta: "Open Health",
-                  }
-                : {
-                    label: `Train Day ${nextWorkout} + ${config.trainingPlan.liftSessionCardioFinisherMin} min cardio`,
-                    reason: "Gym completion is one of your core compounding signals.",
-                    href: "/health",
-                    cta: "Open Health",
-                  };
-            })()
-          : {
-              label: "Review today's patterns",
-              reason: "Use reflection analysis to set tomorrow's adjustments.",
-              href: "/reflect",
-              cta: "Open Reflect",
-            };
+    // Compact reflections for Hub
+    const reflectionsSummary = buildReflectionsSummary(reflections);
 
-    // Meditation stats
-    const meditateStreak = getStreak(signals, "meditate");
-    const thirtyDaysAgo = daysAgoStr(30);
-    const meditateSessions = signals.filter(
-      (e) => e.signal === "meditate" && e.value === "1" && e.date >= thirtyDaysAgo
-    );
-    const recentMeditations = meditateSessions
-      .sort((a, b) => b.date.localeCompare(a.date))
+    // Open todos peek
+    const openTodos = todos
+      .filter((t) => !t.done)
+      .sort((a, b) => b.created.localeCompare(a.created))
       .slice(0, 3)
-      .map((e) => ({ date: e.date, context: e.context || "" }));
+      .map((t) => ({ id: t.id, item: t.item }));
+    const openTodosCount = todos.filter((t) => !t.done).length;
 
     return NextResponse.json({
       nowWindow: getNowWindow(),
-      gymToday,
-      nextWorkout,
-      weight: {
-        current: currentWeight,
-        start: startWeight,
-        goal: config.weight.goal,
-        deadline: config.weight.deadline,
-        checkpoints: config.weight.checkpoints,
-        log: weightHistory,
-      },
       dopamineReset: {
         startDate: config.dopamineReset.startDate,
         dayNumber,
@@ -233,19 +286,15 @@ export async function GET() {
         done: p.done,
         notes: p.notes || "",
       })),
-      todos,
       yesterdayChanges,
       insight,
       todayHabits,
       habitTracker,
       habitTrends,
-      nextAction,
-      ideas: { total: ideaCount, shipped: ideaShipped, pending: ideaPending },
-      meditation: {
-        streak: meditateStreak,
-        sessions30d: meditateSessions.length,
-        recent: recentMeditations,
-      },
+      habitLogs,
+      reflectionsSummary,
+      openTodos,
+      openTodosCount,
     });
   } catch (e) {
     console.error("GET /api/hub error:", e);

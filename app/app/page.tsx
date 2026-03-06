@@ -1,20 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import DailyInsight, { InsightData } from "./components/DailyInsight";
 import LineTrendChart from "./components/LineTrendChart";
 import TrendModal from "./components/TrendModal";
+import HabitTooltip from "./components/HabitTooltip";
+import HabitLogHistory, { type HabitLogEntry } from "./components/HabitLogHistory";
 import { HABIT_CONFIG } from "./lib/config";
-
-interface WeightData {
-  current: number;
-  start: number;
-  goal: number;
-  deadline: string;
-  checkpoints: { month: string; target: number }[];
-  log: { date: string; value: number }[];
-}
 
 interface DopamineDay {
   date: string;
@@ -29,17 +22,18 @@ interface DopamineDay {
   ateClean: boolean | null;
 }
 
-interface NextAction {
-  label: string;
-  reason: string;
-  href: string;
-  cta: string;
+interface ReflectionBullet {
+  domain: string;
+  insight: string;
+}
+
+interface OpenTodo {
+  id: number;
+  item: string;
 }
 
 interface AppData {
   nowWindow: "morning" | "day" | "evening";
-  gymToday: boolean;
-  weight: WeightData;
   dopamineReset: {
     startDate: string;
     dayNumber: number;
@@ -48,20 +42,16 @@ interface AppData {
     streaks: { lol: number; weed: number; poker: number; clarity: number };
   };
   todaysPlan: { start: number; end: number; item: string; done: string; notes: string }[];
-  todos: { id: number; item: string; done: number; created: string }[];
   insight: InsightData;
   habitTracker: {
     dates: string[];
     days: Record<string, boolean>[];
   };
   habitTrends: Record<string, { date: string; value: boolean | null }[]>;
-  nextAction: NextAction;
-  ideas: { total: number; shipped: number; pending: number };
-  meditation: {
-    streak: number;
-    sessions30d: number;
-    recent: { date: string; context: string }[];
-  };
+  habitLogs: Record<string, HabitLogEntry[]>;
+  reflectionsSummary: ReflectionBullet[];
+  openTodos: OpenTodo[];
+  openTodosCount: number;
 }
 
 const HABIT_ORDER = [
@@ -77,10 +67,6 @@ const HABIT_ORDER = [
 ] as const;
 type HabitKey = keyof typeof HABIT_CONFIG;
 
-function clamp(n: number, min = 0, max = 1): number {
-  return Math.min(max, Math.max(min, n));
-}
-
 function formatHour(v: number): string {
   const h = Math.floor(v);
   const m = v % 1 === 0.5 ? ":30" : "";
@@ -94,6 +80,8 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [activeHabitKey, setActiveHabitKey] = useState<HabitKey | null>(null);
   const [hoveredDay, setHoveredDay] = useState<number | null>(null);
+  const [hoveredCol, setHoveredCol] = useState<number | null>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
 
   const fetchData = useCallback(() => {
     fetch("/api/hub")
@@ -186,22 +174,7 @@ export default function Home() {
   }
 
   const undonePlan = data.todaysPlan.filter((p) => p.done !== "1");
-  const undoneTodos = data.todos.filter((t) => !t.done);
   const resetDay = Math.max(1, Math.min(data.dopamineReset.dayNumber, data.dopamineReset.days));
-
-  const start = data.weight.start;
-  const current = data.weight.current;
-  const goal = data.weight.goal;
-  const denom = Math.abs(start - goal);
-  const rawProgress =
-    denom === 0
-      ? 1
-      : start >= goal
-        ? (start - current) / denom
-        : (current - start) / denom;
-  const weightProgress = clamp(rawProgress);
-
-  const lbsToGoal = Math.max(0, Math.round(data.weight.current - data.weight.goal));
 
   return (
     <div className="min-h-screen bg-black text-zinc-100">
@@ -218,19 +191,8 @@ export default function Home() {
             <h1 className="text-sm font-semibold text-zinc-400 uppercase tracking-wide">Hub</h1>
           </header>
 
-          <section className="p-4 bg-zinc-900/60 backdrop-blur-md border border-white/20 rounded-xl">
-            <p className="text-xs text-zinc-400 uppercase mb-2">Next Action</p>
-            <p className="text-lg font-semibold text-zinc-100">{data.nextAction.label}</p>
-            <p className="text-sm text-zinc-400 mt-1">{data.nextAction.reason}</p>
-            <Link
-              href={data.nextAction.href}
-              className="inline-flex mt-3 px-4 py-2 rounded-lg bg-zinc-100 text-zinc-900 font-medium text-sm hover:bg-white transition-colors"
-            >
-              {data.nextAction.cta}
-            </Link>
-          </section>
-
-          {undonePlan.length > 0 || undoneTodos.length > 0 ? (
+          {/* Today Queue: undone plan blocks + top 3 open todos */}
+          {(undonePlan.length > 0 || data.openTodos.length > 0) && (
             <section className="p-4 bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl">
               <p className="text-xs text-zinc-400 uppercase mb-2">Today Queue</p>
               <div className="space-y-1">
@@ -240,7 +202,7 @@ export default function Home() {
                     {block.item}
                   </p>
                 ))}
-                {undoneTodos.slice(0, 3).map((todo) => (
+                {data.openTodos.map((todo) => (
                   <p key={todo.id} className="text-sm text-zinc-300">
                     <span className="text-zinc-600 mr-1.5">○</span>
                     {todo.item}
@@ -249,87 +211,47 @@ export default function Home() {
               </div>
               <div className="mt-2 flex items-center gap-3 text-xs text-zinc-400">
                 {undonePlan.length > 0 && <Link href="/plan" className="hover:text-zinc-300">Open Plan</Link>}
+                {data.openTodosCount > 3 && (
+                  <Link href="/plan" className="hover:text-zinc-300">
+                    View all {data.openTodosCount} todos in Plan →
+                  </Link>
+                )}
               </div>
             </section>
-          ) : null}
+          )}
 
-          <section className="grid gap-3 sm:grid-cols-2">
-            <div className="p-4 bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl">
-              <p className="text-xs text-zinc-400 uppercase">Weight</p>
-              <div className="flex items-end justify-between mt-2">
-                <p className="text-2xl font-semibold text-zinc-100">{data.weight.current} lbs</p>
-                <p className="text-xs text-zinc-400">goal {data.weight.goal}</p>
-              </div>
-              <div className="mt-3 h-2 bg-zinc-800 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-blue-500"
-                  style={{ width: `${Math.round(weightProgress * 100)}%` }}
-                />
-              </div>
-              <p className="mt-2 text-xs text-zinc-400">
-                {lbsToGoal} lbs to go · started at {data.weight.start}
-              </p>
-            </div>
-
-            <div className="p-4 bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl">
-              <p className="text-xs text-zinc-400 uppercase">Recovery</p>
-              <p className="mt-2 text-2xl font-semibold text-zinc-100">
-                Day {resetDay}/{data.dopamineReset.days}
-              </p>
-              <p className="mt-2 text-xs text-zinc-400">
-                {data.dopamineReset.streaks.weed}d weed · {data.dopamineReset.streaks.lol}d lol · {data.dopamineReset.streaks.poker}d poker · {data.dopamineReset.streaks.clarity}d clarity
-              </p>
-              <div className="mt-3 h-2 bg-zinc-800 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-emerald-500"
-                  style={{ width: `${Math.round((resetDay / data.dopamineReset.days) * 100)}%` }}
-                />
-              </div>
+          {/* Recovery card */}
+          <section className="p-4 bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl">
+            <p className="text-xs text-zinc-400 uppercase">Recovery</p>
+            <p className="mt-2 text-2xl font-semibold text-zinc-100">
+              Day {resetDay}/{data.dopamineReset.days}
+            </p>
+            <p className="mt-2 text-xs text-zinc-400">
+              {data.dopamineReset.streaks.weed}d weed · {data.dopamineReset.streaks.lol}d lol · {data.dopamineReset.streaks.poker}d poker · {data.dopamineReset.streaks.clarity}d clarity
+            </p>
+            <div className="mt-3 h-2 bg-zinc-800 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-emerald-500"
+                style={{ width: `${Math.round((resetDay / data.dopamineReset.days) * 100)}%` }}
+              />
             </div>
           </section>
 
-          {data.ideas.total > 0 && (
-            <Link
-              href="/ideas"
-              className="block p-4 bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl hover:border-white/20 transition-colors"
-            >
-              <p className="text-xs text-zinc-400 uppercase">Ideas</p>
-              <div className="flex items-end justify-between mt-2">
-                <p className="text-2xl font-semibold text-zinc-100">{data.ideas.total}</p>
-                <div className="text-xs text-zinc-400 text-right">
-                  {data.ideas.shipped > 0 && <span>{data.ideas.shipped} shipped</span>}
-                  {data.ideas.pending > 0 && (
-                    <span className="ml-2">{data.ideas.pending} pending</span>
-                  )}
-                </div>
-              </div>
-            </Link>
-          )}
-
-          {(data.meditation.streak > 0 || data.meditation.sessions30d > 0) && (
-            <section className="p-4 bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl">
-              <p className="text-xs text-zinc-400 uppercase">Meditation</p>
-              <div className="flex items-end justify-between mt-2">
-                <p className="text-2xl font-semibold text-zinc-100">
-                  {data.meditation.streak}d streak
-                </p>
-                <p className="text-xs text-zinc-400">
-                  {data.meditation.sessions30d} sessions / 30d
-                </p>
-              </div>
-              {data.meditation.recent.length > 0 && data.meditation.recent[0].context && (
-                <p className="mt-2 text-sm text-zinc-400 line-clamp-2">
-                  {data.meditation.recent[0].context}
-                </p>
-              )}
-            </section>
-          )}
-
-          <DailyInsight data={data.insight} />
-
+          {/* Habit grid -- 14 Days */}
           <section className="p-4 bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl">
             <p className="text-xs text-zinc-400 uppercase mb-2">Daily Habits — 14 Days</p>
-            <div className="space-y-2">
+            <div
+              ref={gridRef}
+              className="relative space-y-2"
+              onMouseLeave={() => setHoveredCol(null)}
+            >
+              {hoveredCol !== null && data.habitTracker.dates[hoveredCol] && (
+                <HabitTooltip
+                  dateStr={data.habitTracker.dates[hoveredCol]}
+                  columnIndex={hoveredCol}
+                  gridRef={gridRef}
+                />
+              )}
               {HABIT_ORDER.map((habitKey) => (
                 <div key={habitKey} className="flex items-center gap-2.5">
                   <span className="text-xs text-zinc-400 w-[4.5rem] shrink-0 text-right truncate">
@@ -342,29 +264,25 @@ export default function Home() {
                       return (
                         <div
                           key={data.habitTracker.dates[i]}
-                          title={data.habitTracker.dates[i]}
-                          className={`w-6 h-6 rounded ${
+                          className={`w-6 h-6 rounded cursor-pointer ${
                             val === true
                               ? "bg-emerald-500"
                               : val === false
                                 ? "bg-red-500"
                                 : "bg-zinc-800"
                           } ${isToday ? "ring-2 ring-zinc-400 ring-offset-1 ring-offset-zinc-950" : ""}`}
+                          onMouseEnter={() => setHoveredCol(i)}
+                          onClick={() => setActiveHabitKey(habitKey)}
                         />
                       );
                     })}
                   </div>
-                  <button
-                    onClick={() => setActiveHabitKey(habitKey)}
-                    className="ml-auto px-2 py-1 rounded-md border border-white/15 bg-zinc-800 text-[11px] text-zinc-300 hover:text-zinc-100 hover:border-white/30"
-                  >
-                    Trend
-                  </button>
                 </div>
               ))}
             </div>
           </section>
 
+          {/* 90-Day Reset heatmap */}
           <section className="p-4 bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs text-zinc-400 uppercase tracking-wide">90-Day Reset</span>
@@ -424,7 +342,7 @@ export default function Home() {
                             ] as [string, boolean | null][]).map(([label, val]) => (
                               <p key={label}>
                                 <span className={val === true ? "text-emerald-400" : val === false ? "text-red-400" : "text-zinc-600"}>
-                                  {val === true ? "✓" : val === false ? "✗" : "–"}
+                                  {val === true ? "\u2713" : val === false ? "\u2717" : "\u2013"}
                                 </span>{" "}
                                 {label}
                               </p>
@@ -445,11 +363,33 @@ export default function Home() {
             </div>
             <div className="flex items-center gap-3 mt-2 text-[10px] text-zinc-500">
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-red-500 inline-block" /> Relapse</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-orange-500 inline-block" /> ≤2 habits</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-orange-500 inline-block" /> &le;2 habits</span>
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-lime-500 inline-block" /> 3-4 habits</span>
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-emerald-400 inline-block" /> All 5</span>
             </div>
           </section>
+
+          {/* Compact Reflections */}
+          <section className="p-4 bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl">
+            <p className="text-xs text-zinc-400 uppercase mb-2">Recent Reflections (7d)</p>
+            {data.reflectionsSummary.length > 0 ? (
+              <div className="space-y-1.5">
+                {data.reflectionsSummary.map((bullet, i) => (
+                  <p key={i} className="text-sm text-zinc-300">
+                    <span className="text-xs text-zinc-500 font-mono mr-2">{bullet.domain}</span>
+                    {bullet.insight}
+                  </p>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-zinc-500">
+                No reflections this week. Use /reflect to capture one.
+              </p>
+            )}
+          </section>
+
+          {/* Daily Insight */}
+          <DailyInsight data={data.insight} />
         </div>
       </div>
 
@@ -458,6 +398,11 @@ export default function Home() {
         onClose={() => setActiveHabitKey(null)}
         title={activeHabitKey ? HABIT_CONFIG[activeHabitKey].label : "Habit Trend"}
         subtitle="Rolling 7-day adherence"
+        sidebar={
+          activeHabitKey && data.habitLogs?.[activeHabitKey] ? (
+            <HabitLogHistory logs={data.habitLogs[activeHabitKey]} />
+          ) : undefined
+        }
       >
         <div className="space-y-4">
           <LineTrendChart

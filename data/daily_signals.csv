@@ -256,3 +256,8 @@ date,signal,value,unit,context,source,capture_id,category
 2026-03-04,clarity,1,bool,,chat,,addiction
 2026-03-05,gym,1,bool,Day E - went after earlier skip,voice,voice-81,habits
 2026-03-05,clarity,1,bool,,chat,,addiction
+2026-03-05,lol,0,bool,relapsed - played League,chat,,addiction
+2026-03-05,poker,1,bool,no poker,chat,,addiction
+2026-03-05,deep_work,1,bool,,chat,,habits
+2026-03-05,sleep,0,bool,poor sleep because of League,chat,,habits
+2026-03-05,meditate,1,bool,,chat,,habits

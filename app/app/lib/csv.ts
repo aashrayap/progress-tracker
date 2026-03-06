@@ -747,12 +747,15 @@ export function readQuotes(): QuoteEntry[] {
   const lines = readDataLines(QUOTES_PATH);
   return lines.map((line) => {
     const c = parseCSVLine(line);
+    // CSV may be id,text,author,source,added (5 cols) or id,text,author,source,domain,added (6 cols)
+    const hasDomain = c.length >= 6;
     return {
       id: parseInt(c[0], 10) || 0,
       text: c[1] || "",
       author: c[2] || "",
       source: c[3] || "",
-      added: c[4] || "",
+      domain: hasDomain ? (c[4] || "") : "",
+      added: hasDomain ? (c[5] || "") : (c[4] || ""),
     };
   });
 }
