@@ -273,3 +273,4 @@ date,signal,value,unit,context,source,capture_id,category
 2026-03-06,lol,1,bool,clean so far,chat,,addiction
 2026-03-06,ate_clean,1,bool,hasnt eaten yet - fasting clean,chat,,habits
 2026-03-06,deep_work,1,bool,90min — intention: work through vision in app,deepwork,deepwork-1772828521,productivity
+2026-03-06,deep_work,1,bool,60min — intention: test 99 min test intentioin no log,deepwork,deepwork-1772828981,productivity
