@@ -5,7 +5,6 @@ import type {
   ExerciseProgressEntry,
   GroceryEntry,
   InboxEntry,
-  MindLoopEntry,
   QuoteEntry,
   ResourceEntry,
   WorkoutDay,
@@ -31,13 +30,10 @@ const PLAN_HEADER = "date,start,end,item,done,notes,domain";
 const TODOS_HEADER = "id,item,done,created,domain";
 const WORKOUTS_HEADER = "date,workout,exercise,set,weight,reps,notes";
 const REFLECTIONS_HEADER = "date,domain,win,lesson,change,archived";
-const MIND_LOOPS_PATH = path.join(DATA_ROOT, "mind_loops.csv");
-const MIND_LOOPS_HEADER =
-  "date,trigger,autopilot_action,updated_action,response,lens,emotion_before,emotion_after,body_sensation,thought_pattern,value_target,source,capture_id";
 const GROCERIES_PATH = path.join(DATA_ROOT, "groceries.csv");
 const GROCERIES_HEADER = "item,section,done,added";
 const QUOTES_PATH = path.join(DATA_ROOT, "quotes.csv");
-const QUOTES_HEADER = "id,text,author,source,added";
+const QUOTES_HEADER = "id,text,author,source,domain,added";
 const RESOURCES_PATH = path.join(DATA_ROOT, "resources.csv");
 const RESOURCES_HEADER = "title,author,type,domain,status,notes";
 
@@ -422,6 +418,78 @@ export function getPlanForDateRange(plan: PlanEntry[], start: string, end: strin
     });
 }
 
+export function getIncompletePlanItems(date: string): PlanEntry[] {
+  return readPlan()
+    .filter((entry) => entry.date === date && entry.done !== "1")
+    .sort((a, b) => a.start - b.start);
+}
+
+export interface CurrentIntention {
+  date: string;
+  domain: string;
+  mantra: string;
+}
+
+export interface CurrentIntentions {
+  dailyIntention: CurrentIntention | null;
+  weeklyIntention: CurrentIntention | null;
+}
+
+const SOURCE_LIKE_TOKENS = new Set(["chat", "voice", "manual", "cli", "api", "shortcut", "ios", "iphone", "android"]);
+
+function stripContextPrefix(value: string): string {
+  return value.replace(/^context\s*:\s*/i, "").trim();
+}
+
+function isSourceLikeToken(value: string, entry: DailySignalEntry): boolean {
+  const token = value.trim().toLowerCase();
+  if (!token) return false;
+  if (SOURCE_LIKE_TOKENS.has(token)) return true;
+  if ((entry.source || "").trim().toLowerCase() === token) return true;
+  if ((entry.captureId || "").trim().toLowerCase() === token) return true;
+  return false;
+}
+
+function extractIntentionMantra(entry: DailySignalEntry): string {
+  const context = stripContextPrefix((entry.context || "").trim());
+  if (context && !isSourceLikeToken(context, entry)) return context;
+
+  const unit = stripContextPrefix((entry.unit || "").trim());
+  if (unit && !isSourceLikeToken(unit, entry)) return unit;
+
+  const value = stripContextPrefix((entry.value || "").trim());
+  if (value && !isSourceLikeToken(value, entry)) return value;
+
+  return "";
+}
+
+function toCurrentIntention(entry: DailySignalEntry): CurrentIntention {
+  return {
+    date: entry.date,
+    domain: (entry.category || "").trim() || (entry.value || "").trim(),
+    mantra: extractIntentionMantra(entry),
+  };
+}
+
+export function getCurrentIntentions(): CurrentIntentions {
+  const signals = readDailySignals();
+  const today = todayStr();
+
+  const daily = signals.findLast((entry) => entry.signal === "intention" && entry.date === today) || null;
+
+  const weeklyRows = signals.filter((entry) => entry.signal === "weekly_intention");
+  const latestWeeklyDate = weeklyRows.reduce((latest, entry) => {
+    return entry.date > latest ? entry.date : latest;
+  }, "");
+  const weekly =
+    weeklyRows.findLast((entry) => entry.date === latestWeeklyDate) || null;
+
+  return {
+    dailyIntention: daily ? toCurrentIntention(daily) : null,
+    weeklyIntention: weekly ? toCurrentIntention(weekly) : null,
+  };
+}
+
 export function getHabitsForDate(signals: DailySignalEntry[], date: string): Record<string, boolean> {
   const habitMetrics = ["weed", "lol", "poker", "clarity", "gym", "sleep", "meditate", "deep_work", "ate_clean"];
   const dayEntries = signals.filter((e) => e.date === date && habitMetrics.includes(e.signal));
@@ -612,52 +680,6 @@ export function archiveReflection(date: string, domain: string, index: number): 
 export function getYesterdayChanges(reflections: ReflectionEntry[]): ReflectionEntry[] {
   const yesterday = daysAgoStr(1);
   return reflections.filter((r) => r.date === yesterday && r.change.trim());
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Mind Loops
-// ─────────────────────────────────────────────────────────────────────────────
-
-export function readMindLoops(): MindLoopEntry[] {
-  if (!fs.existsSync(MIND_LOOPS_PATH)) return [];
-  const lines = readDataLines(MIND_LOOPS_PATH);
-  return lines.map((line) => {
-    const c = parseCSVLine(line);
-    return {
-      date: c[0] || "",
-      trigger: c[1] || "",
-      autopilotAction: c[2] || "",
-      updatedAction: c[3] || "",
-      response: c[4] || "",
-      lens: c[5] || "",
-      emotionBefore: parseFloat(c[6]) || 0,
-      emotionAfter: parseFloat(c[7]) || 0,
-      bodySensation: c[8] || "",
-      thoughtPattern: c[9] || "",
-      valueTarget: c[10] || "",
-      source: c[11] || "",
-      captureId: c[12] || "",
-    };
-  });
-}
-
-export function appendMindLoop(entry: MindLoopEntry): void {
-  const line = [
-    entry.date,
-    csvQuote(entry.trigger),
-    csvQuote(entry.autopilotAction),
-    csvQuote(entry.updatedAction),
-    csvQuote(entry.response),
-    csvQuote(entry.lens),
-    String(entry.emotionBefore),
-    String(entry.emotionAfter),
-    csvQuote(entry.bodySensation),
-    csvQuote(entry.thoughtPattern),
-    csvQuote(entry.valueTarget),
-    csvQuote(entry.source || ""),
-    csvQuote(entry.captureId || ""),
-  ].join(",");
-  appendLines(MIND_LOOPS_PATH, MIND_LOOPS_HEADER, [line]);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

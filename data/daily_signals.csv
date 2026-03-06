@@ -266,3 +266,7 @@ date,signal,value,unit,context,source,capture_id,category
 2026-03-06,feeling,uncertain,,,chat,,mental
 2026-03-06,intention,health,context: strong habit day — cardio (Day F) + clean car + haircut before poker. check-in ritual bringing backward clarity but needs forward vision alignment,chat,,health
 2026-03-06,checkin_daily,1,bool,,chat,,system
+2026-03-06,deep_work,1,bool,,chat,,habits
+2026-03-06,meditate,1,bool,,chat,,habits
+2026-03-06,intention,personal_growth,remember my blessings — enjoy recovery and freedom and get wins,chat,,personal_growth
+2026-03-06,gym,1,bool,30min walk with Cooper + cleans and biceps,chat,,habits

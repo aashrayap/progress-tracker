@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import SchedulerModal from "./SchedulerModal";
 import type { PlanEvent, HabitMap, Todo } from "../lib/types";
 import { HABIT_CONFIG } from "../lib/config";
@@ -15,9 +15,17 @@ interface Props {
   onTodosChange?: (todos: Todo[]) => void;
 }
 
+interface IntentionSummary {
+  date: string;
+  domain: string;
+  mantra: string;
+}
+
 export default function DayView({ events, habits, focusDate, onRefresh, todos: externalTodos, onTodosChange }: Props) {
   const [editing, setEditing] = useState(false);
   const [localTodos, setLocalTodos] = useState<Todo[]>([]);
+  const [dailyIntention, setDailyIntention] = useState<IntentionSummary | null>(null);
+  const [weeklyIntention, setWeeklyIntention] = useState<IntentionSummary | null>(null);
   const dateStr = toDateStr(focusDate);
   const todayStr = toDateStr(new Date());
   const isToday = dateStr === todayStr;
@@ -27,6 +35,31 @@ export default function DayView({ events, habits, focusDate, onRefresh, todos: e
     .sort((a, b) => a.start - b.start);
   const timedEvents = dayEvents.filter((e) => !(e.start === 0 && e.end === 0));
   const allDayEvents = dayEvents.filter((e) => e.start === 0 && e.end === 0);
+  const hasIntentions = Boolean(dailyIntention?.mantra || weeklyIntention?.mantra);
+
+  useEffect(() => {
+    let active = true;
+
+    fetch(`/api/plan/range?start=${dateStr}&end=${dateStr}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch intentions");
+        return res.json();
+      })
+      .then((data) => {
+        if (!active) return;
+        setDailyIntention(data.dailyIntention ?? null);
+        setWeeklyIntention(data.weeklyIntention ?? null);
+      })
+      .catch(() => {
+        if (!active) return;
+        setDailyIntention(null);
+        setWeeklyIntention(null);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [dateStr]);
 
   const todosForModal = externalTodos ?? localTodos;
   const plannedGym = dayEvents.some((e) => /gym/i.test(e.item));
@@ -154,6 +187,24 @@ export default function DayView({ events, habits, focusDate, onRefresh, todos: e
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Intention banner */}
+        {hasIntentions && (
+          <div className="px-3 py-2 rounded-lg border border-cyan-400/20 bg-cyan-500/[0.06]">
+            {weeklyIntention?.mantra && (
+              <p className="text-xs text-zinc-500 italic">
+                <span className="text-zinc-600 not-italic">This week:</span>{" "}
+                {weeklyIntention.mantra}
+              </p>
+            )}
+            {dailyIntention?.mantra && (
+              <p className="text-sm text-zinc-300 italic mt-1">
+                <span className="text-zinc-500 not-italic">Today:</span>{" "}
+                {dailyIntention.mantra}
+              </p>
+            )}
           </div>
         )}
 

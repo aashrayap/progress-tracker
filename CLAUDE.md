@@ -41,7 +41,7 @@ Use these terms consistently in docs, specs, code comments, and conversation:
 | Term | Layers | Contains | When to use |
 |------|--------|----------|-------------|
 | **Core Docs** | L0 | `CLAUDE.md`, `docs/*.md` | "Does this align with core docs?" |
-| **Core Data** | L1 | `data/*.csv`, `insights.csv` | "What does core data say?" |
+| **Core Data** | L1 | `data/*.csv` | "What does core data say?" |
 | **Foundation** | L0 + L1 | Core Docs + Core Data | "Bring the UI in line with foundation" |
 | **Intelligence** | L2 | `app/app/lib/`, `app/app/api/` | "This logic belongs in intelligence, not surfaces" |
 | **Backend** | L0-L2 | Foundation + Intelligence | "Is this a backend or surface change?" |
@@ -84,7 +84,6 @@ nvm use 22.14.0
 - `data/plan.csv`
 - `data/todos.csv`
 - `data/reflections.csv`
-- `data/mind_loops.csv`
 - `data/groceries.csv`
 - `data/inbox.csv`
 
@@ -98,6 +97,8 @@ nvm use 22.14.0
 | `/review-notes`  | Cross-CSV activity summary              | `review notes`, `what happened`        |
 | `/checkin`       | Guided daily/weekly/monthly check-in     | `checkin`, `check in`, `morning check-in` |
 | `/feature-interview` | Scope a feature: audit, interview, lock decisions, write spec | `feature interview`, `spec a feature`, `new feature` |
+| `/audit`         | Codebase health scan (read-only, versioned reports) | `audit`, `find dead code`, `cleanup scan` |
+| `/remove-slop`   | Strip AI-generated code slop from diff   | `remove slop`, `clean up slop`, `slop check` |
 
 ## Guardrails
 

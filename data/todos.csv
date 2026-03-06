@@ -1,36 +1,36 @@
 id,item,done,created,domain
-1,Book Poland flight,1,2026-02-07
-2,Buy ring,0,2026-02-07
-3,Car wash + clean inside,0,2026-02-19
-4,Go to Costco with mom - diamond ring,1,2026-02-25
-5,Look into Ghostty,1,2026-02-25
-6,Clean room,0,2026-02-26
-7,Get Canadian passport photo,1,2026-02-26
-8,Move sleep to guest room - separate office from sleep space,0,2026-02-26
-9,Order diet boxes for April to mid-May during Poland trip,0,2026-02-27
-10,Ask about MultiSport card on March 14,0,2026-02-27
-11,Buy good earplugs and face mask,0,2026-02-27
-12,Buy for Basia Crest Whitestrips,1,2026-02-27
-13,Buy for Basia Burt's Bees chapstick,1,2026-02-27
-14,Buy for Basia pink blush (color TBD): https://www.rhodeskin.com/products/pocket-blush-spicy-marg,0,2026-02-27
-15,When I give a suggestion - explore whether Claude should investigate and give a,1,2026-02-26
-16,Idea: notifications should give a contextual response after looking things up in,1,2026-02-26
-17,Feature idea: add graphs to weight and workout logging + habit tracking - show p,1,2026-02-26
-18,Restart meditation. Life is what you make it - there is a lot to be thankful for. Focus...,1,2026-02-27
-19,Pattern recognition engine - detect binge/crash cycles from logged data,1,2026-02-27
-20,Clarify: Consider how adding meditate section into the app would integrate with existing functionalities - reflections and trigger tracking already exist. Into meditation (Francis Lucille). How might this factor in?,1,2026-02-26
-21,Clarify: Idea: notifications should give a contextual response after looking things up instead of just saying saved/logged. Unsure if good idea - logged for later review.,1,2026-02-26
-22,Clarify: Add 5min cardio to every gym session - start frictionless then expand later,1,2026-02-26
-23,Rule: when getting takeout on Fri/Sat bring only enough for that night - no leftovers (Mezza Grille lesson),1,2026-03-01
-24,Replace pullups with lat_pulldown in gym Days C and E (pullups already covered by daily home reps),1,2026-03-01
-25,Feature: voice notes should trigger Claude to investigate and make incremental repo improvements autonomously,1,2026-03-01
-27,Clarify: 'Create shortcut except without instead of dictation type' - likely about iOS Shortcut with text input instead of dictation. Re-record or clarify.,1,2026-03-01
-28,Feature: idea cards with Claude pre-investigation — voice idea → Claude scans repo against core pillars/3 layers → presents concise investigation on idea card → user approves → PR created automatically,1,2026-03-01
-29,Talk through habit/reward/fitness/eating goal neuroscience with Claude,0,2026-03-03
-30,Try fitting 1 bicep exercise per week into rotation,1,2026-03-03
-31,Transcribe 'As A Man Thinketh' and add quotes page to app,0,2026-03-03
-todo-rel-1,Daily relationship clarity journal (90-day protocol through June 1),0,2026-03-03
-todo-rel-2,Find therapist experienced with ROCD / relationship anxiety,0,2026-03-03
-todo-rel-3,Visit her in person before making any decisions,0,2026-03-03
-todo-rel-4,Check insurance coverage for NOCD and book free intro call (treatmyocd.com) - MONDAY March 9,0,2026-03-03
-32,Organize capture layers: ensure proper routing between reflections mind_loops daily_signals and voice pipeline,0,2026-03-04
+1,Book Poland flight,1,2026-02-07,
+2,Buy ring,0,2026-02-07,
+3,Car wash + clean inside,0,2026-02-19,
+4,Go to Costco with mom - diamond ring,1,2026-02-25,
+5,Look into Ghostty,1,2026-02-25,
+6,Clean room,0,2026-02-26,
+7,Get Canadian passport photo,1,2026-02-26,
+8,Move sleep to guest room - separate office from sleep space,0,2026-02-26,
+9,Order diet boxes for April to mid-May during Poland trip,1,2026-02-27,
+10,Ask about MultiSport card on March 14,1,2026-02-27,
+11,Buy good earplugs and face mask,0,2026-02-27,
+12,Buy for Basia Crest Whitestrips,1,2026-02-27,
+13,Buy for Basia Burt's Bees chapstick,1,2026-02-27,
+14,Buy for Basia pink blush (color TBD): https://www.rhodeskin.com/products/pocket-blush-spicy-marg,0,2026-02-27,
+15,When I give a suggestion - explore whether Claude should investigate and give a,1,2026-02-26,
+16,Idea: notifications should give a contextual response after looking things up in,1,2026-02-26,
+17,Feature idea: add graphs to weight and workout logging + habit tracking - show p,1,2026-02-26,
+18,Restart meditation. Life is what you make it - there is a lot to be thankful for. Focus...,1,2026-02-27,
+19,Pattern recognition engine - detect binge/crash cycles from logged data,1,2026-02-27,
+20,Clarify: Consider how adding meditate section into the app would integrate with existing functionalities - reflections and trigger tracking already exist. Into meditation (Francis Lucille). How might this factor in?,1,2026-02-26,
+21,Clarify: Idea: notifications should give a contextual response after looking things up instead of just saying saved/logged. Unsure if good idea - logged for later review.,1,2026-02-26,
+22,Clarify: Add 5min cardio to every gym session - start frictionless then expand later,1,2026-02-26,
+23,Rule: when getting takeout on Fri/Sat bring only enough for that night - no leftovers (Mezza Grille lesson),1,2026-03-01,
+24,Replace pullups with lat_pulldown in gym Days C and E (pullups already covered by daily home reps),1,2026-03-01,
+25,Feature: voice notes should trigger Claude to investigate and make incremental repo improvements autonomously,1,2026-03-01,
+27,Clarify: 'Create shortcut except without instead of dictation type' - likely about iOS Shortcut with text input instead of dictation. Re-record or clarify.,1,2026-03-01,
+28,Feature: idea cards with Claude pre-investigation — voice idea → Claude scans repo against core pillars/3 layers → presents concise investigation on idea card → user approves → PR created automatically,1,2026-03-01,
+29,Talk through habit/reward/fitness/eating goal neuroscience with Claude,0,2026-03-03,
+30,Try fitting 1 bicep exercise per week into rotation,1,2026-03-03,
+31,Transcribe 'As A Man Thinketh' and add quotes page to app,0,2026-03-03,
+0,Daily relationship clarity journal (90-day protocol through June 1),0,2026-03-03,
+0,Find therapist experienced with ROCD / relationship anxiety,0,2026-03-03,
+0,Visit her in person before making any decisions,0,2026-03-03,
+0,Check insurance coverage for NOCD and book free intro call (treatmyocd.com) - MONDAY March 9,0,2026-03-03,
+32,add cleans to workout fun,0,2026-03-06,

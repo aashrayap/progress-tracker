@@ -107,8 +107,6 @@ High-leverage = score >= 3.8.
 - `dormant`: not seen for 15-45 days, or score falls below 3.0.
 - `resolved`: no confirming evidence for 45+ days and an explicit replacement behavior exists.
 
-When lifecycle changes, update `data/insights.csv` rather than rewriting historical source rows.
-
 ## Decisions Made
 
 Append-only log. When a directional choice is made during a feature, record it here so future sessions don't re-litigate.

@@ -4,6 +4,7 @@ import {
   readDailySignals,
   getPlanForDateRange,
   getHabitsForDate,
+  getCurrentIntentions,
 } from "../../../lib/csv";
 
 export async function GET(request: NextRequest) {
@@ -17,6 +18,7 @@ export async function GET(request: NextRequest) {
 
     const plan = readPlan();
     const signals = readDailySignals();
+    const intentions = getCurrentIntentions();
 
     const events = getPlanForDateRange(plan, start, end);
 
@@ -30,7 +32,12 @@ export async function GET(request: NextRequest) {
       if (Object.keys(h).length > 0) habits[date] = h;
     }
 
-    return NextResponse.json({ events, habits });
+    return NextResponse.json({
+      events,
+      habits,
+      dailyIntention: intentions.dailyIntention,
+      weeklyIntention: intentions.weeklyIntention,
+    });
   } catch (e) {
     console.error("GET /api/plan/range error:", e);
     return NextResponse.json({ error: "Failed to read plan data" }, { status: 500 });

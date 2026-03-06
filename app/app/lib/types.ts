@@ -173,18 +173,3 @@ export interface ResourceEntry {
   notes: string;
 }
 
-export interface MindLoopEntry {
-  date: string;
-  trigger: string;
-  autopilotAction: string;
-  updatedAction: string;
-  response: string;
-  lens: string;
-  emotionBefore: number;
-  emotionAfter: number;
-  bodySensation: string;
-  thoughtPattern: string;
-  valueTarget: string;
-  source: string;
-  captureId: string;
-}

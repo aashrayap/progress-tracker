@@ -32,10 +32,22 @@ interface OpenTodo {
   item: string;
 }
 
+interface IntentionSummary {
+  date: string;
+  domain: string;
+  mantra: string;
+}
+
 interface CheckinStatus {
   daily: { done: boolean; streak: number };
   weekly: { done: boolean; lastDate: string | null };
   monthly: { done: boolean; lastDate: string | null };
+}
+
+interface DailyQuote {
+  text: string;
+  author: string;
+  source: string;
 }
 
 interface AppData {
@@ -59,6 +71,9 @@ interface AppData {
   reflectionsSummary: ReflectionBullet[];
   openTodos: OpenTodo[];
   openTodosCount: number;
+  dailyIntention: IntentionSummary | null;
+  weeklyIntention: IntentionSummary | null;
+  dailyQuote: DailyQuote | null;
 }
 
 const HABIT_ORDER = [
@@ -191,6 +206,7 @@ export default function Home() {
   const resetDay = Math.max(1, Math.min(data.dopamineReset.dayNumber, data.dopamineReset.days));
   const { checkinStatus } = data;
   const hasAnyPending = !checkinStatus.daily.done || !checkinStatus.weekly.done || !checkinStatus.monthly.done;
+  const hasIntentions = Boolean(data.dailyIntention || data.weeklyIntention);
 
   return (
     <div className="min-h-screen bg-black text-zinc-100">
@@ -262,6 +278,40 @@ export default function Home() {
               </div>
               <p className="mt-3 text-xs text-zinc-500">
                 Run <span className="text-zinc-400 font-mono">/checkin</span> in Claude Code to start.
+              </p>
+            </section>
+          )}
+
+          {/* Current intention (weekly + daily) */}
+          {hasIntentions && (
+            <section className="px-1">
+              {data.weeklyIntention?.mantra && (
+                <p className="text-sm text-zinc-500 italic">
+                  <span className="text-zinc-600 not-italic">This week:</span>{" "}
+                  {data.weeklyIntention.mantra}
+                </p>
+              )}
+              {data.dailyIntention?.mantra && (
+                <p className="text-sm text-zinc-300 italic mt-1">
+                  <span className="text-zinc-500 not-italic">Today:</span>{" "}
+                  {data.dailyIntention.mantra}
+                </p>
+              )}
+              {data.dailyQuote && (
+                <p className="text-xs text-zinc-600 italic mt-2 leading-relaxed">
+                  &ldquo;{data.dailyQuote.text}&rdquo;
+                  <span className="not-italic"> — {data.dailyQuote.author}</span>
+                </p>
+              )}
+            </section>
+          )}
+
+          {/* Quote of the day (when no mantra set) */}
+          {!hasIntentions && data.dailyQuote && (
+            <section className="px-1">
+              <p className="text-xs text-zinc-500 italic leading-relaxed">
+                &ldquo;{data.dailyQuote.text}&rdquo;
+                <span className="not-italic"> — {data.dailyQuote.author}</span>
               </p>
             </section>
           )}

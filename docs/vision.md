@@ -1,6 +1,6 @@
 # Vision (Distilled)
 
-This document is the actionable intent lens derived from `vision-session.md`.
+This document is the actionable intent lens for the tracker system.
 
 ## Horizon Definitions
 - **Now**: immediate focus this week
@@ -28,16 +28,22 @@ This document is the actionable intent lens derived from `vision-session.md`.
 - **2-year**: maintain best shape (about 200 lb), longevity-focused routine, and consistent training base.
 
 ### `addiction`
+> "Thought rapidly crystallizes into habit, and habit solidifies into circumstance." — James Allen
+
 - **Now**: protect sobriety streaks and interrupt urges immediately when routine or stress changes.
 - **90-day**: complete the dopamine reset window with reliable replacement behaviors for weed, `lol`, and poker triggers.
 - **2-year**: operate with non-negotiable sobriety systems and low relapse volatility.
 
 ### `mental`
+> "Circumstance does not make the man, it reveals him to himself." — James Allen
+
 - **Now**: restart daily meditation and use short decompression routines when morning fog/catastrophizing appears.
 - **90-day**: lock in sleep and emotional regulation habits that keep mood and focus stable.
 - **2-year**: sustain a clear, regulated mind through integrated meditation, self-observation, and nervous-system care.
 
 ### `career`
+> "Until thought is linked with purpose there is no intelligent accomplishment." — James Allen
+
 - **Now**: prioritize AI fluency and minimum two deep-work blocks/day on high-leverage output.
 - **90-day**: reduce lone-wolf work patterns and increase exposure to compounding opportunities with aligned people.
 - **2-year**: build/lead mission-driven work with trusted collaborators (finance, therapy, meditation, or productivity impact).
@@ -58,6 +64,8 @@ This document is the actionable intent lens derived from `vision-session.md`.
 - **2-year**: have a full, chosen weekend life where home is restful by choice, not default isolation.
 
 ### `personal_growth`
+> "A man is literally what he thinks, his character being the complete sum of all his thoughts." — James Allen
+
 - **Now**: keep daily reflection/journaling active and orient learning toward truth-seeking and behavior change.
 - **90-day**: convert reflection outputs into concrete rule updates and weekly operating adjustments.
 - **2-year**: live from a mature inner framework where philosophy, meditation, and self-knowledge guide decisions consistently.

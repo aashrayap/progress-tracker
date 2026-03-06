@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import { todayStr as todayLocal, daysAgoStr } from "../../lib/utils";
 import {
+  getCurrentIntentions,
   readDailySignals,
   getDaysSince,
   getHabitsForDate,
   getStreak,
   getTodaysPlan,
   readPlan,
+  readQuotes,
   readReflections,
   readTodos,
   readWorkouts,
@@ -265,6 +267,7 @@ export async function GET() {
     );
 
     const checkinStatus = computeCheckinStatus(signals, todayStr);
+    const intentions = getCurrentIntentions();
 
     const todayEntries = signals.filter((e) => e.date === todayStr);
     const sleepToday = getBool(todayEntries, "sleep");
@@ -318,8 +321,23 @@ export async function GET() {
       .map((t) => ({ id: t.id, item: t.item }));
     const openTodosCount = todos.filter((t) => !t.done).length;
 
+    // Daily quote: match mantra domain, fall back to any quote
+    const allQuotes = readQuotes();
+    let dailyQuote: { text: string; author: string; source: string } | null = null;
+    if (allQuotes.length > 0) {
+      const mantraDomain = intentions.dailyIntention?.domain || intentions.weeklyIntention?.domain || "";
+      const domainQuotes = mantraDomain ? allQuotes.filter((q) => q.domain === mantraDomain) : [];
+      const pool = domainQuotes.length > 0 ? domainQuotes : allQuotes;
+      // Deterministic daily rotation based on date
+      const daysSinceEpoch = Math.floor(Date.now() / 86400000);
+      const pick = pool[daysSinceEpoch % pool.length];
+      dailyQuote = { text: pick.text, author: pick.author, source: pick.source };
+    }
+
     return NextResponse.json({
       checkinStatus,
+      dailyIntention: intentions.dailyIntention,
+      weeklyIntention: intentions.weeklyIntention,
       nowWindow: getNowWindow(),
       dopamineReset: {
         startDate: config.dopamineReset.startDate,
@@ -356,6 +374,7 @@ export async function GET() {
       reflectionsSummary,
       openTodos,
       openTodosCount,
+      dailyQuote,
     });
   } catch (e) {
     console.error("GET /api/hub error:", e);

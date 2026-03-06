@@ -96,12 +96,13 @@ The agent will report a confidence summary. Do NOT trust it blindly.
 1. **Diff review**: `git diff --stat` — are only expected files changed?
 2. **Scope violations**: Did the agent touch "must NOT change" files? (This happened in Hub Restructure — agent modified Vision despite explicit blocklist. Caught during Chrome verification.)
 3. **Revert violations**: `git checkout -- <file>` for any out-of-scope changes
-4. **Chrome verification yourself**: Navigate every affected route
+4. **Remove slop**: Run `/remove-slop` to strip AI-generated code patterns (unnecessary comments, defensive overkill, `as any` casts, style inconsistencies). Do this before Chrome verification so you're verifying clean code.
+5. **Chrome verification yourself**: Navigate every affected route
    - Screenshot (or JS DOM inspect if screenshot tool is down)
    - Console errors
    - Visual contract comparison
-5. **Regression routes**: Open unchanged pages, confirm nothing broke
-6. **Build**: `npm run build` after any reverts
+6. **Regression routes**: Open unchanged pages, confirm nothing broke
+7. **Build**: `npm run build` after any reverts
 
 ### Common Agent Failures to Watch For
 

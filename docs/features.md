@@ -6,13 +6,11 @@
 | `/` | Hub | Priority and next action |
 | `/plan` | Plan | Time-block execution and completion |
 | `/health` | Health | Workout/body metrics and progression |
-| `/mind` | Mind | Cognitive loop analysis + reflections in one place |
-| `/ideas` | Ideas | Voice idea pipeline status |
+| `/mind` | Mind | Mind entries (trigger/thought/action) + mental/addiction reflections |
 | `/resources` | Resources | Library surface (resources + quotes) |
 | `/vision` | Vision | Standalone optional strategy view (not primary nav) |
 
 ## Route Consolidation
-- `/reflect` redirects to `/mind`.
 - `/quotes` redirects to `/resources`.
 
 ## Navigation Rule
