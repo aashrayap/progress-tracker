@@ -4,6 +4,8 @@ System-agnostic specification template for AI-assisted development. Any AI syste
 
 This template defines what must be specified before implementation, how to verify the result, and what to do when verification fails.
 
+**Terminology note:** The process of scoping a feature using this template is called a **feature interview**. This is distinct from `/checkin` (the daily/weekly/monthly life check-in skill). "Interview" = extracting requirements for a feature. "Check-in" = capturing daily signals, intentions, and reflections.
+
 ## When to Use This
 
 - Any task that modifies UI or touches multiple files
@@ -146,80 +148,7 @@ Which verification gates apply to this task.
 
 ---
 
-## Verification Protocol (run before reporting done)
-
-### Gate 1: Build
-
-```
-npm run build
-```
-
-Zero errors. Fix before proceeding.
-
-### Gate 2: Diff Review
-
-```
-git diff --stat
-```
-
-- Only expected files changed?
-- No out-of-scope modifications?
-- Invariants intact?
-
-### Gate 3: Browser Verification (UI tasks)
-
-1. Ensure dev server is running
-2. Navigate to the affected page
-3. Take a screenshot
-4. Read browser console (filter for errors/warnings)
-5. Read network requests (check for failed API calls)
-6. Compare screenshot against visual contract:
-   - Expected elements present?
-   - Unexpected elements absent?
-   - Layout correct at target viewport?
-   - No visual regressions on surrounding content?
-
-Tool-specific implementation:
-- **Claude Code**: `mcp__claude-in-chrome__*` tools (navigate, computer/screenshot, read_console_messages, read_network_requests)
-- **Cursor/Copilot**: Playwright MCP or browser preview
-- **Manual**: Open page in browser, inspect visually, check DevTools console
-
-### Gate 4: Spec Adherence
-
-Walk each success criterion from section 4. For each one:
-- **YES**: criterion met
-- **NO**: enter fix loop
-- **PARTIAL**: treat as NO
-
-### Gate 5: Confidence Report
-
-Return to user:
-- What was done (1-2 sentences)
-- What was verified (which gates passed)
-- What wasn't verified (manual checks needed)
-- Screenshot evidence (if UI task)
-- Uncertainty flags (if any)
-
----
-
-## Fix Loop
-
-When any gate fails:
-
-```
-implement --> build --> screenshot --> evaluate
-    ^                                    |
-    |            PASS --> DONE           |
-    |                                    |
-    +--- fix <-- FAIL <-----------------+
-          |
-          +-- max 3 retries per failure type
-          +-- each retry must change approach (not repeat same fix)
-          +-- 3 fails on same issue --> stop, explain, ask user
-          +-- fix introduces NEW failure --> stop, don't cascade
-```
-
-The loop is async — the implementer continues fixing without returning to the user until either all gates pass or an abort condition is hit.
+**Verification & fix loop**: See `docs/execution-playbook.md` Phase 4 for the full verification protocol (build, diff, browser, spec adherence gates) and fix loop.
 
 ---
 

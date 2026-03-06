@@ -15,74 +15,17 @@ Skip for: single-file fixes, copy changes, data-only additions.
 
 ---
 
-## Phase 1: Interview Before Spec
+## Phase 1 & 2: Interview + Spec
 
-Do NOT jump to implementation. Interview first to surface real requirements.
+Run `/feature-interview` to execute the interactive interview and generate a spec file. The skill handles:
+- Auditing current state (reads relevant files, presents inventory)
+- Structured interview (usage, value, ambiguity resolution)
+- Decision locking (all TBDs resolved before spec)
+- Spec generation in `docs/specs/` using `docs/feature-spec-template.md`
 
-### Step 1: Audit Current State
+The output is a self-contained spec file that Phase 3 executes against.
 
-Read every relevant file. Map what exists today:
-- Every page/route and what it contains
-- Every data source and how it flows
-- Every API endpoint and what it serves
-- Navigation structure
-
-Present this as a structured inventory to the user.
-
-### Step 2: Challenge Each Element
-
-For each surface/feature, ask:
-- What's your actual usage? (daily / occasional / rare / never)
-- Does this trace back to a core goal?
-- What would you miss if it disappeared?
-- What's missing that should be here?
-
-### Step 3: Go Deeper on Ambiguous Areas
-
-Don't accept first answers at face value. For areas where the user says "I'm not sure" or "maybe":
-- Present 2-3 concrete options with mockups (text-based is fine)
-- Show trade-offs for each
-- Let the user pick rather than guessing
-
-### Step 4: Lock Decisions
-
-Before writing any spec, confirm a decision table:
-
-```
-| Decision | Detail | Status |
-|----------|--------|--------|
-| [thing]  | [what] | Locked / TBD |
-```
-
-Every TBD must be resolved before Phase 2.
-
----
-
-## Phase 2: Write the Spec
-
-Use the feature-spec-template (`docs/feature-spec-template.md`) as the skeleton. The spec must be **self-contained** — an agent with no conversation history should be able to execute it.
-
-### Required Sections
-
-1. **Intent Alignment** — what to optimize for, trade-off rules, health metrics
-2. **Problem Statement** — what, why, user-facing effect
-3. **Scope** — explicit file lists:
-   - Files to modify (exhaustive)
-   - Files to create
-   - **Files that must NOT change** (critical — agents WILL modify things outside scope without this)
-4. **Visual Contract** — what the user should see and NOT see, per route, at specific viewport
-5. **Success Criteria** — binary YES/NO checks (3-12 items)
-6. **Failure Definitions** — table mapping failure type to detection method to action
-7. **Invariants** — what must NOT change under any circumstance
-8. **Per-File Checkpoints** — yes/no questions after each file edit
-9. **Diff Contract** — WHAT/WHY/PRESERVES/REMOVES/RISK stated before each edit
-10. **Abort Conditions** — when to stop and ask instead of guessing
-11. **Implementation Order** — phases from lowest risk to highest risk
-12. **Verification Route** — all gates with Chrome verification protocol
-
-### Chrome Verification Protocol (mandatory for UI tasks)
-
-Embed this in the spec:
+### Chrome Verification Protocol (embed in spec for UI tasks)
 
 ```
 Before reporting done:
@@ -104,16 +47,10 @@ Before reporting done:
 - Use `mcp__claude-in-chrome__javascript_tool` for DOM inspection
 - Query section headers, element presence/absence, CSS classes
 - Use `curl -sI` for redirect verification
-- This provides equivalent functional evidence
 
 ### The "Must NOT Change" List
 
-This is the single most important guardrail. Agents will "improve" things outside scope. Without an explicit blocklist, they will:
-- Refactor files they read during investigation
-- Add features to pages they were only supposed to inspect
-- Change schemas they think could be "better"
-
-Be exhaustive. List every file and data schema that should be untouched.
+The single most important guardrail. Agents will "improve" things outside scope without an explicit blocklist. The `/feature-interview` skill ensures this list is included in every spec.
 
 ---
 

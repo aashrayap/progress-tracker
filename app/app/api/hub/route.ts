@@ -23,11 +23,69 @@ function getNowWindow(): "morning" | "day" | "evening" {
   return "day";
 }
 
+function getWeekStartDate(): string {
+  const now = new Date();
+  const day = now.getDay(); // 0=Sun, 1=Mon, ...
+  const diff = day === 0 ? 6 : day - 1; // days since Monday
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - diff);
+  return `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, "0")}-${String(monday.getDate()).padStart(2, "0")}`;
+}
+
+function getMonthStartDate(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+}
+
+function computeCheckinStatus(signals: DailySignalEntry[], today: string) {
+  const weekStart = getWeekStartDate();
+  const monthStart = getMonthStartDate();
+
+  const dailyDone = signals.some(
+    (s) => s.date === today && s.signal === "checkin_daily" && s.value === "1"
+  );
+
+  const weeklyDone = signals.some(
+    (s) => s.date >= weekStart && s.signal === "checkin_weekly" && s.value === "1"
+  );
+  const lastWeekly = signals
+    .filter((s) => s.signal === "checkin_weekly" && s.value === "1")
+    .sort((a, b) => b.date.localeCompare(a.date))[0]?.date || null;
+
+  const monthlyDone = signals.some(
+    (s) => s.date >= monthStart && s.signal === "checkin_monthly" && s.value === "1"
+  );
+  const lastMonthly = signals
+    .filter((s) => s.signal === "checkin_monthly" && s.value === "1")
+    .sort((a, b) => b.date.localeCompare(a.date))[0]?.date || null;
+
+  // Daily streak: count consecutive days with checkin_daily going backwards from yesterday
+  const dailyCheckins = new Set(
+    signals
+      .filter((s) => s.signal === "checkin_daily" && s.value === "1")
+      .map((s) => s.date)
+  );
+  let dailyStreak = 0;
+  for (let i = 1; i <= 90; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    if (dailyCheckins.has(ds)) dailyStreak++;
+    else break;
+  }
+
+  return {
+    daily: { done: dailyDone, streak: dailyStreak },
+    weekly: { done: weeklyDone, lastDate: lastWeekly },
+    monthly: { done: monthlyDone, lastDate: lastMonthly },
+  };
+}
+
 function getBool(
   entries: DailySignalEntry[],
   signal: string
 ): boolean | null {
-  const row = entries.find((e) => e.signal === signal);
+  const row = entries.findLast((e) => e.signal === signal);
   if (!row) return null;
   return row.value === "1";
 }
@@ -172,7 +230,7 @@ export async function GET() {
     const dopamineLog = dopamineDates.map((date) => {
       const dayEntries = signals.filter((e) => e.date === date);
       const get = (m: string): boolean | null => {
-        const entry = dayEntries.find((e) => e.signal === m);
+        const entry = dayEntries.findLast((e) => e.signal === m);
         if (!entry) return null;
         return entry.value === "1";
       };
@@ -205,6 +263,8 @@ export async function GET() {
       })),
       todaysPlan
     );
+
+    const checkinStatus = computeCheckinStatus(signals, todayStr);
 
     const todayEntries = signals.filter((e) => e.date === todayStr);
     const sleepToday = getBool(todayEntries, "sleep");
@@ -259,6 +319,7 @@ export async function GET() {
     const openTodosCount = todos.filter((t) => !t.done).length;
 
     return NextResponse.json({
+      checkinStatus,
       nowWindow: getNowWindow(),
       dopamineReset: {
         startDate: config.dopamineReset.startDate,

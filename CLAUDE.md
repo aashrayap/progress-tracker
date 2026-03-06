@@ -59,7 +59,8 @@ Core rule: each layer only depends downward. Surfaces consume Intelligence. Inte
 | `docs/personal-os.md`   | Runtime loop and decision quality            |
 | `docs/life-playbook.md` | Domain protocols and constraints             |
 | `docs/app-intent.md`   | Product direction, health metrics, decisions  |
-| `docs/feature-spec-template.md` | Feature spec + verification protocol (read before any feature work) |
+| `docs/feature-spec-template.md` | Spec skeleton (sections 1-10) -- used by `/feature-interview` |
+| `docs/execution-playbook.md` | Async execution, verification gates, Chrome protocol, lessons |
 
 ## Commands
 
@@ -96,6 +97,7 @@ nvm use 22.14.0
 | `/weekly-review` | Weekly accountability and planning      | `weekly review`, `plan the week`       |
 | `/review-notes`  | Cross-CSV activity summary              | `review notes`, `what happened`        |
 | `/checkin`       | Guided daily/weekly/monthly check-in     | `checkin`, `check in`, `morning check-in` |
+| `/feature-interview` | Scope a feature: audit, interview, lock decisions, write spec | `feature interview`, `spec a feature`, `new feature` |
 
 ## Guardrails
 

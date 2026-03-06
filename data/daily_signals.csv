@@ -261,3 +261,8 @@ date,signal,value,unit,context,source,capture_id,category
 2026-03-05,deep_work,1,bool,,chat,,habits
 2026-03-05,sleep,0,bool,poor sleep because of League,chat,,habits
 2026-03-05,meditate,1,bool,,chat,,habits
+2026-03-06,sleep,0,bool,went to bed late but sleep quality was good,chat,,habits
+2026-03-06,weed,1,bool,clean,chat,,addiction
+2026-03-06,feeling,uncertain,,,chat,,mental
+2026-03-06,intention,health,context: strong habit day — cardio (Day F) + clean car + haircut before poker. check-in ritual bringing backward clarity but needs forward vision alignment,chat,,health
+2026-03-06,checkin_daily,1,bool,,chat,,system
