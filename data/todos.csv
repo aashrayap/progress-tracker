@@ -28,7 +28,7 @@ id,item,done,created,domain
 28,Feature: idea cards with Claude pre-investigation — voice idea → Claude scans repo against core pillars/3 layers → presents concise investigation on idea card → user approves → PR created automatically,1,2026-03-01,
 29,Talk through habit/reward/fitness/eating goal neuroscience with Claude,0,2026-03-03,
 30,Try fitting 1 bicep exercise per week into rotation,1,2026-03-03,
-31,Transcribe 'As A Man Thinketh' and add quotes page to app,0,2026-03-03,
+31,Transcribe 'As A Man Thinketh' and add quotes page to app,50,2026-03-03,2026-03-08
 32,add cleans to workout fun,1,2026-03-06,
 33,Clarify: 'I can put my poker hand' — unclear voice note about poker. Re-record or clarify intent.,1,2026-03-06,
 34,Clarify: empty voice note issue #97 — re-record or discard,1,2026-03-07,
@@ -39,3 +39,4 @@ id,item,done,created,domain
 39,Clarify: empty voice note (issue #87),1,2026-03-07,
 40,Document consumption channels and evaluate against calm mind goal,0,2026-03-08,personal_growth
 41,Create habit system with explicit rules for consumption channels (poker/Twitter/YouTube) — define when and why each is allowed,0,2026-03-08,personal_growth
+42,Clarify: empty voice note (issue #106),1,2026-03-09,
