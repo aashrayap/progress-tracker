@@ -69,7 +69,7 @@ If the voice note is a **codebase improvement idea** — feature request, app en
 - Suggests new functionality or improvements to existing features
 - Proposes architectural or workflow changes
 
-**Routing**: Set `suggested_destination=idea` in data/inbox.csv. Do NOT also append to `data/todos.csv`. The idea pipeline daemon will handle investigation and implementation.
+**Routing**: Set `suggested_destination=idea` in data/inbox.csv. Do NOT also append to `data/todos.csv`. Ideas are triaged during `/checkin`.
 
 ## Grocery Routing
 If text mentions buying food, groceries, "pick up", "need from store", or lists food items to buy:
@@ -125,12 +125,19 @@ Delta = difference from most recent prior weight row in data/daily_signals.csv. 
 {
   "type": "workout",
   "title": "{workout_label} logged",
-  "body": "✓ {exercise_count} exercises, {total_sets} sets\n{heaviest_set_per_exercise}\nGym streak: {consecutive_gym_1_days}",
+  "body": "✓ {exercise_count} exercises, {total_sets} sets\n{heaviest_set_per_exercise}\nGym streak: {consecutive_gym_1_days}\n\n📋 Next session targets:\n{next_session_targets}",
   "tags": "muscle",
   "priority": 3
 }
 ```
 Gym streak = count of consecutive days with `gym,1` in data/daily_signals.csv ending today. Heaviest set per exercise = `exercise weight×reps` for the top set of each.
+
+**Next session targets**: After logging the workout, compute progressive overload targets for the NEXT workout in the rotation. Read the workout templates from `app/app/lib/config.ts` to determine which exercises are in the next workout day. For each exercise, find the most recent session in `data/workouts.csv` and apply these rules:
+- Parse the exercise's rep range (e.g. "5-8" means min=5, max=8)
+- If all working sets hit max reps → add 5lbs (10 for lower body: squat, front_squat, rdl, lunges, trap_bar_deadlift), show new weight × min reps
+- Otherwise → same weight, +1 rep per set (capped at max)
+- Format each exercise as: `Exercise: weight×reps, weight×reps, weight×reps`
+- If no history exists for an exercise, show the prescribed rep range only
 
 ### type: "addiction" (weed/lol/poker signals)
 Clean day (value=1):
@@ -195,7 +202,7 @@ Show lesson and change only. Do not include win — the notification reinforces 
 {
   "type": "idea",
   "title": "Idea captured",
-  "body": "✓ Routed to idea pipeline: {first_30_chars}...",
+  "body": "✓ Captured for triage: {first_30_chars}...",
   "tags": "bulb",
   "priority": 3
 }

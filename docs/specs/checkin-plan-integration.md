@@ -1,3 +1,5 @@
+Status: shipped
+
 # Feature Spec: Check-in → Plan Integration
 
 ## 1. Problem Statement
@@ -40,7 +42,6 @@ Files that must NOT change:
   - app/app/mind/page.tsx
   - app/app/vision/page.tsx
   - app/app/ideas/page.tsx
-  - app/app/reflect/page.tsx
   - app/app/resources/page.tsx
   - app/app/quotes/page.tsx
   - app/app/lib/config.ts

@@ -25,6 +25,10 @@
 - Calendar/todo execution loop
 - Reflection capture and lesson surfacing
 
+## Feature Specs
+
+Specs live in `docs/specs/`. Each spec has a `Status` line at the top: `draft`, `in-progress`, `shipped`, or `archived`. See `docs/feature-spec-template.md` for the template.
+
 ## Current Gaps
 1. Data integrity hardening (idempotency, file-locking strategy)
 2. Stable plan row identity model

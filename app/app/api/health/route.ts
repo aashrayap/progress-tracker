@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { todayStr as todayLocal, daysAgoStr } from "../../lib/utils";
 import {
   getExerciseProgress,
+  getExerciseTargets,
   getLatestValue,
   getMetricHistory,
   getNextWorkout,
@@ -148,6 +149,12 @@ export async function GET() {
     const exerciseProgress = getExerciseProgress(workoutDays);
     const displayWorkout = getDisplayWorkout(gymToday, todayWorkout, nextWorkout);
 
+    // Compute progressive overload targets for the current/next workout
+    const prescribedIds = displayWorkout.displayExercises.map((e) => e.id);
+    const exerciseTargets = displayWorkout.isCardio
+      ? []
+      : getExerciseTargets(prescribedIds, workoutDays);
+
     return NextResponse.json({
       weight: {
         current: currentWeight,
@@ -170,6 +177,7 @@ export async function GET() {
         isCardio: displayWorkout.isCardio,
         cardioInfo: displayWorkout.cardioInfo,
         rotation: config.trainingPlan.rotation,
+        exerciseTargets,
       },
       gymToday,
       gymStreak,

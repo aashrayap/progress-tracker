@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { todayStr as todayLocal, daysAgoStr } from "../../lib/utils";
 import {
   getCurrentIntentions,
+  readBriefing,
   readDailySignals,
   getDaysSince,
   getHabitsForDate,
@@ -286,8 +287,10 @@ export async function GET() {
       ateClean: getBool(todayEntries, "ate_clean"),
     };
 
-    // 14-day habit tracker: today - 13 days -> today
-    const habitDates = Array.from({ length: 14 }, (_, i) => daysAgoStr(13 - i));
+    // 28-day habit tracker: always start on a Monday, show through today
+    const todayDow = new Date().getDay(); // 0=Sun
+    const daysBack = 27 + ((todayDow + 6) % 7); // extend back to nearest Monday
+    const habitDates = Array.from({ length: daysBack + 1 }, (_, i) => daysAgoStr(daysBack - i));
     const habitTracker = {
       dates: habitDates,
       days: habitDates.map((date) => getHabitsForDate(signals, date)),
@@ -321,20 +324,23 @@ export async function GET() {
       .map((t) => ({ id: t.id, item: t.item }));
     const openTodosCount = todos.filter((t) => !t.done).length;
 
-    // Daily quote: match mantra domain, fall back to any quote
+    // Briefing card data (from pipeline-generated briefing.json)
+    const briefing = readBriefing();
+
+    // Fallback quote if no briefing: match mantra domain, fall back to any quote
     const allQuotes = readQuotes();
     let dailyQuote: { text: string; author: string; source: string } | null = null;
-    if (allQuotes.length > 0) {
+    if (!briefing && allQuotes.length > 0) {
       const mantraDomain = intentions.dailyIntention?.domain || intentions.weeklyIntention?.domain || "";
       const domainQuotes = mantraDomain ? allQuotes.filter((q) => q.domain === mantraDomain) : [];
       const pool = domainQuotes.length > 0 ? domainQuotes : allQuotes;
-      // Deterministic daily rotation based on date
       const daysSinceEpoch = Math.floor(Date.now() / 86400000);
       const pick = pool[daysSinceEpoch % pool.length];
       dailyQuote = { text: pick.text, author: pick.author, source: pick.source };
     }
 
     return NextResponse.json({
+      briefing,
       checkinStatus,
       dailyIntention: intentions.dailyIntention,
       weeklyIntention: intentions.weeklyIntention,

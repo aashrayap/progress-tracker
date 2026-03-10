@@ -128,6 +128,9 @@ export const config = {
       { id: "rdl", name: "Romanian Deadlift", sets: 3, reps: "6-8" },
       { id: "trap_bar_deadlift", name: "Trap Bar Deadlift", sets: 2, reps: "3-5" },
     ],
+    power: [
+      { id: "clean", name: "Barbell Clean", sets: 3, reps: "3-5" },
+    ],
     core: [
       { id: "pushup", name: "Push-Up", sets: 3, reps: "submax" },
     ],
@@ -139,7 +142,7 @@ export const config = {
     C: ["rdl", "bench", "pullup"],
     D: ["front_squat", "incline_bench", "cable_row"],
     E: ["lunges", "ohp", "pullup"],
-    G: ["machine_bicep_curl"],
+    G: ["clean", "machine_bicep_curl"],
   } as Record<string, string[]>,
 
   cardioTemplates: {
@@ -164,7 +167,7 @@ export const config = {
       { key: "D", kind: "lift", label: "Lift D", detail: "Front Squat, Incline Bench, Cable Row" },
       { key: "E", kind: "lift", label: "Lift E", detail: "Lunges, OHP, Pull-Up" },
       { key: "F", kind: "cardio", label: "Zone 2", detail: "Conversational pace, 45 min", minutes: 45 },
-      { key: "G", kind: "cardio", label: "Moderate Cardio", detail: "Bike, jog, or brisk walk, 25 min + Machine Bicep Curl", minutes: 25 },
+      { key: "G", kind: "cardio", label: "Moderate Cardio", detail: "Bike, jog, or brisk walk, 25 min + Barbell Clean, Machine Bicep Curl", minutes: 25 },
     ] as RotationDay[],
     masterList: {
       lower: ["squat", "front_squat", "lunges", "rdl", "trap_bar_deadlift"],

@@ -1,11 +1,15 @@
 ---
 name: checkin
-description: Guided daily, weekly, or monthly check-in that captures signals, intentions, feelings, and reflections into canonical CSVs.
+description: Guided daily, weekly, or monthly check-in that captures habits, intentions, feelings, and reflections into canonical CSVs.
 ---
 
 # Check-in
 
 Structured ritual that reads current state, shows where you stand in a human-friendly briefing, asks only what's needed, and writes everything to canonical CSVs.
+
+## Date & Day-of-Week
+
+Never guess the current date or day of week. Run `date '+%Y-%m-%d %A'` at the start of every check-in to get the actual date and weekday from the system clock.
 
 ## Commands
 
@@ -16,7 +20,7 @@ Structured ritual that reads current state, shows where you stand in a human-fri
 
 ## Auto-Detection (when user runs `/checkin` with no argument)
 
-1. Read `daily_signals.csv` for today's logged signals
+1. Read `daily_signals.csv` for today's logged habits
 2. Present status and let the user choose:
 
 ```
@@ -27,7 +31,7 @@ Structured ritual that reads current state, shows where you stand in a human-fri
 └──────────────────────────────────────────────────────┘
 ```
 
-Then ask: "Want to update today's signals?"
+Then ask: "Want to update today's habits?"
 
 3. Wait for user to choose. Do NOT auto-run anything.
 4. If only one is actionable, suggest it but still confirm.
@@ -36,7 +40,7 @@ Then ask: "Want to update today's signals?"
 
 The `checkin_daily` flag means "at least one check-in happened today" -- it does NOT block re-entry. When the flag already exists:
 - Show today's current state (what's logged, what's still open)
-- Offer to fill gaps or update signals
+- Offer to fill gaps or update habits
 - Do NOT write a second `checkin_daily` flag -- one per day is enough
 
 ### Schedule rules
@@ -54,12 +58,23 @@ Append to `daily_signals.csv` after each check-in:
 | Weekly | `checkin_weekly` | `1` | Per calendar week (Mon-Sun) |
 | Monthly | `checkin_monthly` | `1` | Per calendar month |
 
+## Canonical Files Read
+
+- `~/Documents/2026/tracker/data/daily_signals.csv`
+- `~/Documents/2026/tracker/data/reflections.csv`
+- `~/Documents/2026/tracker/data/plan.csv`
+- `~/Documents/2026/tracker/data/todos.csv`
+- `~/Documents/2026/tracker/data/code-todos.csv`
+- `~/Documents/2026/tracker/data/inbox.csv`
+- **GitHub Issues** — `aashrayap/progress-tracker` open issues (synced live during inbox triage)
+
 ## Canonical Files Written
 
 - `~/Documents/2026/tracker/data/daily_signals.csv`
 - `~/Documents/2026/tracker/data/reflections.csv`
 - `~/Documents/2026/tracker/data/plan.csv`
 - `~/Documents/2026/tracker/data/todos.csv`
+- `~/Documents/2026/tracker/data/inbox.csv` (status updates during triage)
 
 ---
 
@@ -70,61 +85,105 @@ Append to `daily_signals.csv` after each check-in:
 - **Morning** (`before 12:00 PM`): yesterday backfill + today setup
 - **Afternoon** (`12:00 PM or later`): yesterday backfill if missing + today progress + today adjustment
 
-### Phase 0: State Scan
+### State Scan
 
-Read signals for yesterday and today. Present inside a single compact box. No prose outside the box — just the box, then proceed.
+Read ALL data sources and present two cards. No prose outside the cards.
 
-**Morning example:**
+**Data sources:**
+- `daily_signals.csv` — habits, addiction, feelings, intentions
+- `inbox.csv` — unprocessed voice notes, ideas, shipped PRs
+- `todos.csv` — open life todos
+- `code-todos.csv` — open code todos
+- `plan.csv` — today's scheduled blocks, yesterday's incomplete blocks
+- `reflections.csv` — whether yesterday's reflection exists
+- `workouts.csv` — last workout (to show next workout day)
 
-```
-┌─ Thu Mar 6 ──────────────────────────┐
-│ YESTERDAY          │ TODAY           │
-│ ✓ Gym              │ · Sleep         │
-│ ✓ Sleep            │                 │
-│ ✓ No weed          │ No plan yet.    │
-│ ✓ No League        │ No reflection.  │
-│ ✗ Deep work        │                 │
-│ · Meditate         │                 │
-│ · Ate clean        │                 │
-│ · Poker  · Clarity │                 │
-│ 3 gaps.            │                 │
-└────────────────────┴─────────────────┘
-```
-
-**Afternoon example:**
+**Card 1 — Habits** (same as before, unchanged):
 
 ```
-┌─ Thu Mar 6 ──────────────────────────┐
-│ YESTERDAY          │ TODAY           │
-│ All logged. ✓      │ ✓ No weed      │
-│                    │ ✗ Sleep         │
-│                    │ · Gym           │
-│                    │ · Deep work     │
-│                    │ · Meditate      │
-│                    │ · Ate clean     │
-│                    │ · League        │
-│                    │ · Poker         │
-│                    │ · Clarity       │
-│                    │ 7 open.         │
-│                    │                 │
-│ Reflection: done   │ Feel: uncertain │
-│                    │ Intent: health  │
-└────────────────────┴─────────────────┘
+┌─ Sat Mar 7 ──────────────────────────┐
+│ YESTERDAY          │ TODAY            │
+│ ✓ Gym (Day F)      │ ✗ Sleep          │
+│ ✓ Deep work        │ Feel: determined │
+│ ✓ Meditate         │ · Gym            │
+│ ✓ Ate clean        │ · Deep work      │
+│ ✗ Sleep            │ · Meditate       │
+│ ✗ Weed (relapse)   │ · Ate clean      │
+│ ✗ League (relapse) │ · Weed           │
+│ ✓ Poker            │ · League         │
+│ ✓ Clarity          │ · Poker          │
+│ All logged.        │ · Clarity        │
+│                    │ 8 open.          │
+└────────────────────┴──────────────────┘
 ```
 
 Formatting rules:
-- ✓ done, ✗ missed, · not logged. Addiction named positively ("No weed").
+- ✓ done, ✗ missed, · not logged. Addiction uses substance name directly: ✓ Weed = clean, ✗ Weed (relapse) = relapsed. No "No weed" double negatives.
 - Side-by-side: YESTERDAY left, TODAY right. One signal per line.
 - Max box width ~40 chars to avoid terminal wrapping.
 - Collapse completed side ("All logged. ✓"). Detail goes on the side with gaps.
-- End with gap/open count. Feeling/intention/reflection on TODAY side, abbreviated.
-- The box IS the state scan. No additional prose before proceeding to Phase 1.
+- End with gap/open count. Feeling/intention on TODAY side, abbreviated.
 
-### Phase 1: Yesterday Backfill
+**Card 2 — Actions:**
 
-Ask ONLY about signals missing for yesterday. Group by category.
+```
+┌─ On Your Plate ──────────────────────────────────────┐
+│ Inbox        3 unprocessed                           │
+│               • neuroscience talk (4d old)           │
+│               • As A Man Thinketh (4d old)           │
+│               • poker hand note (garbled)            │
+│ Shipped      2 auto-PRs                              │
+│               • Meditation card — PR #63             │
+│               • Vision tab redesign — PR #84         │
+│ Todos        5 open (oldest: Buy ring, 28d)          │
+│ Reflection   yesterday — missing                     │
+│ Plan         nothing scheduled today                 │
+│ Last gym     Day F (Thu) → next: Day A               │
+└──────────────────────────────────────────────────────┘
+```
 
-**Addiction signals** (non-skippable -- must answer):
+Formatting rules:
+- Show unprocessed inbox items (status=logged or needs_review), capped at 3 with count
+- Show shipped auto-PRs (status=shipped) that haven't been reviewed in checkin yet
+- Show open todo count with age of oldest
+- Show reflection status for yesterday
+- Show plan status for today
+- Show last workout + next workout day
+- If a section has 0 items, omit it entirely
+
+After both cards, present the menu.
+
+### Menu
+
+After the state scan, present options with live counts. The user picks what to do. After each option completes, writes happen immediately, then show the menu again with updated counts. When the user stops picking (or says "done"), the checkin ends.
+
+```
+What do you want to do?
+
+1. Log habits       (8 open today)
+2. Emotional check
+3. Reflect on yesterday
+4. Inbox triage     (3 items + 2 shipped PRs)
+5. Plan today       (includes intention)
+```
+
+Rules:
+- Show counts from current state
+- Options with nothing to do still appear but show "(done)" or "(0 items)"
+- User can pick any option in any order
+- User can pick the same option again (re-enterable)
+- After completing an option, ask "What next?" with the updated menu
+- When user says "done" or stops, write `checkin_daily=1` if not already written today
+
+---
+
+### Option 1: Log Habits
+
+Ask ONLY about habits/addiction not yet logged for the relevant day.
+
+**Yesterday backfill** — ask only if yesterday has gaps:
+
+Addiction (non-skippable -- must answer):
 
 | Signal | Question |
 |--------|----------|
@@ -133,7 +192,7 @@ Ask ONLY about signals missing for yesterday. Group by category.
 | `poker` | Clean from poker yesterday? |
 | `clarity` | Clean from Clarity yesterday? |
 
-**Habit signals** (skippable):
+Habits (skippable):
 
 | Signal | Question |
 |--------|----------|
@@ -142,16 +201,16 @@ Ask ONLY about signals missing for yesterday. Group by category.
 | `meditate` | Did you meditate yesterday? |
 | `ate_clean` | Eat clean yesterday? |
 
-If all signals for a category are already logged, skip with a quick note: "Yesterday's addiction signals are all logged -- moving on."
+If all signals for a category are already logged, skip with a quick note: "Yesterday's addiction habits are all logged -- moving on."
 
-### Phase 2: Today Signals
+**Today** — behavior depends on time of day:
 
-**Sleep** (always today's date -- "last night's sleep"):
+Sleep (always today's date -- "last night's sleep"):
 - If today's `sleep` is missing: "Did you sleep on time last night?"
 
-**Morning mode**: only ask sleep. All other today signals (habits AND addiction) aren't knowable yet — do NOT ask about weed/lol/poker/gym/etc for today in the morning. If the user volunteers a today signal, accept and log it, but don't prompt for it.
+**Morning mode**: only ask sleep. All other today habits (lifestyle AND addiction) aren't knowable yet — do NOT ask about weed/lol/poker/gym/etc for today in the morning. If the user volunteers a today signal, accept and log it, but don't prompt for it.
 
-**Afternoon mode**: ask about today's signals that are missing:
+**Afternoon mode**: ask about today's habits that are missing:
 
 | Signal | Question |
 |--------|----------|
@@ -166,7 +225,11 @@ If all signals for a category are already logged, skip with a quick note: "Yeste
 
 Accept "not yet" / "in progress" -- do not write a row for unknowns.
 
-### Phase 3: Emotional Check
+Write signals to `daily_signals.csv` immediately after this option completes.
+
+---
+
+### Option 2: Emotional Check
 
 Ask: "How are you feeling right now? Anything unresolved you're carrying?"
 
@@ -190,7 +253,11 @@ If any trigger was identified, write a single `signal=mind` row to `daily_signal
 
 Do NOT force the deeper questions. If user gives a feeling and moves on, just log the feeling signal. The mind capture is opportunistic -- no "mind" completion flag.
 
-### Phase 4: Yesterday Reflection (if missing)
+Write immediately after this option completes.
+
+---
+
+### Option 3: Reflect on Yesterday
 
 Check `reflections.csv` for yesterday. If no row exists:
 
@@ -198,15 +265,109 @@ Check `reflections.csv` for yesterday. If no row exists:
 2. "Anything you learned?"
 3. "What would you do differently?"
 
-Infer domain from answers. Write one row to `reflections.csv`.
+Infer domain from answers. Write one row to `reflections.csv` immediately.
 
-If reflection exists, skip: "Yesterday's reflection is already captured."
+If reflection exists, say: "Yesterday's reflection is already captured." and offer to view it.
 
-### Phase 5: Plan Integration + Daily Intention
+---
 
-Goal: turn check-in output into executable plan blocks without requiring a separate Plan session.
+### Option 4: Inbox Triage
 
-#### 5.1 Rollover incomplete items from yesterday (skippable)
+#### GitHub Issue Sync (always run first)
+
+Before reading `inbox.csv`, ALWAYS fetch open issues from GitHub:
+
+```
+gh api repos/aashrayap/progress-tracker/issues --paginate -q '.[] | select(.pull_request == null)'
+```
+
+Or use `mcp__github__list_issues` with `owner=aashrayap`, `repo=progress-tracker`, `state=OPEN`.
+
+**Sync logic:**
+1. Fetch all open issues from GitHub
+2. Compare against `inbox.csv` — any issue ID not present in `inbox.csv` is NEW
+3. For new issues:
+   - Read the issue body/title to determine content
+   - Auto-discard empty issues (no body or garbled)
+   - Add substantive issues to `inbox.csv` with `status=logged`
+   - Classify `suggested_destination` (workouts, todos, idea, reflection, question, etc.)
+4. For issues already in `inbox.csv` but still open on GitHub:
+   - If `status=discarded` or `status=archived` in CSV but issue is still open on GitHub, note the mismatch but don't resurface — the CSV status is canonical
+5. Present the merged view (CSV + newly synced) for triage
+
+This ensures voice notes that created GitHub issues but weren't written to `inbox.csv` are never missed.
+
+#### Triage Sections
+
+Read `inbox.csv` (now synced) and present items in two sections.
+
+#### Section 1: Shipped PRs (review)
+
+Show inbox items with `status=shipped` that the user hasn't reviewed yet. These are auto-PRs created from voice ideas.
+
+```
+Shipped from your voice ideas:
+
+PR #63: Meditation stats card on Hub
+  voice-62: "want to add meditation aspect to the app..."
+  → merged? working? need changes?
+
+PR #84: Vision tab redesign
+  voice-83: "vision tab to align with direction..."
+  → merged? working? need changes?
+```
+
+For each: user can say "looks good" (mark reviewed), "need changes" (note what), or "skip".
+
+#### Section 2: Unprocessed Items
+
+Show items with `status=logged` or `status=needs_review`, excluding empty/garbled notes (auto-discard those).
+
+```
+Unprocessed:
+1. neuroscience talk (voice, Mar 3)
+   "Talk through habit/reward/fitness/eating goal neuroscience"
+   → process / discuss now / defer / discard
+
+2. As A Man Thinketh (voice, Mar 3)
+   "Transcribe and add quotes page to app"
+   → process / discuss now / defer / discard
+```
+
+Actions per item:
+- **process** — move to appropriate destination (todo, reflection, idea). Write to target CSV, update inbox status.
+- **discuss now** — talk through the item right here. After discussion, decide: process, defer, or discard.
+- **defer** — leave as-is for next checkin
+- **discard** — set `status=discarded` in inbox.csv
+
+Rules:
+- Cap at 5 items per triage round. If more exist, show count and offer "more" or "skip".
+- Auto-discard empty voice notes (empty raw_text) — never show these to the user.
+- Items processed here may create new todos that appear in Option 5 (Plan).
+- Write inbox status updates immediately per item.
+
+---
+
+### Option 5: Plan Today
+
+Goal: turn check-in context into executable plan blocks. Includes daily intention.
+
+#### 5.1 Intention (mantra, not a task)
+
+Ask:
+"What's today's intention in mantra form? (e.g., 'bounce back clean', not 'go to gym')"
+
+- If the user gives a task-style answer, ask for a concise mantra rewrite.
+- Infer `domain` from the final intention.
+- Write to `daily_signals.csv`:
+  - `signal=intention`
+  - `value=<domain>`
+  - `context=<mantra text>`
+  - `category=<domain>`
+
+Allow skip: if user says `skip`, leave intention unchanged for today.
+
+#### 5.2 Rollover incomplete items from yesterday (skippable)
 
 Read yesterday's `plan.csv` rows where `done != 1`.
 
@@ -227,15 +388,24 @@ For each choice:
 
 If none are incomplete, say: "No incomplete plan items from yesterday."
 
-#### 5.2 Context-aware surfacing from todos/reflections/signals (skippable)
+#### 5.3 Context-aware surfacing from todos/reflections/signals (skippable)
 
 Read:
-- open `todos.csv` items
+- open `todos.csv` items (life todos)
+- open `code-todos.csv` items (code todos — file paths, line numbers, type)
 - recent `reflections.csv` rows (last 7-14 days)
 - recent `daily_signals.csv` patterns (especially misses, streak breaks, and today's gaps)
-- user's emotional context from Phase 3
+- user's emotional context from Option 2 (if completed)
 
 Use LLM reasoning over all of the above (not keyword matching) to propose up to 3 high-relevance candidate actions for today.
+
+**When code todos exist**, show them separately:
+
+```
+Code todos (2 open):
+  1. Refactor auth flow — app/lib/auth.ts:42-67 (3 days old)
+  2. Fix CSV write race — app/lib/csv.ts:120 (1 day old)
+```
 
 For each suggestion:
 - show a 1-line reason tied to intention/feeling/state
@@ -246,50 +416,18 @@ For each suggestion:
 
 Allow global skip: "skip suggestions" keeps everything unchanged.
 
-#### 5.3 Daily intention (mantra, not a task)
-
-Ask:
-"What's today's intention in mantra form? (e.g., 'move with discipline', not 'finish API migration')"
-
-- If the user gives a task-style answer, ask for a concise mantra rewrite.
-- Infer `domain` from the final intention.
-- Write to `daily_signals.csv`:
-  - `signal=intention`
-  - `value=<domain>`
-  - `context=<mantra text>`
-  - `category=<domain>`
-
-Allow skip: if user says `skip`, leave intention unchanged for today.
-
 #### 5.4 Confirm today's block plan (skippable)
 
 Show today's plan including:
 - existing today's blocks
 - kept/deferred items that were scheduled today
-- any surfaced actions added in 5.2
+- any surfaced actions added in 5.3
 
 Ask: "Anything else to adjust, or lock this in?"
 - If user adjusts timing/items, write updates to `plan.csv`.
 - If user says `skip`, keep current plan as-is.
 
-### Phase 6: Write & Confirm
-
-1. Batch all signal writes to `daily_signals.csv`
-2. Write reflection row if captured
-3. Write/update plan rows if changed
-4. Write completion flag `checkin_daily=1` only if not already written today
-5. Print a compact confirmation box:
-
-```
-┌─ Logged ─────────────────────────────┐
-│ YESTERDAY          │ TODAY           │
-│ ✓ Deep work (miss) │ ✓ Sleep        │
-│ ✓ Meditate         │ Feel: stressed │
-│ ✓ Ate clean        │ Intent: career │
-│ Reflect: auth flow │                │
-│  / timebox better  │                │
-└────────────────────┴── checkin ✓ ───┘
-```
+Write plan rows immediately.
 
 ---
 
@@ -297,54 +435,259 @@ Ask: "Anything else to adjust, or lock this in?"
 
 Run on **Sundays only** (or `/checkin weekly` to force on demand).
 
-### Step 1: Read Last 7 Days
+### Data Sources
 
-Read `daily_signals.csv`, `reflections.csv`, `plan.csv`, `todos.csv`.
+Read ALL of these before presenting anything:
+- `daily_signals.csv` — habits, addiction, feelings, triggers, intentions, experiments, goals
+- `reflections.csv` — daily reflections
+- `plan.csv` — scheduled blocks and completion
+- `todos.csv` — open life todos
+- `code-todos.csv` — open code todos
+- `inbox.csv` — pipeline stats
+- `briefing_feedback.csv` — briefing quality signal
+- `docs/vision.md` — domain "Now" goals for grounding reflections
 
-### Step 2: Present Week Summary
+### Phase 1: Quantitative Score Card (auto-generated, no user input)
 
-Present as a coach recap, not a spreadsheet.
+Compute and display. User just reads.
 
 ```
-WEEK IN REVIEW -- Feb 24 to Mar 2
+WEEK IN REVIEW — Mar 3 to Mar 8
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-The good:
-  Gym             6/7 days -- your best week this month
-  Sleep           6/7 days -- solid consistency
-  Ate clean       5/7 days -- strong
-  Addiction       clean all week (weed 34d, League 34d, poker 34d, clarity 34d)
+HABIT SCORE
+  Total:    38/56 (68%)
+  Trend:    ↑ from 31/56 last week (55%)
+  Best day: Monday 8/8
+  Worst day: Thursday 3/8
 
-The gap:
-  Deep work       4/7 days -- dropped off Wed and Thu
-  Meditate        3/7 days -- inconsistent, skipped midweek
+DAILY BREAKDOWN
+  This Week              Last Week
+  Mon  ████████  8/8     Mon  █████░░░  5/8
+  Tue  ██████░░  6/8     Tue  ████░░░░  4/8
+  Wed  █████░░░  5/8     Wed  ████░░░░  4/8
+  Thu  ███░░░░░  3/8     Thu  █████░░░  5/8
+  Fri  █████░░░  5/8     Fri  ████░░░░  4/8
+  Sat  ██████░░  6/8     Sat  █████░░░  5/8
+  Sun  █████░░░  5/8     Sun  ████░░░░  4/8
 
-Pattern: You're strong Mon-Tue, then things slip midweek.
-         Last week had the same shape.
+HABIT DETAIL
+  This Week              Last Week
+  Gym         6/7  ↑     Gym         5/7
+  Sleep       5/7  ↓     Sleep       6/7
+  Ate clean   5/7  ↑     Ate clean   4/7
+  Deep work   4/7  ↓     Deep work   5/7
+  Meditate    3/7  ↑     Meditate    2/7
+  Weed        7/7  ━     Weed        7/7 ✓
+  League      5/7  ↓ ⚠   League      7/7 ✓
+  Poker       7/7  ━     Poker       7/7 ✓
+  Clarity     7/7  ━     Clarity     7/7 ✓
 
-Plan: 12 of 15 blocks completed (80%)
-Todos: 4 open, 6 completed this week
+STREAKS
+  Now                    Last Week
+  Weed 34d               Weed 27d
+  Poker 34d              Poker 27d
+  Clarity 34d            Clarity 27d
+  League 0d (broke Thu)  League 7d
 
-Check-ins: 6/7 daily -- missed Thursday
+EXECUTION
+  Plan: 12/15 blocks (80%) · Todos: 4 open, 6 done · Inbox: 3 processed, 2 shipped
+  Check-ins: 6/7 daily — missed Thursday
 ```
 
-Key formatting rules for the weekly summary:
-- Split into "the good" and "the gap" -- honest, not demoralizing
-- Name patterns, not just numbers ("dropped off Wed and Thu" not "4/7")
-- Show addiction streaks as a single line since they're either clean or not
-- Compare to last week when relevant ("your best week this month")
-- End with plan and todo stats
+**Score computation** (matches hub logic):
+- Weed is gatekeeper: if weed=0 for the day, score=0
+- 5 habit points: gym, sleep, meditate, deep_work, ate_clean (+1 each if true)
+- 3 vice adjustments: lol, poker, clarity (+1 if clean, -1 if relapse)
+- Daily score = max(0, habit_sum + vice_adjustments), range 0-8
+- Week total = sum of 7 daily scores, max 56
+- Pull prior week's data for trend comparison
+- Streak = consecutive days with value=1, counting backward from today
+- Use █ for filled, ░ for empty in bar chart (8 chars wide = 8 max score)
 
-### Step 3: Ask
+**Briefing feedback** (if any this week):
+- Show good/bad count, extract recurring themes
+- End with one-line actionable takeaway (prefixed with →)
+- Omit section entirely if no feedback this week
 
-1. "Biggest win this week?"
-2. "What pattern do you want to change next week?"
-3. "Top 3 priorities for next week?"
-4. "How are you feeling about your trajectory overall?"
+### Phase 2: Mood & Trigger Arc (auto-generated, no user input)
 
-### Step 3.5: Set weekly intention (mantra)
+Only show sections that have data.
 
-Ask:
-"What's the mantra for next week? (broad direction, not a task)"
+```
+EMOTIONAL ARC
+  Mon: determined · Tue: focused · Wed: anxious
+  Thu: frustrated · Fri: flat · Sat: hopeful
+
+  Pattern: energy dropped after League relapse Thursday.
+           Same midweek dip as last 2 weeks.
+```
+
+- Source: `signal=feeling` rows from the week
+- Show if ≥3 feeling entries exist; otherwise skip with "Not enough mood data this week."
+- Pattern detection: look for correlation between mood shifts and habit misses/relapses
+- Compare to prior 2 weeks if data exists
+
+```
+TRIGGERS
+  2 this week:
+  • Thu 10:30pm — boredom after work, alone → played League
+  • Fri 11pm — stress from deadline → urge to smoke (resisted)
+
+  Pattern: both after 10pm, alone. Same window as last 2 weeks.
+```
+
+- Source: `signal=mind` rows from the week
+- Only show if any exist
+- Pattern detection: compare time, circumstance, trigger type across prior 2-4 weeks
+- Flag recurring patterns explicitly
+
+### Phase 3: Domain Spotlight (2-3 domains, data-selected, interactive)
+
+**Selection logic** — pick 2-3 domains using these rules in priority order:
+1. **Biggest decline** — domain where habit compliance dropped most vs last week
+2. **Biggest improvement** — domain where habits improved most
+3. **Stalled** — domain with no movement (flat for 2+ weeks)
+4. **Vision misaligned** — domain where current behavior contradicts the "Now" goal in `docs/vision.md`
+
+**Habit-to-domain mapping:**
+| Habit | Domain |
+|-------|--------|
+| gym, ate_clean, sleep | health |
+| deep_work | career |
+| meditate | personal_growth |
+| weed, lol, poker, clarity | personal_growth |
+
+Domains without direct habit signals (relationships, finances, fun, environment) can still surface via:
+- Trigger data mentioning those domains
+- Reflections tagged to those domains
+- Stall detection (no reflections or todos touched in 2+ weeks)
+- Vision "Now" goals with no corresponding activity
+
+**For each spotlighted domain, show:**
+
+```
+─── HEALTH (biggest improvement) ──────────────────────────
+  This week: Gym 6/7, Sleep 5/7, Ate clean 5/7
+  Last week: Gym 5/7, Sleep 6/7, Ate clean 4/7
+
+  Vision (Now): "hit planned gym sessions, protein-first meals,
+                 prioritize sleep quality"
+
+  1. What went well this week in health?
+  2. What would you do differently?
+  3. One small experiment for next week?
+```
+
+Rules:
+- Pull the domain's "Now" horizon goal from `docs/vision.md` to ground reflection
+- 3 questions per domain, max 3 domains = 9 questions worst case
+- Accept short answers — this isn't journaling
+- Write each domain's reflection to `reflections.csv`: `domain=<domain>`, `win=<Q1 answer>`, `lesson=<Q2 answer>`, `change=<Q3 answer>`
+- Spotlighted domains are natural candidates for the experiment in Phase 5, but don't force it
+
+### Phase 4: Social Contact Check (one question, always asked)
+
+```
+SOCIAL
+  Did you have meaningful social contact this week?
+  If yes: with who / what?
+```
+
+- Always ask — vision says "reduce isolation with deliberate weekly social contact"
+- Write to `daily_signals.csv`:
+  - `signal=social_contact`
+  - `value=0|1`
+  - `context=<details if provided>`
+  - `category=relationships`
+  - `date` = Sunday (week-end date)
+
+### Phase 5: Experiment Loop (review last week's + set new)
+
+**Review last week's experiment:**
+
+Read prior week's `signal=weekly_experiment` from `daily_signals.csv`.
+
+If one exists:
+```
+─── LAST WEEK'S EXPERIMENT ────────────────────────────────
+  "Do 10-min meditation immediately after gym instead of evening"
+
+  Did it work? (yes / partial / no)
+  What did you learn?
+```
+
+- Write to `daily_signals.csv`:
+  - `signal=experiment_result`
+  - `value=yes|partial|no`
+  - `context=<what they learned>`
+  - `category=<domain of the experiment>`
+
+If none exists, skip review.
+
+**Set this week's experiment:**
+
+```
+─── THIS WEEK'S EXPERIMENT ────────────────────────────────
+  Based on what surfaced today, what's ONE small behavior
+  change you want to test this week?
+
+  (Specific and observable — "meditate before work" not "be more mindful")
+```
+
+- Write to `daily_signals.csv`:
+  - `signal=weekly_experiment`
+  - `value=<domain>`
+  - `context=<experiment description>`
+  - `category=<domain>`
+- Domain inferred from content
+- Allow skip
+
+### Phase 6: Weekly Goals & Intention (vision-connected)
+
+**Review last week's goals first:**
+
+Read prior week's `signal=weekly_goal` rows from `daily_signals.csv`.
+
+If any exist:
+```
+─── LAST WEEK'S GOALS ────────────────────────────────────
+  ✓ 4 gym sessions — hit 6/7
+  ✗ Call mom — didn't happen
+  ~ Ship auth refactor — partial, PR open
+
+  Score: 1/3 complete, 1 partial
+```
+
+- Ask user to mark each: ✓ (complete) / ✗ (missed) / ~ (partial)
+- Write for each: `signal=weekly_goal_result`, `value=complete|missed|partial`, `context=<goal text>`, `category=<domain>`
+
+**Set this week's goals (1-3):**
+
+```
+─── THIS WEEK'S GOALS ────────────────────────────────────
+  Set 1-3 goals for the week. Each should connect to a
+  domain and your current vision horizon.
+
+  Example:
+  • "4 gym sessions" (health → 90-day: stabilize training)
+  • "2 social plans" (relationships → Now: reduce isolation)
+  • "Ship tracker feature" (career → Now: AI fluency + deep work)
+```
+
+- For each goal, write to `daily_signals.csv`:
+  - `signal=weekly_goal`
+  - `value=<domain>`
+  - `context=<goal text>`
+  - `category=<domain>`
+- Infer domain from content; confirm with user if ambiguous
+
+**Set weekly intention (mantra):**
+
+```
+  What's the mantra for this week?
+  (broad direction, not a task — e.g., "reclaim the midweek")
+```
 
 - If task-like, ask for a mantra rewrite
 - Infer `domain`
@@ -353,15 +696,27 @@ Ask:
   - `value=<domain>`
   - `context=<mantra text>`
   - `category=<domain>`
+- Allow skip
 
-Allow skip: if user says `skip`, leave weekly intention unchanged.
+### Phase 7: Stale Review & Close
 
-### Step 4: Write
+- Review stale todos: "These have been open 7+ days — keep, kill, or defer?" (ask user)
+- Review stale code todos from `code-todos.csv`: "These code items are 7+ days old — still relevant?" (ask user)
+- Write `checkin_weekly=1` to `daily_signals.csv`
 
-- Weekly reflection to `reflections.csv`
-- Weekly intention row to `daily_signals.csv` (if provided in Step 3.5)
-- Review stale todos: "These have been open 7+ days -- keep, kill, or defer?" (ask user)
-- Write `checkin_weekly=1`
+### Weekly Phase Order Summary
+
+```
+Phase 1  Score Card           auto-gen        0 min
+Phase 2  Mood & Triggers      auto-gen        0 min
+Phase 3  Domain Spotlight     interactive     3-5 min
+Phase 4  Social Contact       1 question      30 sec
+Phase 5  Experiment Loop      review + set    2 min
+Phase 6  Goals & Intention    review + set    3 min
+Phase 7  Stale Review         interactive     1 min
+                                         ──────────
+                              Target:     ~10 min
+```
 
 ---
 
@@ -394,10 +749,8 @@ Addiction:
 Weight:
   228 -> 224 lbs (-4 lbs). On track for March target of 224. ✓
 
-Insights:
-  3 active -- midweek consistency, evening routine, deep work scheduling
-  1 dormant -- morning workout timing (resolved itself)
-  1 resolved -- meal prep system (working well now)
+Inbox pipeline:
+  12 voice notes processed, 4 shipped as PRs, 8 discarded
 
 Plan completion: 74% of scheduled blocks done
 Check-ins: 26/28 daily, 4/4 weekly
@@ -408,7 +761,7 @@ Key formatting rules for the monthly summary:
 - Percentages are fine at monthly scale -- they tell a meaningful story
 - Call out the narrative on addiction (clean/not, any close calls)
 - Weight gets its own section with trajectory check
-- Insights show lifecycle status
+- Include inbox pipeline stats
 
 ### Step 3: Ask
 
@@ -431,7 +784,7 @@ Key formatting rules for the monthly summary:
 - Ask the user which check-in to run -- never auto-decide.
 - Ask conversationally, not as a form. Group related questions.
 - Accept natural language ("yeah", "nah", "skipped it") -- parse to 0/1.
-- Addiction signals: non-skippable. Re-prompt if user tries to skip.
+- Addiction habits: non-skippable. Re-prompt if user tries to skip.
 - All other questions: accept "skip" or "pass".
 - Never invent answers. Only write what the user says.
 - No cheerleading. Direct tone. One observation is fine, a pep talk is not.
@@ -441,3 +794,5 @@ Key formatting rules for the monthly summary:
 - Keep daily check-in under 2 minutes of user time.
 - Name patterns, not just numbers. "Dropped off midweek" beats "Wed: 0, Thu: 0".
 - When everything in a category is done, collapse it. Don't waste the user's time reading green checkmarks.
+- Writes happen immediately after each menu option completes — no batching to a final phase.
+- Auto-discard empty voice notes in inbox — never surface them to the user.

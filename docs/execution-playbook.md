@@ -120,10 +120,11 @@ The agent will report a confidence summary. Do NOT trust it blindly.
 
 After successful execution:
 
-1. **Update decisions log** in `docs/app-intent.md`
-2. **Update architecture doc** if routes/APIs changed
-3. **Save methodology improvements** to this playbook
-4. **Note agent failure patterns** for future spec guardrails
+1. **Mark spec as shipped**: Change `Status: in-progress` to `Status: shipped` in the spec file
+2. **Update decisions log** in `docs/app-intent.md`
+3. **Update architecture doc** if routes/APIs changed
+4. **Save methodology improvements** to this playbook
+5. **Note agent failure patterns** for future spec guardrails
 
 ---
 

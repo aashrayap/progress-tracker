@@ -19,7 +19,6 @@ Web execution surface for the Progress Tracker.
 | `/vision` | Optional standalone strategy view |
 
 Redirects:
-- `/reflect` -> `/mind`
 - `/quotes` -> `/resources`
 
 ## Core APIs

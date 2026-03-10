@@ -4,9 +4,10 @@ interface HabitTooltipProps {
   dateStr: string;
   columnIndex: number;
   gridRef: React.RefObject<HTMLDivElement | null>;
+  score?: number | null;
 }
 
-export default function HabitTooltip({ dateStr, columnIndex, gridRef }: HabitTooltipProps) {
+export default function HabitTooltip({ dateStr, columnIndex, gridRef, score }: HabitTooltipProps) {
   const [, month, day] = dateStr.split("-").map(Number);
   const date = new Date(
     parseInt(dateStr.split("-")[0]),
@@ -37,7 +38,7 @@ export default function HabitTooltip({ dateStr, columnIndex, gridRef }: HabitToo
       }}
     >
       <div className="px-2.5 py-1.5 bg-zinc-800 border border-white/20 rounded-lg text-xs text-zinc-200 whitespace-nowrap shadow-xl">
-        {label}
+        {label}{score !== null && score !== undefined ? ` · ${score}/8` : ""}
       </div>
       <div className="flex justify-center">
         <div

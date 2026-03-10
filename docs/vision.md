@@ -12,34 +12,19 @@ This document is the actionable intent lens for the tracker system.
 | Domain ID | Satisfaction | Alignment |
 | --- | ---: | ---: |
 | `health` | 3 | 5 |
-| `addiction` | 4 | 6 |
-| `mental` | 4 | 5 |
 | `career` | 5 | 5 |
 | `relationships` | 3 | 5 |
 | `finances` | 6 | 6 |
 | `fun` | 6 | 4 |
-| `personal_growth` | 5 | 7 |
+| `personal_growth` | 4 | 7 |
+| `environment` | — | — |
 
 ## Domain Goals
 
 ### `health`
-- **Now**: hit planned gym sessions and run protein-first meals to reduce eating slippage.
-- **90-day**: stabilize training + nutrition to avoid binge/crash cycles and sustain measurable body-composition progress.
-- **2-year**: maintain best shape (about 200 lb), longevity-focused routine, and consistent training base.
-
-### `addiction`
-> "Thought rapidly crystallizes into habit, and habit solidifies into circumstance." — James Allen
-
-- **Now**: protect sobriety streaks and interrupt urges immediately when routine or stress changes.
-- **90-day**: complete the dopamine reset window with reliable replacement behaviors for weed, `lol`, and poker triggers.
-- **2-year**: operate with non-negotiable sobriety systems and low relapse volatility.
-
-### `mental`
-> "Circumstance does not make the man, it reveals him to himself." — James Allen
-
-- **Now**: restart daily meditation and use short decompression routines when morning fog/catastrophizing appears.
-- **90-day**: lock in sleep and emotional regulation habits that keep mood and focus stable.
-- **2-year**: sustain a clear, regulated mind through integrated meditation, self-observation, and nervous-system care.
+- **Now**: hit planned gym sessions, run protein-first meals, prioritize sleep quality and emotional regulation during stress.
+- **90-day**: stabilize training + nutrition to avoid binge/crash cycles; lock in sleep and regulation habits that keep mood and focus stable.
+- **2-year**: maintain best shape (about 200 lb), longevity-focused routine, consistent training base, and a clear regulated mind through nervous-system care.
 
 ### `career`
 > "Until thought is linked with purpose there is no intelligent accomplishment." — James Allen
@@ -65,10 +50,16 @@ This document is the actionable intent lens for the tracker system.
 
 ### `personal_growth`
 > "A man is literally what he thinks, his character being the complete sum of all his thoughts." — James Allen
+> "Thought rapidly crystallizes into habit, and habit solidifies into circumstance." — James Allen
 
-- **Now**: keep daily reflection/journaling active and orient learning toward truth-seeking and behavior change.
-- **90-day**: convert reflection outputs into concrete rule updates and weekly operating adjustments.
-- **2-year**: live from a mature inner framework where philosophy, meditation, and self-knowledge guide decisions consistently.
+- **Now**: keep daily reflection/journaling and meditation active; protect sobriety streaks and interrupt urges immediately.
+- **90-day**: convert reflection outputs into rule updates; complete dopamine reset with reliable replacement behaviors for weed, LoL, and poker triggers.
+- **2-year**: live from a mature inner framework where philosophy, meditation, and self-knowledge guide decisions; non-negotiable sobriety systems with low relapse volatility.
+
+### `environment`
+- **Now**: TBD — score and define baseline.
+- **90-day**: TBD.
+- **2-year**: TBD.
 
 ## Changelog
 | Date | What Changed | Why |

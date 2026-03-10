@@ -1,5 +1,6 @@
 import { config } from "../lib/config";
 import type {
+  ExerciseTarget,
   GymReflection,
   PrescribedExercise,
   WorkoutDay,
@@ -18,6 +19,7 @@ interface WorkoutCardProps {
   isCardio: boolean;
   cardioInfo: { label: string; detail: string; minutes: number } | null;
   rotation: { key: string; kind: string; label: string; detail: string; minutes?: number }[];
+  exerciseTargets: ExerciseTarget[];
 }
 
 function formatSet(set: WorkoutSet): string {
@@ -56,6 +58,7 @@ export default function WorkoutCard({
   isCardio,
   cardioInfo,
   rotation,
+  exerciseTargets,
 }: WorkoutCardProps) {
   const homeDose = `${config.trainingPlan.homeDose.pullupsPerDay} pull-ups / ${config.trainingPlan.homeDose.pushupsPerDay} push-ups`;
 
@@ -113,6 +116,7 @@ export default function WorkoutCard({
           {prescribedExercises.map((exercise) => {
             const todayExercise = todayWorkout?.exercises.find((logged) => logged.id === exercise.id);
             const hasLoggedSets = Boolean(todayExercise && todayExercise.sets.length > 0);
+            const target = exerciseTargets.find((t) => t.id === exercise.id);
 
             return (
               <div
@@ -125,9 +129,14 @@ export default function WorkoutCard({
               >
                 <div className="flex justify-between items-center">
                   <h3 className="text-base font-medium">{exercise.name}</h3>
-                  <span className="text-sm text-zinc-400">
-                    {exercise.sets} x {exercise.reps}
-                  </span>
+                  <div className="text-right">
+                    <span className="text-sm text-zinc-400">
+                      {exercise.sets} x {exercise.reps}
+                    </span>
+                    {target && target.note && target.lastDate && (
+                      <p className="text-xs text-amber-400/80">{target.note}</p>
+                    )}
+                  </div>
                 </div>
 
                 {hasLoggedSets && todayExercise && (
@@ -142,8 +151,40 @@ export default function WorkoutCard({
                   </div>
                 )}
 
-                {!hasLoggedSets && (
-                  <p className="mt-2 text-xs text-zinc-600">Voice log sets at the gym</p>
+                {!hasLoggedSets && target && target.lastSets.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    <div>
+                      <p className="text-xs text-zinc-500 mb-1">Today&apos;s target</p>
+                      <div className="space-y-1">
+                        {target.targetSets.map((ts, i) => (
+                          <div key={i} className="flex items-center gap-3 text-sm">
+                            <span className="text-xs text-zinc-500 w-8">Set {i + 1}</span>
+                            <span className="font-mono text-amber-400">
+                              {ts.weight > 0 ? `${ts.weight}lbs x ${ts.reps}` : ts.reps}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs text-zinc-600 mb-1">Last ({target.lastDate})</p>
+                      <div className="space-y-1">
+                        {target.lastSets.map((ls, i) => (
+                          <div key={i} className="flex items-center gap-3 text-sm">
+                            <span className="text-xs text-zinc-600 w-8">Set {i + 1}</span>
+                            <span className="font-mono text-zinc-500">
+                              {ls.weight > 0 ? `${ls.weight}lbs x ${ls.reps}` : `${ls.reps} reps`}
+                            </span>
+                            {ls.notes && <span className="text-xs text-zinc-600">{ls.notes}</span>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {!hasLoggedSets && (!target || target.lastSets.length === 0) && (
+                  <p className="mt-2 text-xs text-zinc-600">First session — voice log sets at the gym</p>
                 )}
               </div>
             );

@@ -10,121 +10,138 @@ type Dimension = {
   satisfaction: number;
   alignment: number;
   hex: string;
-  notes: string;
-  goals: {
-    week: string[];
-    month: string[];
-    year: string[];
-  };
 };
 
-// ── Data ────────────────────────────────────────────────────────────
+type VisionDomain = {
+  id: string;
+  label: string;
+  state: string;
+  hex: string;
+};
 
-const DIMENSIONS: Dimension[] = [
+// ── Ikigai Data ──────────────────────────────────────────────────────
+
+type IkigaiCircle = {
+  id: string;
+  label: string;
+  color: string;
+  items: string[];
+};
+
+const IKIGAI: IkigaiCircle[] = [
   {
-    id: "health",
-    label: "Health",
-    satisfaction: 3,
-    alignment: 5,
-    hex: "#10b981",
-    notes: "Gym habit sticky, eating is weak link especially traveling. More green days recently.",
-    goals: {
-      week: ["Hit all scheduled lifts", "Eat clean 5/7 days"],
-      month: ["No missed gym weeks", "Consistent meal prep routine"],
-      year: ["200 lbs lean", "Run 2x/week habit locked"],
-    },
+    id: "love",
+    label: "What You Love",
+    color: "#ec4899",
+    items: [
+      "Building systems that create clarity from chaos",
+      "Deep work — coding, writing, thinking",
+      "Meditation and inner frameworks",
+      "Helping people see what they can't see alone",
+    ],
   },
   {
-    id: "addiction",
-    label: "Addiction",
-    satisfaction: 4,
-    alignment: 6,
-    hex: "#ef4444",
-    notes: "Weed streak building. Routine changes and stress break things. Awareness is high.",
-    goals: {
-      week: ["Maintain streak", "Log triggers when they hit"],
-      month: ["30-day clean streak", "Identify top 3 trigger patterns"],
-      year: ["Default sober identity", "Stress response = action not numbing"],
-    },
+    id: "good_at",
+    label: "What You're Good At",
+    color: "#3b82f6",
+    items: [
+      "AI engineering and tooling",
+      "Systematic thinking — turning mess into structure",
+      "Pattern recognition across domains",
+      "Shipping fast with high signal",
+    ],
   },
   {
-    id: "career",
-    label: "Career",
-    satisfaction: 5,
-    alignment: 5,
+    id: "world_needs",
+    label: "What The World Needs",
+    color: "#10b981",
+    items: [
+      "Tools that help people execute, not just plan",
+      "Honest frameworks for self-improvement",
+      "AI applied to real human problems",
+      "Bridges between technical depth and human meaning",
+    ],
+  },
+  {
+    id: "paid_for",
+    label: "What You Can Be Paid For",
+    color: "#f59e0b",
+    items: [
+      "AI/ML engineering at scale",
+      "Developer tools and productivity systems",
+      "Consulting on AI workflows",
+      "Products that compound user value",
+    ],
+  },
+];
+
+const IKIGAI_CENTER = "Build AI-powered tools that help people execute on what matters — turning reflection into action, chaos into clarity.";
+
+// ── Vision Destination ──────────────────────────────────────────────
+
+const VISION_HORIZON = "3-Year Destination — March 2029";
+
+const VISION_DOMAINS: VisionDomain[] = [
+  {
+    id: "ai",
+    label: "AI & Career",
+    state: "Deep AI expertise applied to domains I love — entrepreneurship, markets, poker, meditation, and consciousness.",
     hex: "#3b82f6",
-    notes: "Doing the work but closed off in room. Not in spaces where opportunities compound.",
-    goals: {
-      week: ["Ship one meaningful thing", "One conversation outside team"],
-      month: ["Visible output that others reference", "Attend 1 in-person event"],
-      year: ["Known for something specific", "Working with people I admire"],
-    },
   },
   {
     id: "relationships",
     label: "Relationships",
-    satisfaction: 3,
-    alignment: 5,
+    state: "A partner with shared vision — growing together, becoming the best versions of ourselves.",
     hex: "#ec4899",
-    notes: "Basia: long-distance, plan to close gap. Need positive-sum friendships. Family strong.",
-    goals: {
-      week: ["Quality call with Basia", "Reach out to one friend"],
-      month: ["Visit or host someone", "One new recurring social thing"],
-      year: ["Close the distance", "3+ local friends I see weekly"],
-    },
   },
   {
-    id: "growth",
-    label: "Growth",
-    satisfaction: 5,
-    alignment: 7,
+    id: "body",
+    label: "Body",
+    state: "200 lbs with an athletic Olympic lifter build.",
+    hex: "#10b981",
+  },
+  {
+    id: "mind",
+    label: "Mind",
+    state: "Calm, resilient, self-aware — understanding my own tendencies through meditation and AI.",
     hex: "#a855f7",
-    notes: "Personal OS creating daily insights. Direction right, accelerating.",
-    goals: {
-      week: ["Daily reflection logged", "Read 30 min"],
-      month: ["Finish one book", "One system improvement shipped"],
-      year: ["Clear personal philosophy written", "Teaching what I know"],
-    },
   },
   {
-    id: "finances",
-    label: "Finances",
-    satisfaction: 6,
-    alignment: 6,
-    hex: "#f59e0b",
-    notes: "200k income, 600k NW. On a path but vision unclear on why.",
-    goals: {
-      week: ["Track spending", "No impulse purchases"],
-      month: ["Investment contribution on schedule", "Review budget"],
-      year: ["Clear money-to-meaning link", "NW trajectory to 10M by 40"],
-    },
+    id: "community",
+    label: "Community",
+    state: "Active local community I'm embedded in.",
+    hex: "#f97316",
   },
   {
-    id: "fun",
-    label: "Fun",
-    satisfaction: 6,
-    alignment: 4,
+    id: "environment",
+    label: "Environment",
+    state: "Proximity to hobbies and community, access to nature, walkable.",
+    hex: "#64748b",
+  },
+  {
+    id: "learning",
+    label: "Learning",
+    state: "Consistently curious — reading, exploring, never stagnant.",
     hex: "#14b8a6",
-    notes: "Poker is fun but zero-sum. Want positive-sum hobbies that build relationships.",
-    goals: {
-      week: ["One fun thing that isn't solo", "Try something new"],
-      month: ["Find one positive-sum hobby", "Weekend plans 3/4 weeks"],
-      year: ["Regular social activities I look forward to", "Hobbies that compound"],
-    },
   },
   {
-    id: "mental",
-    label: "Mental",
-    satisfaction: 4,
-    alignment: 5,
-    hex: "#818cf8",
-    notes: "Meditation is the lever. Mental stability tracks sleep + meditation + fast interruption loops.",
-    goals: {
-      week: ["Meditate daily", "Journal 3x"],
-      month: ["No multi-day spirals", "Sleep 7h+ average"],
-      year: ["Equanimity as default", "Deep understanding of my mind"],
-    },
+    id: "sobriety",
+    label: "Sobriety",
+    state: "3 years clean from weed, alcohol, and all substances.",
+    hex: "#f59e0b",
   },
+];
+
+// ── Wheel Data ──────────────────────────────────────────────────────
+
+const DIMENSIONS: Dimension[] = [
+  { id: "health", label: "Health", satisfaction: 3, alignment: 5, hex: "#10b981" },
+  { id: "career", label: "Career", satisfaction: 5, alignment: 5, hex: "#3b82f6" },
+  { id: "relationships", label: "Relationships", satisfaction: 3, alignment: 5, hex: "#ec4899" },
+  { id: "finances", label: "Finances", satisfaction: 6, alignment: 6, hex: "#f59e0b" },
+  { id: "fun", label: "Fun", satisfaction: 6, alignment: 4, hex: "#14b8a6" },
+  { id: "personal_growth", label: "Growth", satisfaction: 4, alignment: 7, hex: "#a855f7" },
+  { id: "environment", label: "Environment", satisfaction: 5, alignment: 5, hex: "#64748b" },
 ];
 
 // ── Radar helpers ───────────────────────────────────────────────────
@@ -302,110 +319,174 @@ function RadarChart({
   );
 }
 
-// ── Goals Panel ─────────────────────────────────────────────────────
+// ── Ikigai Chart ────────────────────────────────────────────────────
 
-const HORIZONS = ["week", "month", "year"] as const;
-const HORIZON_LABELS: Record<string, string> = {
-  week: "This Week",
-  month: "This Month",
-  year: "This Year",
-};
+function IkigaiChart({
+  selected,
+  onSelect,
+}: {
+  selected: string | null;
+  onSelect: (id: string | null) => void;
+}) {
+  const circles = [
+    { id: "love", cx: 130, cy: 120, color: "#ec4899" },
+    { id: "good_at", cx: 170, cy: 120, color: "#3b82f6" },
+    { id: "world_needs", cx: 130, cy: 160, color: "#10b981" },
+    { id: "paid_for", cx: 170, cy: 160, color: "#f59e0b" },
+  ];
 
-function GoalsPanel({ dimension }: { dimension: Dimension }) {
+  const labelPositions: Record<string, { x: number; y: number }> = {
+    love: { x: 100, y: 90 },
+    good_at: { x: 200, y: 90 },
+    world_needs: { x: 100, y: 195 },
+    paid_for: { x: 200, y: 195 },
+  };
+
   return (
-    <div
-      className="rounded-xl border bg-zinc-900/60 p-4 transition-all duration-200"
-      style={{ borderColor: `${dimension.hex}33` }}
-    >
-      <div className="flex items-center gap-2 mb-3">
-        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: dimension.hex }} />
-        <h3 className="text-sm font-semibold text-zinc-100">{dimension.label}</h3>
-        <span className="text-xs text-zinc-500 ml-auto">{dimension.satisfaction}/{dimension.alignment}</span>
-      </div>
+    <div className="flex flex-col items-center">
+      <svg viewBox="0 0 300 280" className="w-full max-w-[320px] sm:max-w-[380px]">
+        {circles.map((c) => {
+          const circle = IKIGAI.find((ik) => ik.id === c.id)!;
+          const isSelected = selected === c.id;
+          return (
+            <g key={c.id}>
+              <circle
+                cx={c.cx}
+                cy={c.cy}
+                r={55}
+                fill={`${c.color}${isSelected ? "18" : "0a"}`}
+                stroke={`${c.color}${isSelected ? "80" : "30"}`}
+                strokeWidth={isSelected ? 2 : 1}
+                className="cursor-pointer transition-all duration-200"
+                onClick={() => onSelect(selected === c.id ? null : c.id)}
+              />
+              <text
+                x={labelPositions[c.id].x}
+                y={labelPositions[c.id].y}
+                textAnchor="middle"
+                fill={isSelected ? c.color : "rgba(161,161,170,0.6)"}
+                fontSize="8"
+                fontWeight={isSelected ? "600" : "400"}
+                className="cursor-pointer transition-all duration-200"
+                onClick={() => onSelect(selected === c.id ? null : c.id)}
+              >
+                {circle.label}
+              </text>
+            </g>
+          );
+        })}
+        <text
+          x={150}
+          y={137}
+          textAnchor="middle"
+          fill="rgba(255,255,255,0.5)"
+          fontSize="8"
+          fontWeight="600"
+        >
+          IKIGAI
+        </text>
+        <text
+          x={150}
+          y={148}
+          textAnchor="middle"
+          fill="rgba(255,255,255,0.25)"
+          fontSize="6"
+        >
+          reason for being
+        </text>
+      </svg>
 
-      <p className="text-xs text-zinc-400 mb-4">{dimension.notes}</p>
-
-      <div className="grid grid-cols-3 gap-3">
-        {HORIZONS.map((h) => (
-          <div key={h}>
-            <h4 className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider mb-2">
-              {HORIZON_LABELS[h]}
-            </h4>
-            <ul className="space-y-1.5">
-              {dimension.goals[h].map((g, i) => (
-                <li key={i} className="text-xs text-zinc-300 leading-relaxed">
-                  <span className="text-zinc-600 mr-1">-</span>
-                  {g}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
+      {selected ? (
+        <IkigaiDetail circle={IKIGAI.find((ik) => ik.id === selected)!} />
+      ) : (
+        <div className="text-center px-4 max-w-xs">
+          <p className="text-xs text-zinc-400 leading-relaxed">{IKIGAI_CENTER}</p>
+          <p className="text-[10px] text-zinc-600 mt-2">Tap a circle to explore</p>
+        </div>
+      )}
     </div>
   );
 }
 
-function AllGoalsGrid() {
+function IkigaiDetail({ circle }: { circle: IkigaiCircle }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      {DIMENSIONS.map((d) => (
-        <div
-          key={d.id}
-          className="rounded-xl border border-white/5 bg-zinc-900/40 p-3"
-        >
-          <div className="flex items-center gap-2 mb-2">
-            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: d.hex }} />
-            <span className="text-xs font-medium text-zinc-300">{d.label}</span>
-            <span className="text-[10px] text-zinc-600 ml-auto">{d.satisfaction}/{d.alignment}</span>
-          </div>
-          <div className="space-y-1">
-            {d.goals.month.map((g, i) => (
-              <p key={i} className="text-[11px] text-zinc-500">
-                <span className="text-zinc-700 mr-1">-</span>{g}
-              </p>
-            ))}
-          </div>
-        </div>
-      ))}
+    <div
+      className="rounded-xl border bg-zinc-900/60 p-3 w-full max-w-xs transition-all duration-200"
+      style={{ borderColor: `${circle.color}33` }}
+    >
+      <div className="flex items-center gap-2 mb-2">
+        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: circle.color }} />
+        <h3 className="text-xs font-semibold text-zinc-100">{circle.label}</h3>
+      </div>
+      <ul className="space-y-1">
+        {circle.items.map((item, i) => (
+          <li key={i} className="text-[11px] text-zinc-400 leading-relaxed">
+            <span className="text-zinc-600 mr-1">-</span>{item}
+          </li>
+        ))}
+      </ul>
     </div>
+  );
+}
+
+// ── Vision Destination ───────────────────────────────────────────────
+
+function VisionDestination() {
+  return (
+    <section className="space-y-3">
+      <div className="text-center">
+        <h2 className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
+          {VISION_HORIZON}
+        </h2>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {VISION_DOMAINS.map((d) => (
+          <div
+            key={d.id}
+            className="rounded-xl border border-white/5 bg-zinc-900/40 p-3"
+          >
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: d.hex }} />
+              <span className="text-xs font-semibold text-zinc-200">{d.label}</span>
+            </div>
+            <p className="text-[11px] text-zinc-400 leading-relaxed">{d.state}</p>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
 // ── Page ────────────────────────────────────────────────────────────
 
 export default function VisionPage() {
-  const [selected, setSelected] = useState<string | null>(null);
-  const active = selected ? DIMENSIONS.find((d) => d.id === selected) ?? null : null;
+  const [wheelSelected, setWheelSelected] = useState<string | null>(null);
+  const [ikigaiSelected, setIkigaiSelected] = useState<string | null>(null);
 
   return (
     <div className="min-h-screen bg-black text-zinc-100">
       <div className="p-4 sm:p-6 pb-24">
-        <div className="max-w-3xl mx-auto space-y-6">
+        <div className="max-w-5xl mx-auto space-y-8">
           <div className="text-center">
             <h1 className="text-2xl sm:text-3xl font-bold mb-1">Vision</h1>
-            <p className="text-zinc-500 text-sm">Tap a dimension to see goals</p>
           </div>
 
-          <RadarChart selected={selected} onSelect={setSelected} />
+          <VisionDestination />
 
-          {active ? (
-            <GoalsPanel dimension={active} />
-          ) : (
-            <AllGoalsGrid />
-          )}
-
-          <section className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3">
-            <h2 className="text-xs font-semibold text-amber-400/80 uppercase tracking-wider mb-1.5">
-              Core Question
-            </h2>
-            <p className="text-zinc-300 text-sm leading-relaxed">
-              Trade escape for building. Move from reactive coping to intentional action
-              that compounds across health, relationships, and meaningful work.
-            </p>
-          </section>
-
-          <p className="text-center text-zinc-700 text-xs">Vision baseline — March 2026</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <h2 className="text-xs font-medium text-zinc-500 uppercase tracking-wider text-center">
+                Wheel of Life
+              </h2>
+              <RadarChart selected={wheelSelected} onSelect={setWheelSelected} />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-xs font-medium text-zinc-500 uppercase tracking-wider text-center">
+                Ikigai
+              </h2>
+              <IkigaiChart selected={ikigaiSelected} onSelect={setIkigaiSelected} />
+            </div>
+          </div>
         </div>
       </div>
     </div>

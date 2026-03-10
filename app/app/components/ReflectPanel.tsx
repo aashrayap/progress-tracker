@@ -39,7 +39,10 @@ function domainLabel(domain: string): string {
   if (domain === "gym") return "Gym";
   if (domain === "eating") return "Eating";
   if (domain === "sleep") return "Sleep";
-  if (domain === "addiction") return "Recovery";
+  if (domain === "addiction") return "Growth"; // legacy → personal_growth
+  if (domain === "mental") return "Health"; // legacy → health
+  if (domain === "personal_growth") return "Growth";
+  if (domain === "environment") return "Environment";
   return domain;
 }
 
@@ -118,7 +121,7 @@ export default function ReflectPanel() {
     const present = (reflectionData?.byDomain || [])
       .map((entry) => entry.domain)
       .filter((domain) => domain !== "gym" && domain !== "sleep");
-    return present.length > 0 ? present : ["deep_work", "eating", "addiction"];
+    return present.length > 0 ? present : ["deep_work", "eating", "personal_growth"];
   }, [reflectionData]);
 
   const handlePromoteReflection = async (reflection: ReflectionEntry, promoteKey: string) => {

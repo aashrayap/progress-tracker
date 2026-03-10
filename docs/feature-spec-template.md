@@ -6,6 +6,17 @@ This template defines what must be specified before implementation, how to verif
 
 **Terminology note:** The process of scoping a feature using this template is called a **feature interview**. This is distinct from `/checkin` (the daily/weekly/monthly life check-in skill). "Interview" = extracting requirements for a feature. "Check-in" = capturing daily signals, intentions, and reflections.
 
+## Spec Status
+
+Every spec file begins with a `Status` line before the title. Valid values:
+
+| Status | Meaning |
+|--------|---------|
+| `draft` | Still being scoped or written |
+| `in-progress` | Implementation underway |
+| `shipped` | Delivered and verified |
+| `archived` | Superseded or abandoned |
+
 ## When to Use This
 
 - Any task that modifies UI or touches multiple files
@@ -155,6 +166,8 @@ Which verification gates apply to this task.
 ## Quick-Start (copy-paste for new features)
 
 ```markdown
+Status: draft
+
 ## Feature: [name]
 
 ### Problem

@@ -1,3 +1,5 @@
+Status: shipped
+
 ## Feature: Mind Page Rework
 
 ### Problem

@@ -17,7 +17,7 @@ Core rule: Surfaces consume read models and trigger actions; semantics are owned
 
 ## Navigation Protocol
 - Keep product information architecture flat: primary surfaces must be top-level routes.
-- Do not add secondary route trees for core product areas (for example: `/health/...`, `/plan/...`, `/reflect/...`).
+- Do not add secondary route trees for core product areas (for example: `/health/...`, `/plan/...`, `/mind/...`).
 - If a surface needs additional depth, use in-page UI state (tabs, sidebars, modals, drawers) instead of new URL routes.
 - When consolidating features, merge into an existing top-level route or replace with a new top-level route.
 
@@ -33,16 +33,14 @@ Core rule: Surfaces consume read models and trigger actions; semantics are owned
 `app/` contains the Next.js app.
 
 Current top-level routes:
+- `/vision` Vision
 - `/` Hub
 - `/plan` Plan
 - `/health` Health
 - `/mind` Mind
-- `/ideas` Ideas
 - `/resources` Resources
-- `/vision` Vision (optional standalone)
 
 Consolidated redirects:
-- `/reflect` → `/mind`
 - `/quotes` → `/resources`
 
 ## Voice + Text Intake Pipeline
@@ -53,36 +51,6 @@ Both iOS shortcuts (voice and text) flow through one processor:
 4. CSVs are updated
 5. Commit + push, issue comment, issue close
 
-## Idea Pipeline
-
-```
-Phone (voice/text — "idea: add dark mode")
-  │
-  ▼
-voice-inbox.sh (detects idea keywords → data/inbox.csv with suggested_destination=idea)
-  │
-  ▼
-idea-pipeline.sh (60s poll via launchd)
-  │  finds: suggested_destination=idea + status=logged
-  │  one idea per run
-  │
-  │  Phase 1: INVESTIGATE (read-only)
-  │    Claude scans codebase, assesses 3 layers + runtime loop
-  │    inbox status → investigating
-  │
-  │  Phase 2: IMPLEMENT
-  │    branch: idea-{captureId}
-  │    Claude codes, opens PR with structured notes
-  │    inbox status → shipped, error field ← PR URL
-  │    ntfy → "PR ready"
-  │
-  ▼
-GitHub PR (sole human gate)
-```
-
-Plist: `~/Library/LaunchAgents/com.ash.idea-pipeline.plist` (60s interval)
-Logs: `~/.local/log/idea-pipeline.log`
-
 ## API Surface (Current)
 - `/api/hub`
 - `/api/daily-signals`
@@ -92,13 +60,12 @@ Logs: `~/.local/log/idea-pipeline.log`
 - `/api/plan`
 - `/api/plan/range`
 - `/api/todos`
-- `/api/ideas`
 - `/api/groceries`
 - `/api/resources`
 - `/api/quotes`
 
 ## Known Constraints
 - CSV writes use atomic temp+rename but no cross-process file locks
-- Shared writer lock (`/tmp/tracker-csv-writer.lock.d`) coordinates voice-inbox and idea-pipeline daemons
+- Shared writer lock (`/tmp/tracker-csv-writer.lock.d`) coordinates CSV-writing daemons
 - Some historical labels are still normalized for backward compatibility
 - Single-user local-first model (no auth boundary)

@@ -162,7 +162,10 @@ export default function ResourcesPage() {
                   key={q.id || i}
                   className="bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl p-5 space-y-3"
                 >
-                  <p className="text-zinc-200 text-base italic leading-relaxed">&ldquo;{q.text}&rdquo;</p>
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-zinc-200 text-base italic leading-relaxed flex-1">&ldquo;{q.text}&rdquo;</p>
+                    <span className="text-xs text-zinc-600 font-mono shrink-0 mt-1">#{q.id}</span>
+                  </div>
                   {(q.author || q.source) && (
                     <p className="text-sm text-zinc-400">
                       {q.author && <span>— {q.author}</span>}

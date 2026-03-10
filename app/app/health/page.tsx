@@ -172,6 +172,7 @@ export default function HealthPage() {
             isCardio={workouts.isCardio}
             cardioInfo={workouts.cardioInfo}
             rotation={workouts.rotation}
+            exerciseTargets={workouts.exerciseTargets || []}
           />
 
           <WeightChart weight={weight} />

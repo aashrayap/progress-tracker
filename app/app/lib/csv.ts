@@ -3,6 +3,7 @@ import path from "path";
 import type {
   DailySignalEntry,
   ExerciseProgressEntry,
+  ExerciseTarget,
   GroceryEntry,
   InboxEntry,
   QuoteEntry,
@@ -36,6 +37,9 @@ const QUOTES_PATH = path.join(DATA_ROOT, "quotes.csv");
 const QUOTES_HEADER = "id,text,author,source,domain,added";
 const RESOURCES_PATH = path.join(DATA_ROOT, "resources.csv");
 const RESOURCES_HEADER = "title,author,type,domain,status,notes";
+const BRIEFING_PATH = path.join(DATA_ROOT, "briefing.json");
+const BRIEFING_FEEDBACK_PATH = path.join(DATA_ROOT, "briefing_feedback.csv");
+const BRIEFING_FEEDBACK_HEADER = "date,state,rating,feedback_text,briefing_hash";
 
 export interface PlanEntry {
   date: string;
@@ -591,6 +595,128 @@ export function getExerciseProgress(
   return progress;
 }
 
+/**
+ * For each prescribed exercise, find the last session's sets and compute
+ * progressive overload targets.
+ *
+ * Rules:
+ * - Parse rep range from config (e.g. "5-8" → min=5, max=8)
+ * - If all working sets hit max reps → bump weight +5lbs, reset reps to min
+ * - Otherwise → same weight, aim for +1 rep per set (capped at max)
+ */
+export function getExerciseTargets(
+  prescribedIds: string[],
+  workoutDays: WorkoutDay[]
+): ExerciseTarget[] {
+  const allExercises = Object.values(config.exercises).flat();
+  const chronological = [...workoutDays].sort((a, b) => a.date.localeCompare(b.date));
+
+  return prescribedIds.map((id) => {
+    const def = allExercises.find((e) => e.id === id);
+    const name = def?.name || id;
+    const repRange = def?.reps || "5-8";
+    const prescribedSets = def?.sets || 3;
+
+    // Parse rep range
+    const rangeMatch = repRange.match(/(\d+)\s*[-–]\s*(\d+)/);
+    const minReps = rangeMatch ? parseInt(rangeMatch[1], 10) : 5;
+    const maxReps = rangeMatch ? parseInt(rangeMatch[2], 10) : 8;
+
+    // Find last session with this exercise (skip today)
+    let lastDay: WorkoutDay | null = null;
+    for (let i = chronological.length - 1; i >= 0; i--) {
+      const day = chronological[i];
+      const hasExercise = day.exercises.some((e) => e.id === id);
+      if (hasExercise) {
+        lastDay = day;
+        break;
+      }
+    }
+
+    if (!lastDay) {
+      // No history — just show the prescribed rep range
+      return {
+        id,
+        name,
+        lastSets: [],
+        lastDate: "",
+        targetSets: Array.from({ length: prescribedSets }, () => ({
+          weight: 0,
+          reps: repRange,
+        })),
+        note: "first session",
+      };
+    }
+
+    const lastExercise = lastDay.exercises.find((e) => e.id === id)!;
+    const lastSets = lastExercise.sets.map((s) => ({
+      weight: s.weight,
+      reps: s.reps,
+      notes: s.notes,
+    }));
+
+    // Filter to working sets (exclude warm-up / notes-only)
+    const workingSets = lastSets.filter(
+      (s) => s.weight > 0 && !s.notes.toLowerCase().includes("warm")
+    );
+
+    if (workingSets.length === 0) {
+      return {
+        id,
+        name,
+        lastSets,
+        lastDate: lastDay.date,
+        targetSets: Array.from({ length: prescribedSets }, () => ({
+          weight: 0,
+          reps: repRange,
+        })),
+        note: "no working sets found",
+      };
+    }
+
+    // Determine weight increment (10 for squat/rdl/front_squat/deadlift, 5 for upper)
+    const lowerBodyIds = ["squat", "front_squat", "rdl", "lunges", "trap_bar_deadlift"];
+    const increment = lowerBodyIds.includes(id) ? 10 : 5;
+
+    // Per-set logic: if a set already hit/exceeded max reps, bump its weight.
+    // Otherwise keep same weight, push +1 rep.
+    let hasWeightBump = false;
+    const targetSets = workingSets.map((s) => {
+      if (s.reps >= maxReps) {
+        hasWeightBump = true;
+        return {
+          weight: s.weight + increment,
+          reps: `${minReps}+`,
+        };
+      }
+      return {
+        weight: s.weight,
+        reps: `${Math.min(s.reps + 1, maxReps)}+`,
+      };
+    });
+
+    const allHitMax = workingSets.every((s) => s.reps >= maxReps);
+    const topWeight = Math.max(...workingSets.map((s) => s.weight));
+    let note: string;
+    if (allHitMax) {
+      note = `+${increment}lbs → ${topWeight + increment}`;
+    } else if (hasWeightBump) {
+      note = "mixed — some sets weight up";
+    } else {
+      note = "push reps";
+    }
+
+    return {
+      id,
+      name,
+      lastSets,
+      lastDate: lastDay.date,
+      targetSets,
+      note,
+    };
+  });
+}
+
 export function appendWorkouts(entries: WorkoutSetEntry[]): void {
   const lines = entries.map(
     (e) =>
@@ -762,6 +888,58 @@ export function addResource(entry: ResourceEntry): void {
     .map((v) => (v.includes(",") || v.includes('"') ? `"${v.replace(/"/g, '""')}"` : v))
     .join(",");
   appendLines(RESOURCES_PATH, RESOURCES_HEADER, [line]);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Briefing
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface BriefingData {
+  state: "momentum" | "recovery" | "neutral" | "danger" | "explore" | "disruption";
+  insight: string;
+  priorities: string[];
+  quote: { text: string; author: string };
+  generated_at: string;
+  input_hash: string;
+  verified: boolean;
+}
+
+export interface BriefingFeedbackEntry {
+  date: string;
+  state: string;
+  rating: string;
+  feedback_text: string;
+  briefing_hash: string;
+}
+
+export function readBriefing(): BriefingData | null {
+  if (!fs.existsSync(BRIEFING_PATH)) return null;
+  try {
+    const raw = fs.readFileSync(BRIEFING_PATH, "utf-8");
+    return JSON.parse(raw) as BriefingData;
+  } catch {
+    return null;
+  }
+}
+
+export function readBriefingFeedback(): BriefingFeedbackEntry[] {
+  if (!fs.existsSync(BRIEFING_FEEDBACK_PATH)) return [];
+  const lines = readDataLines(BRIEFING_FEEDBACK_PATH);
+  return lines.map((line) => {
+    const c = parseCSVLine(line);
+    return {
+      date: c[0] || "",
+      state: c[1] || "",
+      rating: c[2] || "",
+      feedback_text: c[3] || "",
+      briefing_hash: c[4] || "",
+    };
+  });
+}
+
+export function appendBriefingFeedback(entry: BriefingFeedbackEntry): void {
+  const line = `${entry.date},${csvQuote(entry.state)},${csvQuote(entry.rating)},${csvQuote(entry.feedback_text)},${csvQuote(entry.briefing_hash)}`;
+  appendLines(BRIEFING_FEEDBACK_PATH, BRIEFING_FEEDBACK_HEADER, [line]);
 }
 
 export function readQuotes(): QuoteEntry[] {

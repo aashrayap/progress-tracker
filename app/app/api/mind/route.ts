@@ -48,7 +48,7 @@ export async function GET() {
       .sort((a, b) => b.date.localeCompare(a.date));
 
     const reflections: ReflectionEntry[] = readReflections()
-      .filter((r) => r.domain === "mental" || r.domain === "addiction")
+      .filter((r) => r.domain === "mental" || r.domain === "addiction" || r.domain === "health" || r.domain === "personal_growth")
       .filter((r) => r.archived !== "1")
       .sort((a, b) => b.date.localeCompare(a.date));
 

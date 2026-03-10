@@ -5,14 +5,15 @@ All canonical state lives in CSV files under `data/`.
 ## Canonical Domain Standard
 
 Use these exact IDs for domain/category tagging in new rows:
-- `health`
-- `addiction`
-- `mental`
+- `health` (includes sleep, emotional regulation — formerly `mental`)
 - `career`
 - `relationships`
 - `finances`
 - `fun`
-- `personal_growth`
+- `personal_growth` (includes meditation, spirituality, addiction recovery — formerly `addiction`)
+- `environment`
+
+Legacy IDs (`addiction`, `mental`) in historical rows remain valid — do not backfill.
 
 Standardized fields:
 - `data/daily_signals.csv` -> `category` (optional; canonical IDs for new rows)
@@ -37,7 +38,12 @@ Common signals:
 - `relapse` (text)
 - `reset` (`1`)
 - `mind` — trigger keyword in `value`, pipe-delimited context: `thought: X | action: Y | circumstance: Z`, `category` = `mental` or `addiction`
-- `category`: optional canonical domain ID for the signal context (`health`, `addiction`, `mental`, `career`, `relationships`, `finances`, `fun`, `personal_growth`)
+- `category`: optional canonical domain ID for the signal context (`health`, `career`, `relationships`, `finances`, `fun`, `personal_growth`, `environment`)
+- `social_contact` (`0|1`) — weekly signal for meaningful social contact, `category=relationships`
+- `weekly_experiment` (text) — one small behavior change to test this week, `value=<domain>`, `context=<description>`
+- `experiment_result` (`yes|partial|no`) — outcome of last week's experiment, `context=<what was learned>`
+- `weekly_goal` (text) — 1-3 vision-connected goals per week, `value=<domain>`, `context=<goal text>`
+- `weekly_goal_result` (`complete|missed|partial`) — outcome of prior week's goal, `context=<goal text>`
 
 ## data/workouts.csv
 ```
@@ -85,8 +91,21 @@ title,author,type,domain,status,notes
 ```
 
 - `type`: `book`, `essay`, `article`, `video`, `podcast`
-- `domain`: canonical domain ID for new rows (`health`, `addiction`, `mental`, `career`, `relationships`, `finances`, `fun`, `personal_growth`); legacy freeform values may remain in old rows
+- `domain`: canonical domain ID for new rows (`health`, `career`, `relationships`, `finances`, `fun`, `personal_growth`, `environment`); legacy freeform values may remain in old rows
 - `status`: `unread`, `reading`, `done`
+
+## data/code-todos.csv
+```
+date,item,file_path,start_line,end_line,type,done,domain
+```
+
+- `type`: `refactor`, `fix`, `improve`, `feature`, `debt`, `investigate`
+- `domain`: typically `career`
+- `done`: `0|1`
+- `file_path`: relative to project root (e.g., `app/lib/csv.ts`)
+- `start_line`/`end_line`: optional line range
+- Created via `/log note` when file context is detected or `--file` flag is used
+- Surfaced in `/checkin` daily (Phase 5.2) and weekly (stale review)
 
 ## Relationship Notes
 - `gym=1` in `data/daily_signals.csv` can have supporting set data in `data/workouts.csv`.

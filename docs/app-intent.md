@@ -38,13 +38,12 @@ While building new features, these must not degrade:
 
 | Surface | Usage | Gravity |
 |---------|-------|---------|
-| Hub | Daily | High — habit tracking, daily entry point |
-| Health | Daily | High — workout logging, body metrics |
-| Plan | Occasional | Medium — useful but underutilized |
-| Mind | Rare | Low — almost unused |
-| Ideas | Rare | Low — almost unused |
-| Resources | Rare | Low — passive storage |
 | Vision | Rare | Low — separate from app flow |
+| Hub | Daily | High — habit tracking, daily entry point |
+| Plan | Occasional | Medium — useful but underutilized |
+| Health | Daily | High — workout logging, body metrics |
+| Mind | Rare | Low — almost unused |
+| Resources | Rare | Low — passive storage |
 
 The app has too many surfaces and not enough gravity. It feels like a restaurant with a menu too big. Features that aren't pulling their weight should be consolidated, hidden, or removed — not maintained.
 

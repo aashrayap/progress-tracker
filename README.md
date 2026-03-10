@@ -40,7 +40,6 @@ Rules:
 | `/vision` | Optional standalone strategy view |
 
 Redirects:
-- `/reflect` -> `/mind`
 - `/quotes` -> `/resources`
 
 ## Voice + Text Pipeline

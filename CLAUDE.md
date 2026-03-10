@@ -1,27 +1,27 @@
 # Progress Tracker
 
-Personal life execution system for health, addiction, mental, career, relationships, finances, fun, and personal_growth.
+Personal life execution system for health, career, relationships, finances, fun, personal_growth, and environment.
 
 ## Objective
 
 Turn daily inputs into reliable next actions using canonical CSV data.
 
-## Canonical Domain Taxonomy (8 domains)
+## Canonical Domain Taxonomy (7 domains)
 
 Use these exact IDs anywhere a life area/domain/category is referenced:
 
 | Domain ID         | Covers                                         |
 | ----------------- | ---------------------------------------------- |
-| `health`          | body comp, training, nutrition, meals          |
-| `addiction`       | sobriety, triggers, relapse, streaks           |
-| `mental`          | sleep, meditation, emotional regulation        |
+| `health`          | body comp, training, nutrition, sleep, emotional regulation |
 | `career`          | deep work, output, visibility, skills          |
 | `relationships`   | partner, friends, family, social               |
 | `finances`        | income, net worth, spending, compounding       |
 | `fun`             | hobbies, play, positive-sum leisure            |
-| `personal_growth` | reading, reflection, philosophy, learning      |
+| `personal_growth` | reading, reflection, philosophy, learning, meditation, spirituality, addiction recovery, sobriety |
+| `environment`     | home, workspace, surroundings, city, aesthetics |
 
 Travel is a sub-concern (`finances` + `fun` + `relationships`), not a standalone domain.
+Legacy domain IDs (`addiction`, `mental`) in historical CSV rows remain valid — do not backfill.
 
 ## System Vocabulary
 
@@ -77,22 +77,25 @@ nvm use 22.14.0
 - `app/app/components/`
 - `scripts/voice-inbox.sh`
 
-## Canonical Data Files
+## CSV Headers (quick ref — full semantics in `docs/data-schemas.md`)
 
-- `data/daily_signals.csv`
-- `data/workouts.csv`
-- `data/plan.csv`
-- `data/todos.csv`
-- `data/reflections.csv`
-- `data/groceries.csv`
-- `data/inbox.csv`
+```
+daily_signals: date,signal,value,unit,context,source,capture_id,category
+workouts:      date,workout,exercise,set,weight,reps,notes
+plan:          date,start,end,item,done,notes,domain
+todos:         id,item,done,created,domain
+reflections:   date,domain,win,lesson,change,archived
+inbox:         capture_id,captured_at,source,raw_text,status,suggested_destination,normalized_text,error
+groceries:     item,section,done,added
+resources:     title,author,type,domain,status,notes
+code-todos:    date,item,file_path,start_line,end_line,type,done,domain
+```
 
 ## Skills
 
 | Skill            | Purpose                                 | Triggers                               |
 | ---------------- | --------------------------------------- | -------------------------------------- |
-| `/log`           | Structured data entry to canonical CSVs | `log weight`, `log day`, `log relapse` |
-| `/reflect`       | Daily micro-reflection capture          | `reflect`, `what did I learn`          |
+| `/log`           | Quick-fire utility for one-off CSV writes. `/checkin` + voice cover most logging — `/log` is best for code todos (`/log note --file=...`) and quick weight entries | `log weight`, `log note`, `log relapse` |
 | `/weekly-review` | Weekly accountability and planning      | `weekly review`, `plan the week`       |
 | `/review-notes`  | Cross-CSV activity summary              | `review notes`, `what happened`        |
 | `/checkin`       | Guided daily/weekly/monthly check-in     | `checkin`, `check in`, `morning check-in` |
@@ -107,13 +110,21 @@ nvm use 22.14.0
 - Voice + text both flow through the same inbox pipeline.
 - Keep navigation flat: use top-level routes for primary surfaces; avoid secondary route trees and prefer in-page tabs/sidebars/modals for depth.
 
+## Health Metrics (must not degrade)
+
+- **3-layer boundary integrity**: CSV (data) / lib+api (intelligence) / pages (surface) stays clean
+- **Flat navigation**: no new route trees — depth via in-page UI only
+- **Capture reliability**: voice/text intake pipeline must keep working
+- **Data simplicity**: no new CSV files unless existing ones genuinely can't hold the data
+- **Startup friction**: daily use shouldn't require more steps than it does today
+
 ## Escalation Triggers (Project-Specific)
 
 In addition to root-level escalation rules, ask before:
 
 - Creating a new top-level route or API endpoint.
 - Modifying CSV schemas (adding/removing/renaming columns).
-- Changing the voice-inbox or idea-pipeline scripts.
+- Changing the voice-inbox script.
 
 ## Common Failure Modes
 

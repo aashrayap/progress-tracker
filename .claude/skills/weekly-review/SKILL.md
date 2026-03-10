@@ -5,7 +5,9 @@ description: Weekly accountability review using tracker CSV data.
 
 # Weekly Review
 
-Run a data-backed weekly review and set next-week priorities.
+Quick data-only snapshot. For the full interactive weekly check-in (with domain spotlight, experiments, goals, and intention setting), use `/checkin weekly`.
+
+This skill runs Phases 1-2 only from the weekly check-in — the quantitative score card and mood/trigger arc. No interactive questions, no writes.
 
 ## Core Sources
 - `~/Documents/2026/tracker/data/daily_signals.csv`
@@ -13,16 +15,13 @@ Run a data-backed weekly review and set next-week priorities.
 - `~/Documents/2026/tracker/data/reflections.csv`
 - `~/Documents/2026/tracker/data/plan.csv`
 - `~/Documents/2026/tracker/data/todos.csv`
+- `~/Documents/2026/tracker/docs/vision.md`
 
-## Structure
-1. Metrics (targets vs actuals)
-2. Current streaks
-3. Wins (specific)
-4. Misses / risk patterns
-5. Next-week focus (max 3)
+## Output
+
+Run the same computation as `/checkin weekly` Phase 1 (Score Card) and Phase 2 (Mood & Trigger Arc). Present the auto-generated output. Do not ask interactive questions or write to any CSVs.
 
 ## Rules
 - Use actual logged data only.
 - Highlight patterns, not anecdotes.
-- Keep next week simple and actionable.
-- End with one key obstacle and one key behavior change.
+- Read-only — no CSV writes.

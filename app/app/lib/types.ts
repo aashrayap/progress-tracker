@@ -92,6 +92,15 @@ export interface PrescribedExercise {
   reps: string;
 }
 
+export interface ExerciseTarget {
+  id: string;
+  name: string;
+  lastSets: { weight: number; reps: number; notes: string }[];
+  lastDate: string;
+  targetSets: { weight: number; reps: string }[];
+  note: string; // e.g. "weight up" or "push reps"
+}
+
 export interface GymReflection {
   date: string;
   domain: string;
@@ -120,6 +129,7 @@ export interface HealthData {
     isCardio: boolean;
     cardioInfo: { label: string; detail: string; minutes: number } | null;
     rotation: { key: string; kind: string; label: string; detail: string; minutes?: number }[];
+    exerciseTargets: ExerciseTarget[];
   };
   gymToday: boolean;
   gymStreak: number;

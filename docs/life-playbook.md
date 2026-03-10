@@ -4,14 +4,13 @@
 Single reference for behavioral rules and constraints across core life domains.
 
 ## Domains
-- `health`
-- `addiction`
-- `mental`
+- `health` (includes sleep, emotional regulation)
 - `career`
 - `relationships`
 - `finances`
 - `fun`
-- `personal_growth`
+- `personal_growth` (includes meditation, spirituality, addiction recovery)
+- `environment`
 
 ## Daily Structure
 - **Work:** ~8:00–4:00 (flexible 7:30–8:30 start, 3:30–4:30 end)
@@ -34,18 +33,7 @@ Single reference for behavioral rules and constraints across core life domains.
 - Default meal system with predictable groceries.
 - Keep meal decisions low-friction and repeatable.
 - Capture outlier meals and observed effects for reflection.
-
-## `addiction` Recovery Protocol
-- Zero-negotiation boundaries for known relapse behaviors.
-- Track triggers and relapse signals in `data/daily_signals.csv`.
-- Use interruption sequence when urges hit:
-  1. Recognize urge state
-  2. Delay for a short timer
-  3. Physically shift state
-  4. Re-anchor to long-term objective
-
-## `mental` Protocol - TBD
-- Define sleep, meditation, and emotional regulation rules that can be followed during stress windows.
+- Sleep and emotional regulation rules that can be followed during stress windows.
 
 ## `career` Protocol - TBD
 - Define deep work output cadence, visibility behaviors, and anti-isolation work structure.
@@ -60,6 +48,15 @@ Single reference for behavioral rules and constraints across core life domains.
 
 ## `fun` Protocol
 - Prioritize positive-sum leisure over numbing or isolating defaults.
+- **Depletion rule:** When fried after work, pick from the recharge menu before defaulting to dopamine. If nothing appeals after 5 minutes, then decide.
+
+### Recharge Menu
+Activities that restore energy without relapse cost (the middle tier between deep work and League):
+- Walk with Cooper
+- Read a book
+- Cook something
+- Meditate
+- Call someone
 
 ### Travel Planning (sub-concern: `finances` + `fun` + `relationships`)
 - Plan windows ahead of time, track costs, and attach decisions to calendar blocks.
@@ -67,6 +64,17 @@ Single reference for behavioral rules and constraints across core life domains.
 
 ## `personal_growth` Protocol - TBD
 - Define reading, reflection, and learning loops that produce behavior change.
+- Meditation as a daily spiritual and awareness practice.
+- Zero-negotiation boundaries for known relapse behaviors (addiction recovery).
+- Track triggers and relapse signals in `data/daily_signals.csv`.
+- Use interruption sequence when urges hit:
+  1. Recognize urge state
+  2. Delay for a short timer
+  3. Physically shift state (see Recharge Menu under `fun` protocol)
+  4. Re-anchor to long-term objective
+
+## `environment` Protocol - TBD
+- Define standards for home, workspace, and surroundings that support focus and well-being.
 
 ## Resources
 
