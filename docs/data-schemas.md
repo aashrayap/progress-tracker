@@ -94,18 +94,58 @@ title,author,type,domain,status,notes
 - `domain`: canonical domain ID for new rows (`health`, `career`, `relationships`, `finances`, `fun`, `personal_growth`, `environment`); legacy freeform values may remain in old rows
 - `status`: `unread`, `reading`, `done`
 
-## data/code-todos.csv
+
+
+## data/briefing_feedback.csv
 ```
-date,item,file_path,start_line,end_line,type,done,domain
+date,state,rating,feedback_text,briefing_hash
 ```
 
-- `type`: `refactor`, `fix`, `improve`, `feature`, `debt`, `investigate`
-- `domain`: typically `career`
-- `done`: `0|1`
-- `file_path`: relative to project root (e.g., `app/lib/csv.ts`)
-- `start_line`/`end_line`: optional line range
-- Created via `/log note` when file context is detected or `--file` flag is used
-- Surfaced in `/checkin` daily (Phase 5.2) and weekly (stale review)
+- `state`: briefing state at time of feedback (e.g. `recovery`, `streak`)
+- `rating`: `good` or `bad`
+- `briefing_hash`: MD5 hash linking feedback to the specific briefing that was shown
+- Written by `/api/hub/briefing-feedback` when user rates the daily briefing card
+
+## data/vision.json
+
+JSON file (not CSV). Read-only from the app's perspective — authored manually or by AI sessions.
+
+```json
+{
+  "horizon": "March 2029",
+  "identityNorthStar": "<string>",
+  "domains": [
+    {
+      "id": "<slug>",
+      "label": "<display name>",
+      "canonicalId": "<canonical domain ID>",
+      "hex": "<color hex>",
+      "threeYearDestination": "<string>",
+      "now": "<string>",
+      "ninetyDay": "<string>",
+      "threeYear": "<string>"
+    }
+  ]
+}
+```
+
+- `canonicalId` maps each vision domain to the 7 canonical domain IDs (a vision domain may share a canonicalId with another, e.g. `family_friends` and `romance` both map to `relationships`)
+- Consumed by `/api/vision` (GET, read-only) and rendered on the `/vision` surface
+- Supersedes the previous hardcoded vision data in `app/app/vision/page.tsx`
+
+## Side Effect Rules
+
+Enforced by `app/app/lib/router.ts`. Side effects are one level deep — secondary writes call csv.ts directly, never re-enter the router.
+
+| Trigger | Side Effect | Depth |
+|---------|-------------|-------|
+| workout rows written for date X | ensure `gym=1` in daily_signals for date X | primary |
+| `gym=1` written for date X | mark plan item matching "Gym" done | secondary |
+| `sleep=1` written for date X | mark plan item matching "Sleep" done | secondary |
+| `meditate=1` written for date X | mark plan item matching "Meditate" done | secondary |
+| `deep_work=1` written for date X | mark plan item matching "Deep work" done | secondary |
+
+Plan matching uses case-insensitive substring match against a fixed keyword map. No AI, no NLP. If no matching plan item exists, the side effect is a no-op.
 
 ## Relationship Notes
 - `gym=1` in `data/daily_signals.csv` can have supporting set data in `data/workouts.csv`.

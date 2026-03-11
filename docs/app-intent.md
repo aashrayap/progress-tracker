@@ -117,6 +117,7 @@ Append-only log. When a directional choice is made during a feature, record it h
 | 2026-03-05 | Intent doc created — read before multi-layer features | Repeated corrections during feature work indicated missing direction |
 | 2026-03-05 | Vision-driven not feature-driven | App serves 5-year life vision; features must trace to vision, not justify themselves |
 | 2026-03-05 | Fewer surfaces, more gravity | Too many routes feel like a big menu; consolidate or remove low-usage surfaces |
+| 2026-03-10 | Vision page reads from `data/vision.json` via `/api/vision` | Hardcoded vision data moved to structured JSON in core data layer; vision page is now data-driven with expandable domain cards showing now/90-day/3-year |
 
 <!-- Add rows as decisions happen. Format: date, what was decided, why -->
 

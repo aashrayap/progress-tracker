@@ -40,8 +40,39 @@ Current top-level routes:
 - `/mind` Mind
 - `/resources` Resources
 
-Consolidated redirects:
-- `/quotes` → `/resources`
+
+## Write Router
+
+`app/app/lib/router.ts` — single `writeAndSideEffect()` function that writes to the primary CSV and fires deterministic side effects.
+
+```
+writeAndSideEffect(type, data, date?)
+  │
+  ├─ Primary write (csv.ts)
+  │
+  └─ Side effects (hardcoded rules, one level deep):
+       workout rows → ensure gym=1 in daily_signals
+       gym=1        → mark plan item matching "Gym" done
+       sleep=1      → mark plan item matching "Sleep" done
+       meditate=1   → mark plan item matching "Meditate" done
+       deep_work=1  → mark plan item matching "Deep work" done
+```
+
+Side effects call csv.ts directly — they never re-enter the router.
+
+Current consumers:
+- `POST /api/daily-signals` — signals route through router for plan auto-complete
+- `scripts/reconcile.js` — post-checkin bridge using same keyword map
+
+## What Is Working
+- Single canonical data model based on CSV files
+- End-to-end capture path from phone to structured logs
+- Hub-driven daily decision payload
+- Calendar/todo execution loop
+- Reflection capture and lesson surfacing
+
+## Feature Specs
+Specs live in `docs/specs/`. Status: `draft` | `in-progress` | `shipped` | `archived`. Template: `docs/feature-spec-template.md`.
 
 ## Voice + Text Intake Pipeline
 Both iOS shortcuts (voice and text) flow through one processor:
@@ -63,6 +94,8 @@ Both iOS shortcuts (voice and text) flow through one processor:
 - `/api/groceries`
 - `/api/resources`
 - `/api/quotes`
+- `/api/hub/briefing-feedback`
+- `/api/vision`
 
 ## Known Constraints
 - CSV writes use atomic temp+rename but no cross-process file locks
