@@ -1,3 +1,5 @@
+> Superseded by data/vision.json — this file is no longer maintained.
+
 # Vision (Distilled)
 
 This document is the actionable intent lens for the tracker system.
@@ -19,6 +21,10 @@ This document is the actionable intent lens for the tracker system.
 | `personal_growth` | 4 | 7 |
 | `environment` | — | — |
 
+## Identity North Star
+
+The person behind all these domains: grounded, positive, present. The guy people feel better around — not performing, just being. Calm energy, real conversations, no front.
+
 ## Domain Goals
 
 ### `health`
@@ -35,8 +41,8 @@ This document is the actionable intent lens for the tracker system.
 
 ### `relationships`
 - **Now**: reduce isolation with deliberate weekly social contact and pursue honest relationship clarity conversations.
-- **90-day**: build a local positive-sum friend base and resolve long-distance relationship direction with integrity.
-- **2-year**: live in a deeply connected social life with a committed partner and active community rhythm.
+- **90-day**: build a local positive-sum friend base and resolve long-distance relationship direction with integrity. Be the person who brings good energy to the room — not forced, just natural.
+- **2-year**: live in a deeply connected social life with a committed partner and active community rhythm. Known as someone who lifts the vibe and makes people feel at ease.
 
 ### `finances`
 - **Now**: keep compounding systems steady and tie major spending decisions to explicit long-term intent.
@@ -54,7 +60,7 @@ This document is the actionable intent lens for the tracker system.
 
 - **Now**: keep daily reflection/journaling and meditation active; protect sobriety streaks and interrupt urges immediately.
 - **90-day**: convert reflection outputs into rule updates; complete dopamine reset with reliable replacement behaviors for weed, LoL, and poker triggers.
-- **2-year**: live from a mature inner framework where philosophy, meditation, and self-knowledge guide decisions; non-negotiable sobriety systems with low relapse volatility.
+- **2-year**: live from a mature inner framework where philosophy, meditation, and self-knowledge guide decisions; non-negotiable sobriety systems with low relapse volatility. The inner calm that makes the positive energy natural, not effortful.
 
 ### `environment`
 - **Now**: TBD — score and define baseline.
@@ -65,3 +71,4 @@ This document is the actionable intent lens for the tracker system.
 | Date | What Changed | Why |
 |------|-------------|-----|
 | 2026-03-05 | Initial distillation from vision session | Foundation restructure |
+| 2026-03-10 | Added Identity North Star + positive energy threading | Goal to show up as grounded, positive, chill — threaded into relationships and personal_growth |
