@@ -1,0 +1,86 @@
+{
+  "horizon": "March 2029",
+  "identityNorthStar": "The person behind all these domains: grounded, positive, present. The guy people feel better around — not performing, just being. Calm energy, real conversations, no front.",
+  "domains": [
+    {
+      "id": "business_career",
+      "label": "Business & Career",
+      "canonicalId": "career",
+      "hex": "#3b82f6",
+      "threeYearDestination": "Deep AI expertise applied to domains I love — entrepreneurship, markets, poker, meditation, and consciousness.",
+      "now": "Prioritize AI fluency and minimum two deep-work blocks/day on high-leverage output.",
+      "ninetyDay": "Reduce lone-wolf work patterns and increase exposure to compounding opportunities with aligned people.",
+      "threeYear": "Build/lead mission-driven work with trusted collaborators (finance, therapy, meditation, or productivity impact)."
+    },
+    {
+      "id": "finances",
+      "label": "Finances",
+      "canonicalId": "finances",
+      "hex": "#f59e0b",
+      "threeYearDestination": "Strengthen capital trajectory toward eight-figure optionality through focused, high-upside value creation.",
+      "now": "Keep compounding systems steady and tie major spending decisions to explicit long-term intent.",
+      "ninetyDay": "Align cashflow and planning to support habit transformation without breaking long-horizon investing discipline.",
+      "threeYear": "Strengthen capital trajectory toward eight-figure optionality through focused, high-upside value creation."
+    },
+    {
+      "id": "health",
+      "label": "Health",
+      "canonicalId": "health",
+      "hex": "#10b981",
+      "threeYearDestination": "200 lbs with an athletic Olympic lifter build.",
+      "now": "Hit planned gym sessions, run protein-first meals, prioritize sleep quality and emotional regulation during stress.",
+      "ninetyDay": "Stabilize training + nutrition to avoid binge/crash cycles; lock in sleep and regulation habits that keep mood and focus stable.",
+      "threeYear": "Maintain best shape (about 200 lb), longevity-focused routine, consistent training base, and a clear regulated mind through nervous-system care."
+    },
+    {
+      "id": "family_friends",
+      "label": "Family & Friends",
+      "canonicalId": "relationships",
+      "hex": "#f97316",
+      "threeYearDestination": "Active local community I'm embedded in.",
+      "now": "Reduce isolation with deliberate weekly social contact.",
+      "ninetyDay": "Build a local positive-sum friend base. Be the person who brings good energy to the room — not forced, just natural.",
+      "threeYear": "Live in a deeply connected social life with active community rhythm. Known as someone who lifts the vibe and makes people feel at ease."
+    },
+    {
+      "id": "romance",
+      "label": "Romance",
+      "canonicalId": "relationships",
+      "hex": "#ec4899",
+      "threeYearDestination": "A partner with shared vision — growing together, becoming the best versions of ourselves.",
+      "now": "Pursue honest relationship clarity conversations.",
+      "ninetyDay": "Resolve long-distance relationship direction with integrity.",
+      "threeYear": "Committed partner growing together with shared vision."
+    },
+    {
+      "id": "personal_growth",
+      "label": "Personal Growth",
+      "canonicalId": "personal_growth",
+      "hex": "#a855f7",
+      "threeYearDestination": "Calm, resilient, self-aware — understanding my own tendencies through meditation and AI. Consistently curious — reading, exploring, never stagnant. 3 years clean from weed, alcohol, and all substances.",
+      "now": "Keep daily reflection/journaling and meditation active; protect sobriety streaks and interrupt urges immediately.",
+      "ninetyDay": "Convert reflection outputs into rule updates; complete dopamine reset with reliable replacement behaviors for weed, LoL, and poker triggers.",
+      "threeYear": "Live from a mature inner framework where philosophy, meditation, and self-knowledge guide decisions; non-negotiable sobriety systems with low relapse volatility. The inner calm that makes the positive energy natural, not effortful."
+    },
+    {
+      "id": "fun_recreation",
+      "label": "Fun & Recreation",
+      "canonicalId": "fun",
+      "hex": "#14b8a6",
+      "threeYearDestination": "Have a full, chosen weekend life where home is restful by choice, not default isolation.",
+      "now": "Replace at least one zero-sum leisure loop with a positive-sum activity that creates energy and connection.",
+      "ninetyDay": "Establish recurring hobbies that are restorative and social, not isolating or numbing.",
+      "threeYear": "Have a full, chosen weekend life where home is restful by choice, not default isolation."
+    },
+    {
+      "id": "physical_environment",
+      "label": "Physical Environment",
+      "canonicalId": "environment",
+      "hex": "#64748b",
+      "threeYearDestination": "Proximity to hobbies and community, access to nature, walkable.",
+      "now": "TBD — score and define baseline.",
+      "ninetyDay": "TBD.",
+      "threeYear": "TBD."
+    }
+  ]
+}

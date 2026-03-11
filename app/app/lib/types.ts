@@ -183,3 +183,20 @@ export interface ResourceEntry {
   notes: string;
 }
 
+export interface VisionDomain {
+  id: string;
+  label: string;
+  canonicalId: string;
+  hex: string;
+  threeYearDestination: string;
+  now: string;
+  ninetyDay: string;
+  threeYear: string;
+}
+
+export interface VisionData {
+  horizon: string;
+  identityNorthStar: string;
+  domains: VisionDomain[];
+}
+
