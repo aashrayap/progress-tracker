@@ -1,23 +1,7 @@
 "use client";
 
-import { useState } from "react";
-
-// ── Types ───────────────────────────────────────────────────────────
-
-type Dimension = {
-  id: string;
-  label: string;
-  satisfaction: number;
-  alignment: number;
-  hex: string;
-};
-
-type VisionDomain = {
-  id: string;
-  label: string;
-  state: string;
-  hex: string;
-};
+import { useState, useEffect } from "react";
+import type { VisionData } from "../lib/types";
 
 // ── Ikigai Data ──────────────────────────────────────────────────────
 
@@ -77,126 +61,47 @@ const IKIGAI: IkigaiCircle[] = [
 
 const IKIGAI_CENTER = "Build AI-powered tools that help people execute on what matters — turning reflection into action, chaos into clarity.";
 
-// ── Vision Destination ──────────────────────────────────────────────
-
-const VISION_HORIZON = "3-Year Destination — March 2029";
-
-const VISION_DOMAINS: VisionDomain[] = [
-  {
-    id: "ai",
-    label: "AI & Career",
-    state: "Deep AI expertise applied to domains I love — entrepreneurship, markets, poker, meditation, and consciousness.",
-    hex: "#3b82f6",
-  },
-  {
-    id: "relationships",
-    label: "Relationships",
-    state: "A partner with shared vision — growing together, becoming the best versions of ourselves.",
-    hex: "#ec4899",
-  },
-  {
-    id: "body",
-    label: "Body",
-    state: "200 lbs with an athletic Olympic lifter build.",
-    hex: "#10b981",
-  },
-  {
-    id: "mind",
-    label: "Mind",
-    state: "Calm, resilient, self-aware — understanding my own tendencies through meditation and AI.",
-    hex: "#a855f7",
-  },
-  {
-    id: "community",
-    label: "Community",
-    state: "Active local community I'm embedded in.",
-    hex: "#f97316",
-  },
-  {
-    id: "environment",
-    label: "Environment",
-    state: "Proximity to hobbies and community, access to nature, walkable.",
-    hex: "#64748b",
-  },
-  {
-    id: "learning",
-    label: "Learning",
-    state: "Consistently curious — reading, exploring, never stagnant.",
-    hex: "#14b8a6",
-  },
-  {
-    id: "sobriety",
-    label: "Sobriety",
-    state: "3 years clean from weed, alcohol, and all substances.",
-    hex: "#f59e0b",
-  },
-];
-
-// ── Wheel Data ──────────────────────────────────────────────────────
-
-const DIMENSIONS: Dimension[] = [
-  { id: "health", label: "Health", satisfaction: 3, alignment: 5, hex: "#10b981" },
-  { id: "career", label: "Career", satisfaction: 5, alignment: 5, hex: "#3b82f6" },
-  { id: "relationships", label: "Relationships", satisfaction: 3, alignment: 5, hex: "#ec4899" },
-  { id: "finances", label: "Finances", satisfaction: 6, alignment: 6, hex: "#f59e0b" },
-  { id: "fun", label: "Fun", satisfaction: 6, alignment: 4, hex: "#14b8a6" },
-  { id: "personal_growth", label: "Growth", satisfaction: 4, alignment: 7, hex: "#a855f7" },
-  { id: "environment", label: "Environment", satisfaction: 5, alignment: 5, hex: "#64748b" },
-];
-
 // ── Radar helpers ───────────────────────────────────────────────────
 
 const CX = 150;
 const CY = 150;
 const MAX_R = 120;
-const N = DIMENSIONS.length;
 
 function polarToXY(angle: number, r: number): [number, number] {
   const rad = ((angle - 90) * Math.PI) / 180;
   return [CX + r * Math.cos(rad), CY + r * Math.sin(rad)];
 }
 
-function dimAngle(i: number): number {
-  return (360 / N) * i;
-}
-
-function polygonPoints(values: number[]): string {
-  return values
-    .map((v, i) => {
-      const r = (v / 10) * MAX_R;
-      const [x, y] = polarToXY(dimAngle(i), r);
-      return `${x},${y}`;
-    })
-    .join(" ");
-}
-
-function gridOctagon(scale: number): string {
+function gridPolygon(scale: number, n: number): string {
   const r = (scale / 10) * MAX_R;
-  return Array.from({ length: N }, (_, i) => {
-    const [x, y] = polarToXY(dimAngle(i), r);
+  return Array.from({ length: n }, (_, i) => {
+    const angle = (360 / n) * i;
+    const [x, y] = polarToXY(angle, r);
     return `${x},${y}`;
   }).join(" ");
 }
 
-function wedgePath(i: number): string {
-  const a1 = dimAngle(i) - 360 / N / 2;
-  const a2 = dimAngle(i) + 360 / N / 2;
+function wedgePath(i: number, n: number): string {
+  const step = 360 / n;
+  const a1 = step * i - step / 2;
+  const a2 = step * i + step / 2;
   const [x1, y1] = polarToXY(a1, MAX_R + 35);
   const [x2, y2] = polarToXY(a2, MAX_R + 35);
   return `M ${CX} ${CY} L ${x1} ${y1} A ${MAX_R + 35} ${MAX_R + 35} 0 0 1 ${x2} ${y2} Z`;
 }
 
-// ── Radar Chart ─────────────────────────────────────────────────────
+// ── Radar Chart (labels only) ───────────────────────────────────────
 
 function RadarChart({
+  domains,
   selected,
   onSelect,
 }: {
+  domains: VisionData["domains"];
   selected: string | null;
   onSelect: (id: string | null) => void;
 }) {
-  const satPoints = polygonPoints(DIMENSIONS.map((d) => d.satisfaction));
-  const alignPoints = polygonPoints(DIMENSIONS.map((d) => d.alignment));
+  const n = domains.length;
 
   return (
     <div className="flex flex-col items-center">
@@ -204,15 +109,16 @@ function RadarChart({
         {[2, 4, 6, 8, 10].map((s) => (
           <polygon
             key={s}
-            points={gridOctagon(s)}
+            points={gridPolygon(s, n)}
             fill="none"
             stroke="rgba(255,255,255,0.06)"
             strokeWidth="0.5"
           />
         ))}
 
-        {DIMENSIONS.map((_, i) => {
-          const [x, y] = polarToXY(dimAngle(i), MAX_R + 5);
+        {domains.map((_, i) => {
+          const angle = (360 / n) * i;
+          const [x, y] = polarToXY(angle, MAX_R + 5);
           return (
             <line
               key={i}
@@ -226,47 +132,13 @@ function RadarChart({
           );
         })}
 
-        <polygon
-          points={alignPoints}
-          fill="rgba(168,85,247,0.08)"
-          stroke="rgba(168,85,247,0.4)"
-          strokeWidth="1.5"
-          strokeDasharray="4 2"
-        />
-        <polygon
-          points={satPoints}
-          fill="rgba(59,130,246,0.12)"
-          stroke="rgba(59,130,246,0.6)"
-          strokeWidth="1.5"
-        />
-
-        {DIMENSIONS.map((d, i) => {
-          const angle = dimAngle(i);
-          const satR = (d.satisfaction / 10) * MAX_R;
-          const [sx, sy] = polarToXY(angle, satR);
-          const alignR = (d.alignment / 10) * MAX_R;
-          const [ax, ay] = polarToXY(angle, alignR);
+        {domains.map((d, i) => {
+          const angle = (360 / n) * i;
           const [lx, ly] = polarToXY(angle, MAX_R + 22);
           const isSelected = selected === d.id;
 
           return (
             <g key={d.id}>
-              <circle
-                cx={sx}
-                cy={sy}
-                r={isSelected ? 4.5 : 3}
-                fill={isSelected ? d.hex : "rgba(59,130,246,0.8)"}
-                className="transition-all duration-200"
-              />
-              <circle
-                cx={ax}
-                cy={ay}
-                r={isSelected ? 4.5 : 3}
-                fill="none"
-                stroke={isSelected ? d.hex : "rgba(168,85,247,0.6)"}
-                strokeWidth="1.5"
-                className="transition-all duration-200"
-              />
               <text
                 x={lx}
                 y={ly}
@@ -279,18 +151,8 @@ function RadarChart({
               >
                 {d.label}
               </text>
-              <text
-                x={lx}
-                y={ly + 11}
-                textAnchor="middle"
-                dominantBaseline="central"
-                fill={isSelected ? "rgba(255,255,255,0.7)" : "rgba(161,161,170,0.4)"}
-                fontSize="8"
-              >
-                {d.satisfaction}/{d.alignment}
-              </text>
               <path
-                d={wedgePath(i)}
+                d={wedgePath(i, n)}
                 fill="transparent"
                 className="cursor-pointer"
                 onClick={() => onSelect(selected === d.id ? null : d.id)}
@@ -299,22 +161,10 @@ function RadarChart({
           );
         })}
 
-        <text x={CX} y={CY - 4} textAnchor="middle" fill="rgba(161,161,170,0.5)" fontSize="9" fontWeight="500">
+        <text x={CX} y={CY} textAnchor="middle" fill="rgba(161,161,170,0.5)" fontSize="9" fontWeight="500">
           ASH
         </text>
-        <text x={CX} y={CY + 8} textAnchor="middle" fill="rgba(161,161,170,0.3)" fontSize="7">
-          sat / align
-        </text>
       </svg>
-
-      <div className="flex items-center gap-4 mt-2 text-[10px] text-zinc-500">
-        <span className="flex items-center gap-1">
-          <span className="w-2.5 h-0.5 bg-blue-500/60 rounded inline-block" /> Satisfaction
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="w-2.5 h-0.5 border border-purple-500/60 rounded inline-block border-dashed" /> Alignment
-        </span>
-      </div>
     </div>
   );
 }
@@ -431,25 +281,45 @@ function IkigaiDetail({ circle }: { circle: IkigaiCircle }) {
 
 // ── Vision Destination ───────────────────────────────────────────────
 
-function VisionDestination() {
+function VisionDestination({ data }: { data: VisionData }) {
+  const [expanded, setExpanded] = useState<string | null>(null);
+
   return (
     <section className="space-y-3">
       <div className="text-center">
         <h2 className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
-          {VISION_HORIZON}
+          3-Year Destination — {data.horizon}
         </h2>
       </div>
       <div className="grid gap-2 sm:grid-cols-2">
-        {VISION_DOMAINS.map((d) => (
+        {data.domains.map((d) => (
           <div
             key={d.id}
-            className="rounded-xl border border-white/5 bg-zinc-900/40 p-3"
+            className="rounded-xl border border-white/5 bg-zinc-900/40 p-3 cursor-pointer"
+            onClick={() => setExpanded(expanded === d.id ? null : d.id)}
           >
             <div className="flex items-center gap-2 mb-1.5">
               <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: d.hex }} />
               <span className="text-xs font-semibold text-zinc-200">{d.label}</span>
             </div>
-            <p className="text-[11px] text-zinc-400 leading-relaxed">{d.state}</p>
+            <p className="text-[11px] text-zinc-400 leading-relaxed">{d.threeYearDestination}</p>
+
+            {expanded === d.id && (
+              <div className="mt-2 pt-2 border-t border-white/5 space-y-1.5">
+                <div>
+                  <span className="text-[10px] font-medium text-zinc-500 uppercase">Now</span>
+                  <p className="text-[11px] text-zinc-400 leading-relaxed">{d.now}</p>
+                </div>
+                <div>
+                  <span className="text-[10px] font-medium text-zinc-500 uppercase">90-Day</span>
+                  <p className="text-[11px] text-zinc-400 leading-relaxed">{d.ninetyDay}</p>
+                </div>
+                <div>
+                  <span className="text-[10px] font-medium text-zinc-500 uppercase">3-Year</span>
+                  <p className="text-[11px] text-zinc-400 leading-relaxed">{d.threeYear}</p>
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -460,8 +330,21 @@ function VisionDestination() {
 // ── Page ────────────────────────────────────────────────────────────
 
 export default function VisionPage() {
+  const [visionData, setVisionData] = useState<VisionData | null>(null);
   const [wheelSelected, setWheelSelected] = useState<string | null>(null);
   const [ikigaiSelected, setIkigaiSelected] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/vision").then(r => r.json()).then(setVisionData);
+  }, []);
+
+  if (!visionData) {
+    return (
+      <div className="min-h-screen bg-black text-zinc-100 flex items-center justify-center">
+        <div className="text-zinc-500 text-sm">Loading vision...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black text-zinc-100">
@@ -471,14 +354,23 @@ export default function VisionPage() {
             <h1 className="text-2xl sm:text-3xl font-bold mb-1">Vision</h1>
           </div>
 
-          <VisionDestination />
+          <div className="rounded-xl border border-white/5 bg-zinc-900/40 p-4 text-center">
+            <h2 className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider mb-2">
+              Identity North Star
+            </h2>
+            <p className="text-sm text-zinc-300 leading-relaxed max-w-lg mx-auto">
+              {visionData.identityNorthStar}
+            </p>
+          </div>
+
+          <VisionDestination data={visionData} />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <h2 className="text-xs font-medium text-zinc-500 uppercase tracking-wider text-center">
                 Wheel of Life
               </h2>
-              <RadarChart selected={wheelSelected} onSelect={setWheelSelected} />
+              <RadarChart domains={visionData.domains} selected={wheelSelected} onSelect={setWheelSelected} />
             </div>
             <div className="space-y-2">
               <h2 className="text-xs font-medium text-zinc-500 uppercase tracking-wider text-center">
