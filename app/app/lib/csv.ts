@@ -11,7 +11,7 @@ import type {
   VisionData,
   WorkoutDay,
 } from "./types";
-import { todayStr } from "./utils";
+import { daysAgoStr, todayStr } from "./utils";
 import { config, normalizeWorkoutKey } from "./config";
 
 export type { DailySignalEntry, InboxEntry };
@@ -180,6 +180,18 @@ export function appendDailySignals(entries: DailySignalEntry[]): void {
   appendLines(DAILY_SIGNALS_PATH, DAILY_SIGNALS_HEADER, lines);
 }
 
+export function upsertDailySignal(
+  entry: DailySignalEntry,
+  match: (row: DailySignalEntry) => boolean
+): void {
+  const rows = readDailySignals();
+  const idx = rows.findIndex(match);
+  if (idx === -1) rows.push(entry);
+  else rows[idx] = entry;
+  const lines = rows.map(serializeDailySignal);
+  writeAll(DAILY_SIGNALS_PATH, DAILY_SIGNALS_HEADER, lines);
+}
+
 export interface MetricHistoryEntry {
   date: string;
   value: string;
@@ -196,6 +208,19 @@ export function getMetricHistory(signals: DailySignalEntry[], signal: string): M
       context: e.context || "",
       category: e.category || "",
     }));
+}
+
+export function getDayData(signals: DailySignalEntry[], date: string) {
+  const entries = signals.filter((e) => e.date === date);
+  const result: Record<string, { value: string; context: string; category: string }> = {};
+  for (const e of entries) {
+    result[e.signal] = {
+      value: e.value,
+      context: e.context || "",
+      category: e.category || "",
+    };
+  }
+  return result;
 }
 
 export function getLatestValue(signals: DailySignalEntry[], signal: string): string | null {
@@ -218,6 +243,13 @@ export function getStreak(signals: DailySignalEntry[], signal: string): number {
   return streak;
 }
 
+export function getLastResetDate(signals: DailySignalEntry[]): string | null {
+  const resets = signals
+    .filter((e) => e.signal === "reset")
+    .sort((a, b) => b.date.localeCompare(a.date));
+  return resets[0]?.date ?? null;
+}
+
 export function getDaysSince(dateStr: string): number {
   const start = new Date(dateStr);
   const now = new Date();
@@ -227,6 +259,24 @@ export function getDaysSince(dateStr: string): number {
 // ─────────────────────────────────────────────────────────────────────────────
 // Inbox
 // ─────────────────────────────────────────────────────────────────────────────
+
+export function readInbox(): InboxEntry[] {
+  if (!fs.existsSync(INBOX_PATH)) return [];
+  const lines = readDataLines(INBOX_PATH);
+  return lines.map((line) => {
+    const clean = parseCSVLine(line);
+    return {
+      captureId: clean[0] || "",
+      capturedAt: clean[1] || "",
+      source: clean[2] || "",
+      rawText: clean[3] || "",
+      status: (clean[4] as InboxEntry["status"]) || "new",
+      suggestedDestination: clean[5] || "",
+      normalizedText: clean[6] || "",
+      error: clean[7] || "",
+    };
+  });
+}
 
 export function appendInbox(entries: InboxEntry[]): void {
   const lines = entries.map(
@@ -238,6 +288,25 @@ export function appendInbox(entries: InboxEntry[]): void {
       )},${csvQuote(e.error || "")}`
   );
   appendLines(INBOX_PATH, INBOX_HEADER, lines);
+}
+
+export function updateInboxEntry(
+  captureId: string,
+  updates: Partial<Omit<InboxEntry, "captureId">>
+): void {
+  const rows = readInbox();
+  const idx = rows.findIndex((r) => r.captureId === captureId);
+  if (idx === -1) return;
+  rows[idx] = { ...rows[idx], ...updates };
+  const lines = rows.map(
+    (e) =>
+      `${csvQuote(e.captureId)},${csvQuote(e.capturedAt)},${csvQuote(e.source)},${csvQuote(
+        e.rawText
+      )},${csvQuote(e.status)},${csvQuote(e.suggestedDestination)},${csvQuote(
+        e.normalizedText || ""
+      )},${csvQuote(e.error || "")}`
+  );
+  writeAll(INBOX_PATH, INBOX_HEADER, lines);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -353,6 +422,12 @@ export function getPlanForDateRange(plan: PlanEntry[], start: string, end: strin
       if (a.date !== b.date) return a.date.localeCompare(b.date);
       return a.start - b.start;
     });
+}
+
+export function getIncompletePlanItems(date: string): PlanEntry[] {
+  return readPlan()
+    .filter((entry) => entry.date === date && entry.done !== "1")
+    .sort((a, b) => a.start - b.start);
 }
 
 export interface CurrentIntention {
@@ -730,6 +805,11 @@ export function archiveReflection(date: string, domain: string, index: number): 
   writeAll(REFLECTIONS_PATH, REFLECTIONS_HEADER, lines);
 }
 
+export function getYesterdayChanges(reflections: ReflectionEntry[]): ReflectionEntry[] {
+  const yesterday = daysAgoStr(1);
+  return reflections.filter((r) => r.date === yesterday && r.change.trim());
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Groceries
 // ─────────────────────────────────────────────────────────────────────────────
@@ -852,6 +932,21 @@ export function readVision(): VisionData | null {
   } catch {
     return null;
   }
+}
+
+export function readBriefingFeedback(): BriefingFeedbackEntry[] {
+  if (!fs.existsSync(BRIEFING_FEEDBACK_PATH)) return [];
+  const lines = readDataLines(BRIEFING_FEEDBACK_PATH);
+  return lines.map((line) => {
+    const c = parseCSVLine(line);
+    return {
+      date: c[0] || "",
+      state: c[1] || "",
+      rating: c[2] || "",
+      feedback_text: c[3] || "",
+      briefing_hash: c[4] || "",
+    };
+  });
 }
 
 export function appendBriefingFeedback(entry: BriefingFeedbackEntry): void {
