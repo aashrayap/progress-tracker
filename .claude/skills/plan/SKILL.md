@@ -25,23 +25,14 @@ Run `date '+%Y-%m-%d %A'` at the start to get the actual date and weekday.
 
 ### `/plan` (bare) — show today + context
 
-1. Read today's `plan.csv` rows, format as time-sorted block list
-2. Read current week's `weekly_goal` signals from `daily_signals.csv` (find latest week start with `weekly_goal` entries)
-3. Read latest `weekly_intention` and today's `daily_intention` (signal=intention) from `daily_signals.csv`
-4. Present:
-   ```
-   ┌─ Today's Plan ─────────────────────────────┐
-   │ 9:00-10:00  Deep work              · open  │
-   │ 10:00-11:00 Gym                    ✓ done  │
-   │ 14:00-15:30 Code review            · open  │
-   └─────────────────────────────────────────────┘
-   Weekly goals: 4 gym sessions, ship auth refactor
-   Intention: reclaim the midweek
-   ```
-4a. If no daily intention is set for today (signal=intention not found for today's date):
-    - Read latest `weekly_intention` from `daily_signals.csv`
-    - Prompt: "No daily intention set. This week: *{weekly_intention}*. Want to set one? (or skip)"
-    - If weekly_intention is null: "No daily intention set. Want to set one? (or skip)"
+1. Run `node scripts/precompute-plan.js` from the tracker directory and parse the JSON output
+2. Display `display.today_plan` verbatim
+3. Below the plan box, show context from digest:
+   - `Weekly goals:` list from `digest.weekly_goals`
+   - `Intention:` from `digest.weekly_intention` or `digest.daily_intention`
+4. If `digest.daily_intention` is null (no daily intention set for today):
+    - Show `digest.weekly_intention` if available: "No daily intention set. This week: *{weekly_intention}*. Want to set one? (or skip)"
+    - If `digest.weekly_intention` is also null: "No daily intention set. Want to set one? (or skip)"
     - If user provides a mantra: write to daily_signals.csv (signal=intention, value=domain, context=mantra, category=domain)
     - If user says skip: continue to step 5
 5. Ask: "What do you want to do?" and wait for user input.
@@ -60,12 +51,9 @@ Run `date '+%Y-%m-%d %A'` at the start to get the actual date and weekday.
 1. Read today's `plan.csv`, find matching block (case-insensitive substring match on item)
 2. If no match found, tell user and exit
 3. Mark `done="1"` via upsert (read file, find matching row, update done field, write back)
-4. **Signal mapping** (keyword map — matches `router.ts` logic):
-   - `gym` → write `gym=1` to daily_signals.csv
-   - `sleep` → write `sleep=1`
-   - `meditate` → write `meditate=1`
-   - `deep work` → write `deep_work=1`
-   - Match is case-insensitive substring of the plan item against these keywords
+4. **Signal mapping** — run `node scripts/precompute-plan.js` and use `digest.signal_map` for keyword matching:
+   - For each key-value pair in `signal_map`, check if the plan item contains the value (case-insensitive substring)
+   - If matched, write `{key}=1` to daily_signals.csv (e.g., item contains "gym" → write `gym=1`)
 5. If item does NOT match any keyword → ask: "Does this correspond to a trackable signal? (gym/sleep/meditate/deep_work/ate_clean/weed/lol/poker/clarity, or skip)"
    - If user names a signal, write it
    - If skip, no signal written
