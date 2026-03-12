@@ -113,7 +113,25 @@ Sleep is today's cornerstone habit — going to bed on time last night sets up t
 - If today's `sleep` is missing: "Did you sleep on time last night?"
 - Write to `daily_signals.csv` with today's date immediately.
 - Sleep is NEVER part of yesterday's backfill. If the user mentions sleep while listing yesterday's habits, log it on TODAY's date and clarify if needed.
-- Once sleep is answered, show the menu.
+- Once sleep is answered, proceed to the daily intention check (if needed), then show the menu.
+
+### Daily Intention (only if not set today)
+
+If `digest.daily_intention` is null (not yet set today):
+
+1. Show weekly context if available: "This week: *{digest.weekly_intention}*"
+2. Ask: "What's today's intention in mantra form? (e.g., 'bounce back clean', not 'go to gym')"
+3. If the user gives a task-style answer, ask for a concise mantra rewrite.
+4. Do NOT auto-copy the weekly intention — weekly guides daily, different granularity.
+5. Infer `domain` from the final intention.
+6. Write to `daily_signals.csv`:
+   - `signal=intention`
+   - `value=<domain>`
+   - `context=<mantra text>`
+   - `category=<domain>`
+7. Allow skip: if user says `skip`, move on without writing.
+
+If `digest.daily_intention` is already set, skip this section entirely and go to the menu.
 
 ### Menu
 
@@ -126,7 +144,7 @@ What do you want to do?
 2. Emotional check
 3. Reflect on yesterday
 4. Inbox triage     (3 items + 2 shipped PRs)
-5. Plan today       (includes intention)
+5. Plan today
 ```
 
 Rules:
@@ -333,28 +351,9 @@ Rules:
 
 ### Option 5: Plan Today
 
-Goal: turn check-in context into executable plan blocks. Includes daily intention.
+Goal: turn check-in context into executable plan blocks.
 
-#### 5.1 Intention (mantra, not a task)
-
-**Weekly context first:** Use `digest.weekly_intention` from the precompute output. If non-null, show it as context before asking:
-
-"This week's intention: *{mantra}*. What's today's intention in mantra form? (e.g., 'bounce back clean', not 'go to gym')"
-
-If no weekly intention exists, just ask the daily intention question without context.
-
-- If the user gives a task-style answer, ask for a concise mantra rewrite.
-- Do NOT auto-copy the weekly intention — weekly guides daily, different granularity.
-- Infer `domain` from the final intention.
-- Write to `daily_signals.csv`:
-  - `signal=intention`
-  - `value=<domain>`
-  - `context=<mantra text>`
-  - `category=<domain>`
-
-Allow skip: if user says `skip`, leave intention unchanged for today.
-
-#### 5.2 Rollover incomplete items from yesterday (skippable)
+#### 5.1 Rollover incomplete items from yesterday (skippable)
 
 Use `digest.rollover_items` from the precompute output (each has `item` and `roll_count`).
 
@@ -384,7 +383,7 @@ For each choice:
 
 If none are incomplete, say: "No incomplete plan items from yesterday."
 
-#### 5.3 Context-aware surfacing from todos/reflections/signals (skippable)
+#### 5.2 Context-aware surfacing from todos/reflections/signals (skippable)
 
 Use digest fields from precompute output:
 - `digest.stale_todos` — open todos older than 7 days
@@ -407,12 +406,12 @@ For each suggestion:
 
 Allow global skip: "skip suggestions" keeps everything unchanged.
 
-#### 5.4 Confirm today's block plan (skippable)
+#### 5.3 Confirm today's block plan (skippable)
 
 Show today's plan including:
 - existing today's blocks
 - kept/deferred items that were scheduled today
-- any surfaced actions added in 5.3
+- any surfaced actions added in 5.2
 
 Ask: "Anything else to adjust, or lock this in?"
 - If user adjusts timing/items, write updates to `plan.csv`.
