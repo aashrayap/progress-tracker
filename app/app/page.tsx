@@ -7,6 +7,8 @@ import HabitTooltip from "./components/HabitTooltip";
 import HabitLogHistory, { type HabitLogEntry } from "./components/HabitLogHistory";
 import { HABIT_CONFIG } from "./lib/config";
 import BriefingCard from "./components/BriefingCard";
+import ExperimentsTable from "./components/ExperimentsTable";
+import PlanCard from "./components/PlanCard";
 
 interface DopamineDay {
   date: string;
@@ -47,6 +49,7 @@ interface BriefingData {
   generated_at: string;
   input_hash: string;
   verified: boolean;
+  planInsight?: string;
 }
 
 interface AppData {
@@ -60,7 +63,7 @@ interface AppData {
     log: DopamineDay[];
     streaks: { lol: number; weed: number; poker: number; clarity: number };
   };
-  todaysPlan: { start: number; end: number; item: string; done: string; notes: string }[];
+  todaysPlan: { date: string; start: number; end: number; item: string; done: string; notes: string }[];
   habitTracker: {
     dates: string[];
     days: Record<string, boolean>[];
@@ -72,6 +75,10 @@ interface AppData {
   dailyQuote: DailyQuote | null;
   insight: {
     insight: { streak: string; warning: string | null; momentum: string };
+  };
+  experiments: {
+    current: { name: string; dayCount: number; durationDays: number; domain: string; isExpired: boolean }[];
+    past: { name: string; verdict: string; reflection: string; startDate: string }[];
   };
 }
 
@@ -306,8 +313,8 @@ export default function Home() {
                 const [y, m, day] = d.split("-").map(Number);
                 return new Date(y, m - 1, day).toLocaleDateString("en-US", { month: "short", day: "numeric" });
               };
-              const weekCells = (indices: number[], renderCell: (i: number) => React.ReactNode) => (
-                <div className="flex gap-1" style={{ width: `${fullWeekWidth}px` }}>{indices.map(renderCell)}</div>
+              const weekCells = (indices: number[], weekIndex: number, renderCell: (i: number) => React.ReactNode) => (
+                <div key={weekIndex} className="flex gap-1" style={{ width: `${fullWeekWidth}px` }}>{indices.map(renderCell)}</div>
               );
               return (
                 <div
@@ -343,7 +350,7 @@ export default function Home() {
                   <div className="flex items-center gap-2.5">
                     <span className="text-xs text-zinc-300 w-[4.5rem] shrink-0 text-right font-medium">Score</span>
                     <div className="flex gap-3">
-                      {weeks.map((wk, wi) => weekCells(wk, (i) => {
+                      {weeks.map((wk, wi) => weekCells(wk, wi, (i) => {
                         const dateStr = dates[i];
                         const entry = data.dopamineReset.log.find((l) => l.date === dateStr);
                         const isToday = i === dates.length - 1;
@@ -351,6 +358,7 @@ export default function Home() {
                         return (
                           <div
                             key={dateStr}
+                            data-col={i}
                             className={`w-7 h-7 rounded cursor-pointer ${color} ${isToday ? "ring-2 ring-zinc-400 ring-offset-1 ring-offset-zinc-950" : ""}`}
                             title={score !== null ? `${score}/8` : "Not logged"}
                             onMouseEnter={() => setHoveredCol(i)}
@@ -371,7 +379,7 @@ export default function Home() {
                         {HABIT_CONFIG[habitKey].label}
                       </span>
                       <div className="flex gap-3">
-                        {weeks.map((wk, wi) => weekCells(wk, (i) => {
+                        {weeks.map((wk, wi) => weekCells(wk, wi, (i) => {
                           const val = data.habitTracker.days[i][habitKey];
                           const isToday = i === data.habitTracker.days.length - 1;
                           return (
@@ -396,6 +404,33 @@ export default function Home() {
               );
             })()}
           </section>
+
+          {/* Intentions */}
+          {(() => {
+            const today = new Date().toISOString().slice(0, 10);
+            const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+            const weekly = data.weeklyIntention && data.weeklyIntention.date >= sevenDaysAgo ? data.weeklyIntention : null;
+            const daily = data.dailyIntention && data.dailyIntention.date === today ? data.dailyIntention : null;
+            return (
+              <div className="px-4 py-3 bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl space-y-1">
+                <p className="text-sm text-zinc-400">This week: {weekly ? <span className="text-zinc-200">{weekly.mantra}</span> : <span className="text-zinc-500">not set</span>}</p>
+                <p className="text-sm text-zinc-400">Today: {daily ? <span className="text-zinc-200">{daily.mantra}</span> : <span className="text-zinc-500">not set</span>}</p>
+              </div>
+            );
+          })()}
+
+          {/* Experiments */}
+          <ExperimentsTable
+            current={data.experiments.current}
+            past={data.experiments.past}
+          />
+
+          {/* Plan Card */}
+          <PlanCard
+            plan={data.todaysPlan}
+            planInsight={data.briefing?.planInsight}
+            onRefresh={fetchData}
+          />
 
         </div>
       </div>
