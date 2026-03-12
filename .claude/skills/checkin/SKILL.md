@@ -533,7 +533,7 @@ If no expired experiments, skip step 1.
 
 **Review last week's goals first:**
 
-Read prior week's `signal=weekly_goal` rows from `daily_signals.csv`.
+Use `digest.goals_last_week` from the precompute script output. Each entry has `goal` and `domain`.
 
 If any exist:
 ```
@@ -586,7 +586,7 @@ If any exist:
 
 ### Phase 7: Stale Review & Close
 
-- Review stale todos: "These have been open 7+ days — keep, kill, or defer?" (ask user)
+- Use `digest.stale_todos` from the precompute script output. Present items with age: "These have been open 7+ days — keep, kill, or defer?" (ask user)
 - Write `checkin_weekly=1` to `daily_signals.csv`
 
 ### Weekly Phase Order Summary

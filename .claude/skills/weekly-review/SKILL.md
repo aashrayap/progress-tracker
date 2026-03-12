@@ -9,19 +9,22 @@ Quick data-only snapshot. For the full interactive weekly check-in (with domain 
 
 This skill runs Phases 1-2 only from the weekly check-in — the quantitative score card and mood/trigger arc. No interactive questions, no writes.
 
-## Core Sources
-- `~/Documents/2026/tracker/data/daily_signals.csv`
-- `~/Documents/2026/tracker/data/workouts.csv`
-- `~/Documents/2026/tracker/data/reflections.csv`
-- `~/Documents/2026/tracker/data/plan.csv`
-- `~/Documents/2026/tracker/data/todos.csv`
-- `~/Documents/2026/tracker/docs/vision.md`
+## Phase 1: Score Card
 
-## Output
+Run `node ~/Documents/2026/tracker/scripts/precompute-weekly.js` and parse the JSON output.
 
-Run the same computation as `/checkin weekly` Phase 1 (Score Card) and Phase 2 (Mood & Trigger Arc). Present the auto-generated output. Do not ask interactive questions or write to any CSVs.
+Display `display.score_card` **verbatim** — do not reformat, re-compute, or summarize it.
+
+## Phase 2: Mood & Trigger Arc
+
+Use `digest.mood_arc` and `digest.triggers` from the script output. AI interprets patterns only — do not re-read raw CSVs.
+
+If `digest.mood_arc` has 3+ entries, present the emotional arc with pattern detection (correlation between mood shifts and habit misses/relapses). If fewer than 3, note "Not enough mood data this week."
+
+If `digest.triggers` is non-empty, present triggers with pattern detection (time, circumstance, recurring patterns).
 
 ## Rules
-- Use actual logged data only.
-- Highlight patterns, not anecdotes.
 - Read-only — no CSV writes.
+- Do not read raw CSVs for score card generation or aggregation — the script handles all computation.
+- Highlight patterns, not anecdotes.
+- Use actual logged data only (via the script output).
