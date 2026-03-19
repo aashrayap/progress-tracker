@@ -18,6 +18,7 @@ export const HABIT_CONFIG = {
   meditate: { label: "Meditate", abbr: "M" },
   deep_work: { label: "Deep Work", abbr: "D" },
   ate_clean: { label: "Ate Clean", abbr: "E" },
+  vision_reviewed: { label: "Vision", abbr: "V" },
 } satisfies Record<string, HabitConfigEntry>;
 
 const LEGACY_WORKOUT_ALIASES: Record<string, string> = {
@@ -111,6 +112,7 @@ export const config = {
       { id: "bench", name: "Bench Press", sets: 3, reps: "5-8" },
       { id: "incline_bench", name: "Incline Bench Press", sets: 3, reps: "6-10" },
       { id: "ohp", name: "Overhead Press", sets: 3, reps: "6-8" },
+      { id: "lat_raise", name: "Lateral Raise", sets: 3, reps: "10-15" },
     ],
     pull: [
       { id: "lat_pulldown", name: "Lat Pulldown", sets: 3, reps: "6-10" },
@@ -138,11 +140,11 @@ export const config = {
 
   workoutTemplates: {
     A: ["squat", "bench", "lat_pulldown"],
-    B: ["ohp", "barbell_row", "incline_bench"],
+    B: ["incline_bench", "barbell_row", "lat_raise"],
     C: ["rdl", "bench", "pullup"],
     D: ["front_squat", "incline_bench", "cable_row"],
     E: ["lunges", "ohp", "pullup"],
-    G: ["clean", "machine_bicep_curl"],
+    G: ["clean", "machine_bicep_curl", "rdl"],
   } as Record<string, string[]>,
 
   cardioTemplates: {
@@ -162,16 +164,16 @@ export const config = {
     },
     rotation: [
       { key: "A", kind: "lift", label: "Lift A", detail: "Back Squat, Bench Press, Lat Pulldown" },
-      { key: "B", kind: "lift", label: "Lift B", detail: "OHP, Barbell Row, Incline Bench" },
+      { key: "B", kind: "lift", label: "Lift B", detail: "Incline Bench, Barbell Row, Lateral Raise" },
       { key: "C", kind: "lift", label: "Lift C", detail: "RDL, Bench Press, Pull-Up" },
       { key: "D", kind: "lift", label: "Lift D", detail: "Front Squat, Incline Bench, Cable Row" },
       { key: "E", kind: "lift", label: "Lift E", detail: "Lunges, OHP, Pull-Up" },
       { key: "F", kind: "cardio", label: "Zone 2", detail: "Conversational pace, 45 min", minutes: 45 },
-      { key: "G", kind: "cardio", label: "Moderate Cardio", detail: "Bike, jog, or brisk walk, 25 min + Barbell Clean, Machine Bicep Curl", minutes: 25 },
+      { key: "G", kind: "cardio", label: "Moderate Cardio", detail: "Bike, jog, or brisk walk, 25 min + Barbell Clean, Machine Bicep Curl, RDL", minutes: 25 },
     ] as RotationDay[],
     masterList: {
       lower: ["squat", "front_squat", "lunges", "rdl", "trap_bar_deadlift"],
-      push: ["bench", "incline_bench", "ohp"],
+      push: ["bench", "incline_bench", "ohp", "lat_raise"],
       pull: ["lat_pulldown", "lat_row", "pullup"],
     },
   },

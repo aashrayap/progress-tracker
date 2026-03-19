@@ -183,20 +183,81 @@ export interface ResourceEntry {
   notes: string;
 }
 
+export interface LanguageRules {
+  use: string[];
+  forbid: string[];
+}
+
+export interface IdentityScript {
+  coreTraits: string;
+  nonNegotiables: string;
+  languageRules: LanguageRules;
+  physicalPresence: string;
+  socialFilter: string;
+  decisionStyle: string;
+}
+
+export interface RitualBlock {
+  steps: string[];
+  habitStacks: string[];
+}
+
+export interface RitualBlueprint {
+  morning: RitualBlock;
+  midday: RitualBlock;
+  evening: RitualBlock;
+}
+
+export interface TriggerReplacement {
+  trigger: string;
+  replacement: string;
+}
+
+export interface InputControl {
+  mentors: string[];
+  books: string[];
+  podcasts: string[];
+  playlists: string[];
+  nutritionRules: string[];
+  purgeList: string[];
+}
+
+export interface Distractions {
+  digital: string[];
+  physical: string[];
+  social: string[];
+  mental: string[];
+  triggerReplacements: TriggerReplacement[];
+}
+
+export interface HabitAudit {
+  productive: string[];
+  neutral: string[];
+  destructive: string[];
+}
+
 export interface VisionDomain {
   id: string;
   label: string;
-  canonicalId: string;
   hex: string;
-  threeYearDestination: string;
-  now: string;
-  ninetyDay: string;
-  threeYear: string;
+  canonicalIds: string[];
+  actual: string;
+  becoming: string;
+  timeline: string;
+  habits: string[];
 }
 
 export interface VisionData {
-  horizon: string;
-  identityNorthStar: string;
+  identityScript: IdentityScript;
+  antiVision: string;
   domains: VisionDomain[];
+  intentions: {
+    daily: string;
+    weekly: string;
+  };
+  ritualBlueprint: RitualBlueprint;
+  inputControl: InputControl;
+  distractions: Distractions;
+  habitAudit: HabitAudit;
 }
 

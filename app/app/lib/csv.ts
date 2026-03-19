@@ -42,6 +42,8 @@ const BRIEFING_PATH = path.join(DATA_ROOT, "briefing.json");
 const VISION_PATH = path.join(DATA_ROOT, "vision.json");
 const BRIEFING_FEEDBACK_PATH = path.join(DATA_ROOT, "briefing_feedback.csv");
 const BRIEFING_FEEDBACK_HEADER = "date,state,rating,feedback_text,briefing_hash";
+const EXPERIMENTS_PATH = path.join(DATA_ROOT, "experiments.csv");
+const EXPERIMENTS_HEADER = "name,hypothesis,start_date,duration_days,domain,status,verdict,reflection";
 
 export interface PlanEntry {
   date: string;
@@ -78,6 +80,17 @@ export interface ReflectionEntry {
   lesson: string;
   change: string;
   archived?: string;
+}
+
+export interface ExperimentEntry {
+  name: string;
+  hypothesis: string;
+  startDate: string;      // YYYY-MM-DD
+  durationDays: number;   // default 7
+  domain: string;         // canonical domain ID
+  status: string;         // "active" | "concluded"
+  verdict: string;        // "" | "kept" | "dropped" | "extended"
+  reflection: string;     // "" when active
 }
 
 function ensureFileWithHeader(filePath: string, header: string): void {
@@ -180,18 +193,6 @@ export function appendDailySignals(entries: DailySignalEntry[]): void {
   appendLines(DAILY_SIGNALS_PATH, DAILY_SIGNALS_HEADER, lines);
 }
 
-export function upsertDailySignal(
-  entry: DailySignalEntry,
-  match: (row: DailySignalEntry) => boolean
-): void {
-  const rows = readDailySignals();
-  const idx = rows.findIndex(match);
-  if (idx === -1) rows.push(entry);
-  else rows[idx] = entry;
-  const lines = rows.map(serializeDailySignal);
-  writeAll(DAILY_SIGNALS_PATH, DAILY_SIGNALS_HEADER, lines);
-}
-
 export interface MetricHistoryEntry {
   date: string;
   value: string;
@@ -208,19 +209,6 @@ export function getMetricHistory(signals: DailySignalEntry[], signal: string): M
       context: e.context || "",
       category: e.category || "",
     }));
-}
-
-export function getDayData(signals: DailySignalEntry[], date: string) {
-  const entries = signals.filter((e) => e.date === date);
-  const result: Record<string, { value: string; context: string; category: string }> = {};
-  for (const e of entries) {
-    result[e.signal] = {
-      value: e.value,
-      context: e.context || "",
-      category: e.category || "",
-    };
-  }
-  return result;
 }
 
 export function getLatestValue(signals: DailySignalEntry[], signal: string): string | null {
@@ -243,13 +231,6 @@ export function getStreak(signals: DailySignalEntry[], signal: string): number {
   return streak;
 }
 
-export function getLastResetDate(signals: DailySignalEntry[]): string | null {
-  const resets = signals
-    .filter((e) => e.signal === "reset")
-    .sort((a, b) => b.date.localeCompare(a.date));
-  return resets[0]?.date ?? null;
-}
-
 export function getDaysSince(dateStr: string): number {
   const start = new Date(dateStr);
   const now = new Date();
@@ -259,24 +240,6 @@ export function getDaysSince(dateStr: string): number {
 // ─────────────────────────────────────────────────────────────────────────────
 // Inbox
 // ─────────────────────────────────────────────────────────────────────────────
-
-export function readInbox(): InboxEntry[] {
-  if (!fs.existsSync(INBOX_PATH)) return [];
-  const lines = readDataLines(INBOX_PATH);
-  return lines.map((line) => {
-    const clean = parseCSVLine(line);
-    return {
-      captureId: clean[0] || "",
-      capturedAt: clean[1] || "",
-      source: clean[2] || "",
-      rawText: clean[3] || "",
-      status: (clean[4] as InboxEntry["status"]) || "new",
-      suggestedDestination: clean[5] || "",
-      normalizedText: clean[6] || "",
-      error: clean[7] || "",
-    };
-  });
-}
 
 export function appendInbox(entries: InboxEntry[]): void {
   const lines = entries.map(
@@ -288,25 +251,6 @@ export function appendInbox(entries: InboxEntry[]): void {
       )},${csvQuote(e.error || "")}`
   );
   appendLines(INBOX_PATH, INBOX_HEADER, lines);
-}
-
-export function updateInboxEntry(
-  captureId: string,
-  updates: Partial<Omit<InboxEntry, "captureId">>
-): void {
-  const rows = readInbox();
-  const idx = rows.findIndex((r) => r.captureId === captureId);
-  if (idx === -1) return;
-  rows[idx] = { ...rows[idx], ...updates };
-  const lines = rows.map(
-    (e) =>
-      `${csvQuote(e.captureId)},${csvQuote(e.capturedAt)},${csvQuote(e.source)},${csvQuote(
-        e.rawText
-      )},${csvQuote(e.status)},${csvQuote(e.suggestedDestination)},${csvQuote(
-        e.normalizedText || ""
-      )},${csvQuote(e.error || "")}`
-  );
-  writeAll(INBOX_PATH, INBOX_HEADER, lines);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -424,12 +368,6 @@ export function getPlanForDateRange(plan: PlanEntry[], start: string, end: strin
     });
 }
 
-export function getIncompletePlanItems(date: string): PlanEntry[] {
-  return readPlan()
-    .filter((entry) => entry.date === date && entry.done !== "1")
-    .sort((a, b) => a.start - b.start);
-}
-
 export interface CurrentIntention {
   date: string;
   domain: string;
@@ -497,7 +435,7 @@ export function getCurrentIntentions(): CurrentIntentions {
 }
 
 export function getHabitsForDate(signals: DailySignalEntry[], date: string): Record<string, boolean> {
-  const habitMetrics = ["weed", "lol", "poker", "clarity", "gym", "sleep", "meditate", "deep_work", "ate_clean"];
+  const habitMetrics = ["weed", "lol", "poker", "clarity", "gym", "sleep", "meditate", "deep_work", "ate_clean", "vision_reviewed"];
   const dayEntries = signals.filter((e) => e.date === date && habitMetrics.includes(e.signal));
   const habits: Record<string, boolean> = {};
   for (const entry of dayEntries) {
@@ -805,11 +743,6 @@ export function archiveReflection(date: string, domain: string, index: number): 
   writeAll(REFLECTIONS_PATH, REFLECTIONS_HEADER, lines);
 }
 
-export function getYesterdayChanges(reflections: ReflectionEntry[]): ReflectionEntry[] {
-  const yesterday = daysAgoStr(1);
-  return reflections.filter((r) => r.date === yesterday && r.change.trim());
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Groceries
 // ─────────────────────────────────────────────────────────────────────────────
@@ -934,19 +867,12 @@ export function readVision(): VisionData | null {
   }
 }
 
-export function readBriefingFeedback(): BriefingFeedbackEntry[] {
-  if (!fs.existsSync(BRIEFING_FEEDBACK_PATH)) return [];
-  const lines = readDataLines(BRIEFING_FEEDBACK_PATH);
-  return lines.map((line) => {
-    const c = parseCSVLine(line);
-    return {
-      date: c[0] || "",
-      state: c[1] || "",
-      rating: c[2] || "",
-      feedback_text: c[3] || "",
-      briefing_hash: c[4] || "",
-    };
-  });
+export function writeVision(data: VisionData): void {
+  const dir = path.dirname(VISION_PATH);
+  const base = path.basename(VISION_PATH);
+  const tmpPath = path.join(dir, `.${base}.tmp-${process.pid}-${Date.now()}`);
+  fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2) + "\n");
+  fs.renameSync(tmpPath, VISION_PATH);
 }
 
 export function appendBriefingFeedback(entry: BriefingFeedbackEntry): void {
@@ -970,4 +896,47 @@ export function readQuotes(): QuoteEntry[] {
       added: hasDomain ? (c[5] || "") : (c[4] || ""),
     };
   });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Experiments
+// ─────────────────────────────────────────────────────────────────────────────
+
+function serializeExperiment(entry: ExperimentEntry): string {
+  return `${csvQuote(entry.name)},${csvQuote(entry.hypothesis)},${entry.startDate},${entry.durationDays},${csvQuote(entry.domain)},${entry.status},${entry.verdict},${csvQuote(entry.reflection)}`;
+}
+
+export function readExperiments(): ExperimentEntry[] {
+  if (!fs.existsSync(EXPERIMENTS_PATH)) return [];
+  const lines = readDataLines(EXPERIMENTS_PATH);
+  return lines.map((line) => {
+    const c = parseCSVLine(line);
+    return {
+      name: c[0] || "",
+      hypothesis: c[1] || "",
+      startDate: c[2] || "",
+      durationDays: parseInt(c[3], 10) || 7,
+      domain: c[4] || "",
+      status: c[5] || "active",
+      verdict: c[6] || "",
+      reflection: c[7] || "",
+    };
+  });
+}
+
+export function appendExperiment(entry: ExperimentEntry): void {
+  appendLines(EXPERIMENTS_PATH, EXPERIMENTS_HEADER, [serializeExperiment(entry)]);
+}
+
+export function updateExperiment(
+  name: string,
+  startDate: string,
+  updates: Partial<ExperimentEntry>
+): void {
+  const rows = readExperiments();
+  const idx = rows.findIndex((r) => r.name === name && r.startDate === startDate);
+  if (idx === -1) return;
+  rows[idx] = { ...rows[idx], ...updates };
+  const lines = rows.map(serializeExperiment);
+  writeAll(EXPERIMENTS_PATH, EXPERIMENTS_HEADER, lines);
 }
