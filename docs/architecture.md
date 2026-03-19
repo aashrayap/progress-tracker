@@ -28,16 +28,20 @@ Core rule: Surfaces consume read models and trigger actions; semantics are owned
 - `data/reflections.csv`: win/lesson/change memory
 - `data/plan.csv`: time blocks
 - `data/todos.csv`: action backlog
+- `data/groceries.csv`: grocery lists
+- `data/quotes.csv`: curated quotes by domain
+- `data/resources.csv`: books, articles, resources
+- `data/briefing_feedback.csv`: daily briefing feedback
+- `data/experiments.csv`: active experiments and verdicts
 
 ## App Layer
 `app/` contains the Next.js app.
 
 Current top-level routes:
-- `/vision` Vision
-- `/` Hub
+- `/vision` Vision (daily entry point — merged Hub + Vision)
+- `/` Redirect → `/vision`
 - `/plan` Plan
 - `/health` Health
-- `/mind` Mind
 - `/resources` Resources
 
 
@@ -67,7 +71,7 @@ Current consumers:
 ## What Is Working
 - Single canonical data model based on CSV files
 - End-to-end capture path from phone to structured logs
-- Hub-driven daily decision payload
+- Vision-driven daily execution surface
 - Calendar/todo execution loop
 - Reflection capture and lesson surfacing
 
@@ -83,10 +87,9 @@ Both iOS shortcuts (voice and text) flow through one processor:
 5. Commit + push, issue comment, issue close
 
 ## API Surface (Current)
-- `/api/hub`
+- `/api/hub` (consumed by /vision page — briefing, habits, plan, experiments)
 - `/api/daily-signals`
 - `/api/health`
-- `/api/mind`
 - `/api/reflections`
 - `/api/plan`
 - `/api/plan/range`
@@ -95,7 +98,7 @@ Both iOS shortcuts (voice and text) flow through one processor:
 - `/api/resources`
 - `/api/quotes`
 - `/api/hub/briefing-feedback`
-- `/api/vision`
+- `/api/vision` (GET + PUT — vision.json read/write)
 
 ## Known Constraints
 - CSV writes use atomic temp+rename but no cross-process file locks

@@ -40,10 +40,11 @@ Common signals:
 - `mind` — trigger keyword in `value`, pipe-delimited context: `thought: X | action: Y | circumstance: Z`, `category` = `mental` or `addiction`
 - `category`: optional canonical domain ID for the signal context (`health`, `career`, `relationships`, `finances`, `fun`, `personal_growth`, `environment`)
 - `social_contact` (`0|1`) — weekly signal for meaningful social contact, `category=relationships`
-- `weekly_experiment` (text) — one small behavior change to test this week, `value=<domain>`, `context=<description>`
-- `experiment_result` (`yes|partial|no`) — outcome of last week's experiment, `context=<what was learned>`
-- `weekly_goal` (text) — 1-3 vision-connected goals per week, `value=<domain>`, `context=<goal text>`
-- `weekly_goal_result` (`complete|missed|partial`) — outcome of prior week's goal, `context=<goal text>`
+- `vision_reviewed` (`1`) — review checkpoint, `context=morning|afternoon|evening`, `category=personal_growth`. Logged via ritual blueprint checkboxes on /vision.
+- `weekly_experiment` (text) — **legacy** (replaced by `data/experiments.csv`), `value=<domain>`, `context=<description>`
+- `experiment_result` (`yes|partial|no`) — **legacy**, `context=<what was learned>`
+- `weekly_goal` (text) — **legacy**, `value=<domain>`, `context=<goal text>`
+- `weekly_goal_result` (`complete|missed|partial`) — **legacy**, `context=<goal text>`
 
 ## data/workouts.csv
 ```
@@ -108,30 +109,72 @@ date,state,rating,feedback_text,briefing_hash
 
 ## data/vision.json
 
-JSON file (not CSV). Read-only from the app's perspective — authored manually or by AI sessions.
+JSON file (not CSV). Read/write via `/api/vision` (GET + PUT). Content authored via JSON edit, skills, or checkin.
+
+Reinvention Formula schema — 4-domain ABT(H) model with identity script, ritual blueprint, and weekly review sections:
 
 ```json
 {
-  "horizon": "March 2029",
-  "identityNorthStar": "<string>",
+  "identityScript": {
+    "coreTraits": "<string>",
+    "nonNegotiables": "<string>",
+    "languageRules": { "use": ["<string>"], "forbid": ["<string>"] },
+    "physicalPresence": "<string>",
+    "socialFilter": "<string>",
+    "decisionStyle": "<string>"
+  },
+  "antiVision": "<string>",
   "domains": [
     {
-      "id": "<slug>",
+      "id": "health|wealth|love|self",
       "label": "<display name>",
-      "canonicalId": "<canonical domain ID>",
       "hex": "<color hex>",
-      "threeYearDestination": "<string>",
-      "now": "<string>",
-      "ninetyDay": "<string>",
-      "threeYear": "<string>"
+      "canonicalIds": ["<canonical domain IDs mapped to this vision domain>"],
+      "actual": "<string — where I am now>",
+      "becoming": "<string — vivid target state>",
+      "timeline": "<string — specific deadline>",
+      "habits": ["<string — daily actions>"]
     }
-  ]
+  ],
+  "intentions": { "daily": "<string>", "weekly": "<string>" },
+  "ritualBlueprint": {
+    "morning|midday|evening": { "steps": ["<string>"], "habitStacks": ["<string>"] }
+  },
+  "inputControl": {
+    "mentors": [], "books": [], "podcasts": [], "playlists": [],
+    "nutritionRules": [], "purgeList": []
+  },
+  "distractions": {
+    "digital": [], "physical": [], "social": [], "mental": [],
+    "triggerReplacements": [{ "trigger": "<string>", "replacement": "<string>" }]
+  },
+  "habitAudit": { "productive": [], "neutral": [], "destructive": [] }
 }
 ```
 
-- `canonicalId` maps each vision domain to the 7 canonical domain IDs (a vision domain may share a canonicalId with another, e.g. `family_friends` and `romance` both map to `relationships`)
-- Consumed by `/api/vision` (GET, read-only) and rendered on the `/vision` surface
-- Supersedes the previous hardcoded vision data in `app/app/vision/page.tsx`
+- 4 vision domains: Health (`health`), Wealth (`career`, `finances`), Love (`relationships`), Self (`personal_growth`, `fun`, `environment`)
+- `canonicalIds` maps each vision domain to the 7 canonical domain IDs (one-to-many)
+- Consumed by `/vision` page (daily ritual surface) and `/api/vision`
+
+## data/experiments.csv
+```
+name,hypothesis,start_date,duration_days,domain,status,verdict,reflection
+```
+
+- `name`: short label for the experiment (e.g. "Morning meditation before gym")
+- `hypothesis`: expected outcome (e.g. "Better focus in first deep work block")
+- `start_date`: `YYYY-MM-DD` — date experiment began
+- `duration_days`: integer, default 7, minimum 1
+- `domain`: canonical domain ID (`health`, `career`, `relationships`, `finances`, `fun`, `personal_growth`, `environment`)
+- `status`: `active` or `concluded`
+- `verdict`: empty when `status=active`; one of `kept`, `dropped`, `extended` when `status=concluded`
+- `reflection`: empty when `status=active`; one-line reflection when concluded
+
+Derived state (computed at read time, not stored):
+- **Expired**: `status=active` AND `today >= start_date + duration_days` — needs concluding
+- **Day count**: `today - start_date + 1` for active experiments, capped at `duration_days`
+
+Replaces the legacy `weekly_experiment` and `experiment_result` signals in `daily_signals.csv` for new experiments. Historical signal rows in `daily_signals.csv` are preserved — not backfilled or deleted.
 
 ## Side Effect Rules
 

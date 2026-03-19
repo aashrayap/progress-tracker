@@ -22,8 +22,6 @@ Operate as an execution system that translates the life vision into daily action
 3. Capture-to-action path works end-to-end without manual intervention
 4. Weekly reviews produce concrete plan changes
 
-<!-- TODO: Add or revise. What observable states would tell you "this app is working"? -->
-
 ## Health Metrics
 
 While building new features, these must not degrade:
@@ -38,19 +36,18 @@ While building new features, these must not degrade:
 
 | Surface | Usage | Gravity |
 |---------|-------|---------|
-| Vision | Rare | Low — separate from app flow |
-| Hub | Daily | High — habit tracking, daily entry point |
+| Vision | Daily | High — merged Hub + Vision, single entry point, ritual surface |
+| Hub | Deprecated | Redirect → /vision |
 | Plan | Occasional | Medium — useful but underutilized |
 | Health | Daily | High — workout logging, body metrics |
-| Mind | Rare | Low — almost unused |
 | Resources | Rare | Low — passive storage |
 
-The app has too many surfaces and not enough gravity. It feels like a restaurant with a menu too big. Features that aren't pulling their weight should be consolidated, hidden, or removed — not maintained.
+After the Vision Reinvention (March 2026), the app consolidated from 6 surfaces to 4 navigable routes (Vision, Plan, Health, Resources). Hub and Mind were absorbed or removed.
 
 ## Current Direction
 
 - Vision-driven, not feature-driven — every surface must trace back to the life vision
-- Hub as single entry point for daily execution
+- Vision as single entry point for daily execution
 - CSV-first data model (no database migration)
 - Voice and text converge through one pipeline
 - Automation via idea-pipeline and voice-inbox (human gate = PR review only)
@@ -93,9 +90,9 @@ Weighted score:
 
 High-leverage = score >= 3.8.
 
-### Hub Surfacing Rules
+### Vision Surfacing Rules
 
-- Show at most 3 active insights on Hub.
+- Show at most 3 active insights on Vision page.
 - Rank by weighted score, then evidence count, then recency.
 - If there is any active addiction-risk pattern, reserve 1 slot for that class.
 - Do not surface near-duplicates; merge to the highest-evidence candidate.
@@ -118,6 +115,17 @@ Append-only log. When a directional choice is made during a feature, record it h
 | 2026-03-05 | Vision-driven not feature-driven | App serves 5-year life vision; features must trace to vision, not justify themselves |
 | 2026-03-05 | Fewer surfaces, more gravity | Too many routes feel like a big menu; consolidate or remove low-usage surfaces |
 | 2026-03-10 | Vision page reads from `data/vision.json` via `/api/vision` | Hardcoded vision data moved to structured JSON in core data layer; vision page is now data-driven with expandable domain cards showing now/90-day/3-year |
+| 2026-03-18 | Hub merges into Vision at `/vision` | Single daily entry point — identity/direction + execution data on one page. Hub route → 302 redirect. Nav drops Hub tab (4 tabs). |
+| 2026-03-18 | Reinvention Formula replaces old vision structure | 5 pillars: north star (ABT(H) across 4 domains), identity script, input control, distraction removal, habit installation. Kills radar/ikigai charts and 8-domain now/90d/3yr model. |
+| 2026-03-18 | Vision page is read-only ritual surface | NO edit modals. Content authored via JSON edit or future skills. Page designed for daily morning read-through. |
+
+## Future Work (deferred from Vision Reinvention)
+
+| Item | Description | Blocked by |
+|------|-------------|------------|
+| Checkin → vision.json writes | Weekly checkin updates A (Actual), adjusts H (Habits). Monthly rewrites identity script + anti-vision. | Checkin skill needs to exist first (only archived spec today) |
+| Plan ritual reminder | Plan page shows ritual blueprint context strip — "today's ritual" from vision | Vision page must ship first as gravity center |
+| Generative plan blocks | Morning skill auto-suggests plan blocks from ritual blueprint + ABT(H) habits | Vision page + Plan ritual reminder must exist first |
 
 <!-- Add rows as decisions happen. Format: date, what was decided, why -->
 
