@@ -5,10 +5,8 @@ import { usePathname } from "next/navigation";
 
 const tabs = [
   { href: "/vision", label: "Vision" },
-  { href: "/", label: "Hub" },
-  { href: "/plan", label: "Plan" },
+  { href: "/plan/day", label: "Plan" },
   { href: "/health", label: "Health" },
-  { href: "/mind", label: "Mind" },
   { href: "/resources", label: "Resources" },
 ] as const;
 
@@ -19,7 +17,7 @@ export default function TopNav() {
     <nav className="sticky top-0 z-50 bg-black/90 backdrop-blur-sm border-b border-white/5">
       <div className="flex items-center gap-1 py-2 px-2 overflow-x-auto">
         {tabs.map((tab) => {
-          const active = tab.href === "/" ? pathname === "/" : pathname.startsWith(tab.href);
+          const active = pathname.startsWith(tab.href);
           return (
             <Link
               key={tab.href}
