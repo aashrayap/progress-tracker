@@ -34,13 +34,20 @@ While building new features, these must not degrade:
 
 ## Surface Reality (March 2026)
 
-| Surface | Usage | Gravity |
-|---------|-------|---------|
-| Vision | Daily | High — merged Hub + Vision, single entry point, ritual surface |
-| Hub | Deprecated | Redirect → /vision |
-| Plan | Occasional | Medium — useful but underutilized |
-| Health | Daily | High — workout logging, body metrics |
-| Resources | Rare | Low — passive storage |
+| Surface | Usage | Gravity | Ritual Role |
+|---------|-------|---------|-------------|
+| Vision | Daily | High — single entry point, ritual surface | Morning: direction + identity. Evening: review + reflect. |
+| Plan | Daily | Medium — execution surface | Midday: execute blocks + ritual reset strip. |
+| Health | Daily | High — workout logging, body metrics | On-demand: log workouts, track weight. |
+| Resources | Rare | Low — passive storage | On-demand: reference material. |
+
+### Surface Interaction Map
+
+| Time | Surface | Action |
+|------|---------|--------|
+| Morning (before 12:00) | `/vision` | Read identity script, review morning ritual steps, set daily intention via `/checkin` |
+| Midday (12:00-5:00) | `/plan` | Execute plan blocks, midday ritual strip shows reset anchors |
+| Evening (after 5:00) | `/vision` | Review day, evening ritual steps, reflect, prepare tomorrow |
 
 After the Vision Reinvention (March 2026), the app consolidated from 6 surfaces to 4 navigable routes (Vision, Plan, Health, Resources). Hub and Mind were absorbed or removed.
 
@@ -54,6 +61,19 @@ After the Vision Reinvention (March 2026), the app consolidated from 6 surfaces 
 - Reflections should feed back into rules, not just sit in storage
 - Fewer surfaces with more gravity, not more surfaces with less
 - Capture works; retrieval and loop-closing are the gaps to fix
+
+## Cadence Contract
+
+What writes where, at what frequency. See `docs/life-playbook.md` for the full cadence rules table.
+
+| Cadence | Trigger | vision.json fields written | CSV files written |
+|---------|---------|--------------------------|-------------------|
+| Daily | `/checkin daily` or app signals | None | daily_signals, plan, reflections |
+| Weekly | `/checkin weekly` (Sundays) | domains[].actual, domains[].habits, intentions.weekly | daily_signals, reflections, experiments |
+| Monthly | `/checkin monthly` (last Sunday) | identityScript, antiVision, intentions | daily_signals |
+| Quarterly | `/checkin quarterly` | All fields (full rebuild) | daily_signals |
+
+Daily checkins do NOT write to vision.json. Vision.json writes start at weekly cadence.
 
 ## Distillation Rules
 
@@ -118,14 +138,16 @@ Append-only log. When a directional choice is made during a feature, record it h
 | 2026-03-18 | Hub merges into Vision at `/vision` | Single daily entry point — identity/direction + execution data on one page. Hub route → 302 redirect. Nav drops Hub tab (4 tabs). |
 | 2026-03-18 | Reinvention Formula replaces old vision structure | 5 pillars: north star (ABT(H) across 4 domains), identity script, input control, distraction removal, habit installation. Kills radar/ikigai charts and 8-domain now/90d/3yr model. |
 | 2026-03-18 | Vision page is read-only ritual surface | NO edit modals. Content authored via JSON edit or future skills. Page designed for daily morning read-through. |
+| 2026-03-20 | 4-pillar model overlays 7 canonical IDs | Health=[health], Wealth=[career,finances], Love=[relationships], Self=[personal_growth,fun,environment]. Pillars are human-facing; canonical IDs stay for CSV tagging. |
+| 2026-03-20 | Cadence contract: daily=signals, weekly=A+H, monthly=identity, quarterly=full rebuild | Write scopes locked — see life-playbook.md cadence rules. |
 
-## Future Work (deferred from Vision Reinvention)
+## Future Work
 
-| Item | Description | Blocked by |
-|------|-------------|------------|
-| Checkin → vision.json writes | Weekly checkin updates A (Actual), adjusts H (Habits). Monthly rewrites identity script + anti-vision. | Checkin skill needs to exist first (only archived spec today) |
-| Plan ritual reminder | Plan page shows ritual blueprint context strip — "today's ritual" from vision | Vision page must ship first as gravity center |
-| Generative plan blocks | Morning skill auto-suggests plan blocks from ritual blueprint + ABT(H) habits | Vision page + Plan ritual reminder must exist first |
+| Item | Description | Status |
+|------|-------------|--------|
+| Checkin → vision.json writes | Weekly/monthly/quarterly checkins update vision.json fields | In progress (Phase 4 of daily-ritual-alignment spec) |
+| Plan ritual reminder | Plan day view shows ritual context strip from vision.json | In progress (Phase 5 of daily-ritual-alignment spec) |
+| Generative plan blocks | Morning skill auto-suggests plan blocks from ritual blueprint | In progress (Phase 6 of daily-ritual-alignment spec) |
 
 <!-- Add rows as decisions happen. Format: date, what was decided, why -->
 
