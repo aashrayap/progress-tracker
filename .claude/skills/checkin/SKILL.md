@@ -1,6 +1,6 @@
 ---
 name: checkin
-description: Guided daily, weekly, or monthly check-in that captures habits, intentions, feelings, and reflections into canonical CSVs.
+description: Guided daily, weekly, monthly, or quarterly check-in that captures habits, intentions, feelings, and reflections into canonical CSVs and vision.json.
 ---
 
 # Check-in
@@ -17,6 +17,7 @@ Never guess the current date or day of week. Run `date '+%Y-%m-%d %A'` at the st
 - `/checkin daily` — force daily check-in
 - `/checkin weekly` — force weekly check-in
 - `/checkin monthly` — force monthly check-in
+- `/checkin quarterly` — force quarterly check-in (full vision.json rebuild)
 
 ## Auto-Detection (when user runs `/checkin` with no argument)
 
@@ -25,9 +26,10 @@ Never guess the current date or day of week. Run `date '+%Y-%m-%d %A'` at the st
 
 ```
 ┌─ Check-ins ──────────────────────────────────────────┐
-│ Daily     earlier today (gym, sleep, weed -- 5 open) │
-│ Weekly    Sundays only (last: Feb 23)                │
-│ Monthly   last Sun of month (last: never)            │
+│ Daily      earlier today (gym, sleep, weed -- 5 open)│
+│ Weekly     Sundays only (last: Feb 23)               │
+│ Monthly    last Sun of month (last: never)           │
+│ Quarterly  every 3 months (last: never)              │
 └──────────────────────────────────────────────────────┘
 ```
 
@@ -57,6 +59,7 @@ Append to `daily_signals.csv` after each check-in:
 | Daily | `checkin_daily` | `1` | Per day |
 | Weekly | `checkin_weekly` | `1` | Per calendar week (Mon-Sun) |
 | Monthly | `checkin_monthly` | `1` | Per calendar month |
+| Quarterly | `checkin_quarterly` | `1` | Per quarter |
 
 ## Canonical Files Read
 
@@ -66,6 +69,7 @@ Append to `daily_signals.csv` after each check-in:
 - `~/Documents/2026/tracker/data/todos.csv`
 - `~/Documents/2026/tracker/data/inbox.csv`
 - `~/Documents/2026/tracker/data/experiments.csv`
+- `~/Documents/2026/tracker/data/vision.json` (via GET /api/vision — weekly+ cadences)
 - **GitHub Issues** — `aashrayap/progress-tracker` open issues (synced live during inbox triage)
 
 ## Canonical Files Written
@@ -76,6 +80,7 @@ Append to `daily_signals.csv` after each check-in:
 - `~/Documents/2026/tracker/data/todos.csv`
 - `~/Documents/2026/tracker/data/inbox.csv` (status updates during triage)
 - `~/Documents/2026/tracker/data/experiments.csv` (conclude expired, create new)
+- `~/Documents/2026/tracker/data/vision.json` (via PATCH /api/vision for weekly/monthly, PUT for quarterly)
 
 ---
 
@@ -583,6 +588,60 @@ If any exist:
   - `category=<domain>`
 - Allow skip
 
+### Phase 6b: Vision Update (weekly, after goals)
+
+Update vision.json fields based on this week's reflections and progress. Uses PATCH /api/vision.
+
+**Step 1: Update Actual (per pillar)**
+
+For each of the 4 pillars (health, wealth, love, self), using this week's reflections and habit data:
+
+```
+─── VISION UPDATE: HEALTH ──────────────────────────────
+  Current Actual: "Hit planned gym sessions, run protein-first
+  meals, prioritize sleep quality and emotional regulation
+  during stress."
+
+  Based on this week: Gym 6/7, Sleep 5/7, Ate clean 5/7.
+
+  Does this still describe where you are? Update or keep?
+```
+
+- If user says "keep" → skip
+- If user provides update → PATCH `domains[].actual` for that pillar (match by domain id)
+- Keep it grounded — actual = current reality, not aspiration
+
+**Step 2: Adjust Habits (per pillar, optional)**
+
+After reviewing actual for each pillar:
+
+```
+  Current habits:
+  1. Train daily — no excuses for emotion or timing
+  2. No substances
+  3. Clean eating — protein-first every meal
+  ...
+
+  Any habit to add, remove, or reword? (or skip)
+```
+
+- If user adjusts → PATCH `domains[].habits` for that pillar
+- Keep habits as action statements, not goals
+
+**Step 3: Write**
+
+Send a single PATCH request with all updated fields:
+```json
+{
+  "domains": [
+    { "id": "health", "actual": "<updated>", "habits": ["<updated>"] }
+  ],
+  "intentions": { "weekly": "<from Phase 6 mantra>" }
+}
+```
+
+Only include pillars that changed. Always include `intentions.weekly` (set in Phase 6).
+
 ### Phase 7: Stale Review & Close
 
 - Use `digest.stale_todos` from the precompute script output. Present items with age: "These have been open 7+ days — keep, kill, or defer?" (ask user)
@@ -591,15 +650,16 @@ If any exist:
 ### Weekly Phase Order Summary
 
 ```
-Phase 1  Score Card           auto-gen        0 min
-Phase 2  Mood & Triggers      auto-gen        0 min
-Phase 3  Domain Spotlight     interactive     3-5 min
-Phase 4  Social Contact       1 question      30 sec
-Phase 5  Experiment Loop      conclude + new  2 min
-Phase 6  Goals & Intention    review + set    3 min
-Phase 7  Stale Review         interactive     1 min
-                                         ──────────
-                              Target:     ~10 min
+Phase 1   Score Card           auto-gen        0 min
+Phase 2   Mood & Triggers      auto-gen        0 min
+Phase 3   Domain Spotlight     interactive     3-5 min
+Phase 4   Social Contact       1 question      30 sec
+Phase 5   Experiment Loop      conclude + new  2 min
+Phase 6   Goals & Intention    review + set    3 min
+Phase 6b  Vision Update        interactive     2-3 min
+Phase 7   Stale Review         interactive     1 min
+                                          ──────────
+                               Target:     ~13 min
 ```
 
 ---
@@ -654,10 +714,135 @@ Key formatting rules for the monthly summary:
 3. "Does your direction still match where you want to be in 5 years?"
 4. "One protocol change for this month?"
 
+### Step 3b: Vision Rewrite (monthly)
+
+Monthly is the time to rewrite identity content. Uses PATCH /api/vision.
+
+**Identity Script rewrite:**
+
+```
+─── IDENTITY REWRITE ──────────────────────────────────
+  Current identity script:
+    Core traits: "The person behind all these domains: grounded,
+    positive, present..."
+
+  Based on the last month's trajectory and what you told me
+  above, does this still feel right?
+
+  Rewrite your core traits in your own words. (or keep)
+```
+
+Walk through each identityScript field:
+- `coreTraits` — who you are at your core
+- `nonNegotiables` — what you refuse to skip
+- `languageRules` — words to use and forbid
+- `physicalPresence` — how you carry yourself
+- `socialFilter` — who you surround yourself with
+- `decisionStyle` — how you decide under pressure
+
+For each: show current value, ask "rewrite or keep?", accept natural language.
+
+**Anti-Vision rewrite:**
+
+```
+─── ANTI-VISION ──────────────────────────────────────
+  Current: "Smokes weed. Skips gym for any emotion or timing
+  excuse. Watches porn. Isolates. Reactive. Overweight.
+  Hates himself."
+
+  Still accurate? Sharpen, expand, or keep?
+```
+
+**Intentions update:**
+
+```
+─── INTENTIONS ──────────────────────────────────────
+  Set a daily mantra for the coming month:
+  Set a weekly mantra for the coming month:
+```
+
+**Write:** Single PATCH request with all changed fields:
+```json
+{
+  "identityScript": { "...updated fields" },
+  "antiVision": "<updated>",
+  "intentions": { "daily": "<updated>", "weekly": "<updated>" }
+}
+```
+
+Only include fields that changed.
+
 ### Step 4: Write
 
 - Flag protocol changes for `life-playbook.md` (suggest edits, confirm before writing)
 - Write `checkin_monthly=1`
+
+---
+
+## Quarterly Check-in
+
+Run every 3 months (or `/checkin quarterly` to force on demand).
+
+Quarterly is a full rebuild of vision.json. Uses PUT /api/vision (full replace).
+
+### Step 1: Full ABT(H) Rebuild
+
+For each of the 4 pillars (health, wealth, love, self), walk through:
+
+1. **Becoming** — "Where do you want to be in this pillar?" (vivid, specific, measurable)
+2. **Timeline** — "By when?" (specific date)
+3. **Actual** — "Where are you right now, honestly?"
+4. **Habits** — "What daily actions get you from Actual to Becoming?" (3-5 statements)
+
+Show the current values for each. Accept rewrites or keep.
+
+### Step 2: Ritual Blueprint Overhaul
+
+```
+─── RITUAL BLUEPRINT ──────────────────────────────────
+  Morning steps (current):
+  1. Wake — no devices
+  2. Journal
+  ...
+
+  Keep, rewrite, or adjust?
+```
+
+Walk through morning, midday, evening. For each:
+- Show current steps and habit stacks
+- Accept rewrites, additions, removals
+
+### Step 3: Habit Audit
+
+```
+─── HABIT AUDIT ──────────────────────────────────────
+  Productive: Gym, Meditation, Deep work, Clean eating, ...
+  Neutral: Cooking, Walking Cooper, Reading
+  Destructive: Weed, League of Legends, Poker, Porn, ...
+
+  Any changes? Move items between categories, add, remove?
+```
+
+### Step 4: Input Control
+
+```
+─── INPUT CONTROL ──────────────────────────────────────
+  Mentors: Daniel Abrada
+  Books: As a Man Thinketh, The Perfume of Silence
+  Podcasts: (none)
+  Nutrition rules: Protein-first, sustainable deficit, ...
+  Purge list: (empty)
+
+  Any updates?
+```
+
+### Step 5: Write
+
+Assemble the complete vision.json object from all updated fields (merged with unchanged current values) and PUT to `/api/vision`.
+
+Verify the response parses correctly. If the PUT fails, show the error and do NOT write `checkin_quarterly=1`.
+
+Write `checkin_quarterly=1` to `daily_signals.csv`.
 
 ---
 
