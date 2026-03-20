@@ -2,9 +2,17 @@
 
 import { useState, useCallback, useEffect } from "react";
 import SchedulerModal from "./SchedulerModal";
-import type { PlanEvent, HabitMap, Todo } from "../lib/types";
-import { HABIT_CONFIG } from "../lib/config";
-import { toDateStr, formatTime } from "../lib/utils";
+import PlanBlock from "./PlanBlock";
+import NowLine, { getCurrentHour } from "./NowLine";
+import type { PlanEvent, HabitMap, Todo, RitualBlueprint } from "../lib/types";
+import { toDateStr } from "../lib/utils";
+
+function getRitualPhase(): "morning" | "midday" | "evening" {
+  const hour = new Date().getHours();
+  if (hour < 12) return "morning";
+  if (hour < 17) return "midday";
+  return "evening";
+}
 
 interface Props {
   events: PlanEvent[];
@@ -21,21 +29,23 @@ interface IntentionSummary {
   mantra: string;
 }
 
-export default function DayView({ events, habits, focusDate, onRefresh, todos: externalTodos, onTodosChange }: Props) {
+export default function DayView({ events, focusDate, onRefresh, todos: externalTodos, onTodosChange }: Props) {
   const [editing, setEditing] = useState(false);
   const [localTodos, setLocalTodos] = useState<Todo[]>([]);
   const [dailyIntention, setDailyIntention] = useState<IntentionSummary | null>(null);
   const [weeklyIntention, setWeeklyIntention] = useState<IntentionSummary | null>(null);
+  const [ritual, setRitual] = useState<RitualBlueprint | null>(null);
+  const [ritualOpen, setRitualOpen] = useState(false);
   const dateStr = toDateStr(focusDate);
   const todayStr = toDateStr(new Date());
   const isToday = dateStr === todayStr;
-  const dayHabits = habits[dateStr] || {};
   const dayEvents = events
     .filter((e) => e.date === dateStr)
     .sort((a, b) => a.start - b.start);
   const timedEvents = dayEvents.filter((e) => !(e.start === 0 && e.end === 0));
   const allDayEvents = dayEvents.filter((e) => e.start === 0 && e.end === 0);
   const hasIntentions = Boolean(dailyIntention?.mantra || weeklyIntention?.mantra);
+  const currentHour = getCurrentHour();
 
   useEffect(() => {
     let active = true;
@@ -56,21 +66,28 @@ export default function DayView({ events, habits, focusDate, onRefresh, todos: e
         setWeeklyIntention(null);
       });
 
+    if (isToday) {
+      fetch("/api/vision")
+        .then((res) => {
+          if (!res.ok) throw new Error("Failed to fetch vision");
+          return res.json();
+        })
+        .then((data) => {
+          if (!active) return;
+          setRitual(data.ritualBlueprint ?? null);
+        })
+        .catch(() => {
+          if (!active) return;
+          setRitual(null);
+        });
+    }
+
     return () => {
       active = false;
     };
-  }, [dateStr]);
+  }, [dateStr, isToday]);
 
   const todosForModal = externalTodos ?? localTodos;
-  const plannedGym = dayEvents.some((e) => /gym/i.test(e.item));
-  const gymDone = dayHabits.gym === true;
-  const gymReconciliation = gymDone
-    ? plannedGym
-      ? "planned_done"
-      : "unplanned_done"
-    : plannedGym
-      ? "planned_missed"
-      : "not_planned";
 
   const handleEdit = useCallback(async () => {
     if (!externalTodos) {
@@ -110,62 +127,13 @@ export default function DayView({ events, habits, focusDate, onRefresh, todos: e
   return (
     <>
       <div className="space-y-4">
-        {/* Edit button for today */}
+        {/* Edit button for today — disabled */}
         {isToday && (
           <button
-            onClick={handleEdit}
-            className="px-4 py-3 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-400 text-sm hover:border-blue-400/50 transition-colors min-h-[44px]"
+            className="px-4 py-3 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-400 text-sm min-h-[44px] opacity-50 pointer-events-none"
           >
             Edit Plan
           </button>
-        )}
-
-        {/* Habits */}
-        {Object.keys(dayHabits).length > 0 && (
-          <div className="p-4 bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10">
-            <h3 className="text-xs text-zinc-400 uppercase tracking-wide mb-3">
-              Habits
-            </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {Object.entries(HABIT_CONFIG).map(([key, habit]) => {
-                if (dayHabits[key] === undefined) return null;
-                const isGood = dayHabits[key];
-                return (
-                  <div
-                    key={key}
-                    className={`flex items-center gap-2 text-sm px-3 py-2 rounded min-h-[44px] ${
-                      isGood ? "text-emerald-400" : "text-red-400"
-                    }`}
-                  >
-                    <span>{isGood ? "✓" : "✗"}</span>
-                    <span>{habit.label}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Plan vs Actual (gym) */}
-        {(plannedGym || gymDone) && (
-          <div className="p-4 bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10">
-            <h3 className="text-xs text-zinc-400 uppercase tracking-wide mb-2">
-              Plan vs Actual
-            </h3>
-            <p
-              className={`text-sm ${
-                gymReconciliation === "planned_done"
-                  ? "text-emerald-400"
-                  : gymReconciliation === "planned_missed"
-                    ? "text-red-400"
-                    : "text-amber-400"
-              }`}
-            >
-              {gymReconciliation === "planned_done" && "Gym: planned + done"}
-              {gymReconciliation === "planned_missed" && "Gym: planned + missed"}
-              {gymReconciliation === "unplanned_done" && "Gym: unplanned + done"}
-            </p>
-          </div>
         )}
 
         {/* All-day events */}
@@ -208,6 +176,41 @@ export default function DayView({ events, habits, focusDate, onRefresh, todos: e
           </div>
         )}
 
+        {/* Ritual context strip — today only */}
+        {isToday && ritual && (() => {
+          const phase = getRitualPhase();
+          const block = ritual[phase];
+          if (!block?.steps?.length) return null;
+          const label = phase.charAt(0).toUpperCase() + phase.slice(1);
+          return (
+            <div className="rounded-lg border border-white/5 bg-zinc-900/40 overflow-hidden">
+              <button
+                onClick={() => setRitualOpen((o) => !o)}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-400"
+              >
+                <span className="text-zinc-500">{ritualOpen ? "\u25BC" : "\u25B6"}</span>
+                <span>{label} Ritual{!ritualOpen ? ` (${block.steps.length} steps)` : ""}</span>
+              </button>
+              {ritualOpen && (
+                <div className="px-3 pb-3 space-y-2">
+                  <ol className="list-decimal list-inside space-y-0.5">
+                    {block.steps.slice(0, 8).map((step, i) => (
+                      <li key={i} className="text-sm text-zinc-400">{step}</li>
+                    ))}
+                  </ol>
+                  {block.habitStacks?.length > 0 && (
+                    <div className="space-y-0.5 pt-1">
+                      {block.habitStacks.map((hs, i) => (
+                        <p key={i} className="text-xs text-zinc-500 italic">{hs}</p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
         {/* Schedule */}
         <div className="p-4 bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10">
           <h3 className="text-xs text-zinc-400 uppercase tracking-wide mb-3">
@@ -215,58 +218,42 @@ export default function DayView({ events, habits, focusDate, onRefresh, todos: e
           </h3>
           {timedEvents.length === 0 ? (
             <p className="text-sm text-zinc-600">No scheduled events</p>
-          ) : (
-            <div className="space-y-2">
-              {timedEvents.map((e, idx) => {
-                const isDone = e.done === "1";
-                const isSkipped = e.done === "0";
-                return (
-                  <div
+          ) : (() => {
+            const pastBlocks = timedEvents.filter((e) => isToday && e.end <= currentHour);
+            const futureBlocks = timedEvents.filter((e) => !isToday || e.end > currentHour);
+            const showNowLine = isToday && pastBlocks.length > 0 && futureBlocks.length > 0;
+            return (
+              <div>
+                {pastBlocks.map((e, idx) => (
+                  <PlanBlock
                     key={`${e.date}-${e.start}-${e.end}-${e.item}-${idx}`}
-                    className="flex items-center gap-3 py-2 border-b border-white/10 last:border-0 min-h-[44px]"
-                  >
-                    <button
-                      onClick={() => setPlanDone(e, isDone ? "" : "1")}
-                      className={`w-6 h-6 rounded border flex items-center justify-center text-xs ${
-                        isDone
-                          ? "border-green-600 text-green-400"
-                          : isSkipped
-                            ? "border-red-600 text-red-400"
-                            : "border-white/20 text-zinc-600"
-                      }`}
-                    >
-                      {isDone ? "✓" : isSkipped ? "✗" : "○"}
-                    </button>
-                    <span className="text-xs text-zinc-400 w-24">
-                      {formatTime(e.start)}–{formatTime(e.end)}
-                    </span>
-                    <span
-                      className={`text-sm ${
-                        isDone
-                          ? "text-zinc-400 line-through"
-                          : "text-zinc-300"
-                      }`}
-                    >
-                      {e.item}
-                    </span>
-                    {e.notes && (
-                      <span className="text-xs text-zinc-400">
-                        — {e.notes}
-                      </span>
-                    )}
-                    {!isDone && (
-                      <button
-                        onClick={() => setPlanDone(e, "0")}
-                        className="ml-auto text-[10px] text-zinc-400 hover:text-red-400"
-                      >
-                        skip
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                    start={e.start}
+                    end={e.end}
+                    item={e.item}
+                    done={e.done}
+                    date={e.date}
+                    isPast={true}
+                    onToggleDone={() => setPlanDone(e, e.done === "1" ? "" : "1")}
+                    onMarkMissed={() => setPlanDone(e, "0")}
+                  />
+                ))}
+                {showNowLine && <NowLine />}
+                {futureBlocks.map((e, idx) => (
+                  <PlanBlock
+                    key={`${e.date}-${e.start}-${e.end}-${e.item}-${idx}`}
+                    start={e.start}
+                    end={e.end}
+                    item={e.item}
+                    done={e.done}
+                    date={e.date}
+                    isPast={isToday && e.end <= currentHour}
+                    onToggleDone={() => setPlanDone(e, e.done === "1" ? "" : "1")}
+                    onMarkMissed={() => setPlanDone(e, "0")}
+                  />
+                ))}
+              </div>
+            );
+          })()}
         </div>
       </div>
 
