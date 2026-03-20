@@ -23,6 +23,17 @@ Use these exact IDs anywhere a life area/domain/category is referenced:
 Travel is a sub-concern (`finances` + `fun` + `relationships`), not a standalone domain.
 Legacy domain IDs (`addiction`, `mental`) in historical CSV rows remain valid — do not backfill.
 
+### 4-Pillar Vision Model
+
+The 4-pillar model is the human-facing overlay used in `data/vision.json`, the `/vision` page, and weekly+ check-ins. The 7 canonical IDs remain the tagging standard in all CSVs.
+
+| Pillar | ID | Canonical IDs | Covers |
+|--------|-----|--------------|--------|
+| Health | `health` | `health` | Body comp, training, nutrition, sleep, emotional regulation |
+| Wealth | `wealth` | `career`, `finances` | Deep work, output, visibility, skills, income, net worth |
+| Love | `love` | `relationships` | Partner, friends, family, social |
+| Self | `self` | `personal_growth`, `fun`, `environment` | Reading, reflection, meditation, addiction recovery, hobbies, home |
+
 ## System Vocabulary
 
 Use these terms consistently in docs, specs, code comments, and conversation:
@@ -55,8 +66,6 @@ Core rule: each layer only depends downward. Surfaces consume Intelligence. Inte
 | ----------------------- | -------------------------------------------- |
 | `docs/architecture.md`  | System boundaries, data flow, voice pipeline |
 | `docs/data-schemas.md`  | CSV headers and write semantics              |
-| `docs/features.md`      | Active surfaces and current gaps             |
-| `docs/personal-os.md`   | Runtime loop and decision quality            |
 | `docs/life-playbook.md` | Domain protocols and constraints             |
 | `docs/app-intent.md`   | Product direction, health metrics, decisions  |
 | `docs/feature-spec-template.md` | Spec skeleton (sections 1-10) -- used by `/feature-interview` |
@@ -88,20 +97,23 @@ reflections:   date,domain,win,lesson,change,archived
 inbox:         capture_id,captured_at,source,raw_text,status,suggested_destination,normalized_text,error
 groceries:     item,section,done,added
 resources:     title,author,type,domain,status,notes
-code-todos:    date,item,file_path,start_line,end_line,type,done,domain
+briefing_feedback: date,state,rating,feedback_text,briefing_hash
 ```
 
 ## Skills
 
 | Skill            | Purpose                                 | Triggers                               |
 | ---------------- | --------------------------------------- | -------------------------------------- |
-| `/log`           | Quick-fire utility for one-off CSV writes. `/checkin` + voice cover most logging — `/log` is best for code todos (`/log note --file=...`) and quick weight entries | `log weight`, `log note`, `log relapse` |
+| `/log`           | Quick-fire utility for one-off CSV writes. `/checkin` + voice cover most logging — `/log` is best for quick weight entries and notes | `log weight`, `log note`, `log relapse` |
 | `/weekly-review` | Weekly accountability and planning      | `weekly review`, `plan the week`       |
 | `/review-notes`  | Cross-CSV activity summary              | `review notes`, `what happened`        |
-| `/checkin`       | Guided daily/weekly/monthly check-in     | `checkin`, `check in`, `morning check-in` |
+| `/checkin`       | Guided daily/weekly/monthly/quarterly check-in. Weekly+ writes vision.json. | `checkin`, `check in`, `morning check-in` |
+| `/plan`          | Fast plan mutations: add/done/move blocks, show day, sketch week | `plan`, `add block`, `plan week` |
 | `/feature-interview` | Scope a feature: audit, interview, lock decisions, write spec | `feature interview`, `spec a feature`, `new feature` |
 | `/audit`         | Codebase health scan (read-only, versioned reports) | `audit`, `find dead code`, `cleanup scan` |
 | `/remove-slop`   | Strip AI-generated code slop from diff   | `remove slop`, `clean up slop`, `slop check` |
+| `/qa`            | Live smoke test via Chrome — hits routes, reads console/network, fixes issues | `qa`, `smoke test`, `test the app` |
+| `/relationship`  | CBT-informed relationship coach — thought records, pattern review, state snapshot | `relationship`, `basia`, `relationship doubt` |
 
 ## Guardrails
 

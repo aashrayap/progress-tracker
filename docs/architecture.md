@@ -64,6 +64,28 @@ writeAndSideEffect(type, data, date?)
 
 Side effects call csv.ts directly — they never re-enter the router.
 
+## Vision Write Paths
+
+vision.json is updated through the checkin skill at weekly+ cadences. The API supports three methods:
+
+| Method | Purpose | Consumer |
+|--------|---------|----------|
+| GET | Read full vision.json | /vision page, /plan day view (ritual strip) |
+| PUT | Full replace | Manual JSON edits, quarterly rebuild |
+| PATCH | Partial field update | Weekly/monthly checkin writes |
+
+### Cadence-Aware Write Routing
+
+The checkin skill determines which vision.json fields to update based on cadence:
+
+| Cadence | Fields written |
+|---------|---------------|
+| Weekly | `domains[].actual`, `domains[].habits`, `intentions.weekly` |
+| Monthly | `identityScript`, `antiVision`, `intentions` |
+| Quarterly | All fields (full rebuild) |
+
+Daily checkins do NOT write to vision.json.
+
 Current consumers:
 - `POST /api/daily-signals` — signals route through router for plan auto-complete
 - `scripts/reconcile.js` — post-checkin bridge using same keyword map
@@ -98,7 +120,7 @@ Both iOS shortcuts (voice and text) flow through one processor:
 - `/api/resources`
 - `/api/quotes`
 - `/api/hub/briefing-feedback`
-- `/api/vision` (GET + PUT — vision.json read/write)
+- `/api/vision` (GET + PUT + PATCH — vision.json read/write/partial-update)
 
 ## Known Constraints
 - CSV writes use atomic temp+rename but no cross-process file locks

@@ -156,6 +156,22 @@ Reinvention Formula schema — 4-domain ABT(H) model with identity script, ritua
 - `canonicalIds` maps each vision domain to the 7 canonical domain IDs (one-to-many)
 - Consumed by `/vision` page (daily ritual surface) and `/api/vision`
 
+### Vision Write Semantics
+
+vision.json is written via `/api/vision` (PUT for full replace, PATCH for partial update).
+
+| Cadence | Writer | Fields | Merge behavior |
+|---------|--------|--------|---------------|
+| Weekly | `/checkin weekly` | `domains[].actual`, `domains[].habits`, `intentions.weekly` | Deep merge — only specified domain fields update, others preserved |
+| Monthly | `/checkin monthly` | `identityScript`, `antiVision`, `intentions` | Top-level key replace — new identityScript replaces old |
+| Quarterly | `/checkin quarterly` | All fields | Full replace via PUT |
+| Manual | JSON edit | Any | Full replace via PUT |
+
+The `vision_reviewed` signal in daily_signals.csv tracks when the user reviewed vision.json content:
+- `signal=vision_reviewed`, `value=1`, `context=morning|afternoon|evening`, `category=personal_growth`
+- Logged via ritual blueprint checkboxes on /vision page
+- One signal per context per day (morning, afternoon, evening)
+
 ## data/experiments.csv
 ```
 name,hypothesis,start_date,duration_days,domain,status,verdict,reflection
