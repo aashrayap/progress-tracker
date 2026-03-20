@@ -389,31 +389,7 @@ export default function VisionPage() {
             )}
           </section>
 
-          {/* ── 3. Intentions + Briefing (side by side) ────────────── */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {/* Left: Intentions */}
-            {hub && (() => {
-              const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
-              const weekly = hub.weeklyIntention && hub.weeklyIntention.date >= sevenDaysAgo ? hub.weeklyIntention : null;
-              const daily = hub.dailyIntention && hub.dailyIntention.date === today ? hub.dailyIntention : null;
-              return (
-                <div className="px-4 py-3 bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl space-y-1">
-                  <p className="text-sm text-zinc-400">This week: {weekly ? <span className="text-zinc-200">{weekly.mantra}</span> : <span className="text-zinc-500">not set</span>}</p>
-                  <p className="text-sm text-zinc-400">Today: {daily ? <span className="text-zinc-200">{daily.mantra}</span> : <span className="text-zinc-500">not set</span>}</p>
-                </div>
-              );
-            })()}
-            {/* Right: Briefing */}
-            {hub && (
-              <BriefingCard
-                briefing={hub.briefing}
-                fallbackInsight={hub.insight.insight}
-                fallbackQuote={hub.dailyQuote}
-              />
-            )}
-          </div>
-
-          {/* ── 4. Ritual Checklist + Today's Plan (side by side) ─── */}
+          {/* ── 3. Ritual Checklist + Today's Plan (side by side) ─── */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {/* Left: Ritual Blueprint (auto-detected phase) */}
             <section className="bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl">
@@ -493,6 +469,28 @@ export default function VisionPage() {
               />
             )}
           </div>
+
+          {/* ── 4. Intentions + Briefing (merged, full width) ────────── */}
+          {hub && (() => {
+            const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+            const weekly = hub.weeklyIntention && hub.weeklyIntention.date >= sevenDaysAgo ? hub.weeklyIntention : null;
+            const daily = hub.dailyIntention && hub.dailyIntention.date === today ? hub.dailyIntention : null;
+            return (
+              <section className="bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl">
+                <div className="px-4 pt-3 pb-2 flex flex-wrap gap-x-6 gap-y-1">
+                  <p className="text-sm text-zinc-400">This week: {weekly ? <span className="text-zinc-200">{weekly.mantra}</span> : <span className="text-zinc-500">not set</span>}</p>
+                  <p className="text-sm text-zinc-400">Today: {daily ? <span className="text-zinc-200">{daily.mantra}</span> : <span className="text-zinc-500">not set</span>}</p>
+                </div>
+                <div className="border-t border-white/5">
+                  <BriefingCard
+                    briefing={hub.briefing}
+                    fallbackInsight={hub.insight.insight}
+                    fallbackQuote={hub.dailyQuote}
+                  />
+                </div>
+              </section>
+            );
+          })()}
 
           {/* ═══════════════════════════════════════════════════════════
               ZONE SEPARATOR
