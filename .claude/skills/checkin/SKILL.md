@@ -411,6 +411,37 @@ For each suggestion:
 
 Allow global skip: "skip suggestions" keeps everything unchanged.
 
+#### 5.2b Ritual Block Suggestions (morning only, skippable)
+
+If the current time is before 12:00 PM and the user hasn't already planned ritual-aligned blocks:
+
+1. Read `data/vision.json` via `cat` — extract `ritualBlueprint.morning.steps` and `domains[].habits`
+2. Cross-reference with today's existing plan blocks
+3. Suggest up to 3 time blocks that aren't already scheduled:
+
+```
+Ritual-aligned blocks (from your blueprint + habits):
+
+1. "Wim Hof + Identity Review" — 5:45-6:15 AM (morning ritual)
+   → skip / add / adjust time
+
+2. "Deep Work Block 1" — 9:00-10:30 AM (wealth habit: 3 deep work blocks)
+   → skip / add / adjust time
+
+3. "Midday Reset" — 12:00-12:30 PM (midday ritual: walk + breathwork)
+   → skip / add / adjust time
+```
+
+Rules:
+- Only suggest in morning mode (before 12:00 PM)
+- Max 3 suggestions
+- Each maps to a ritual step or domain habit — show the source in parentheses
+- Accept "skip suggestions" to bypass all
+- For each "add": write to `plan.csv` with the suggested or adjusted time
+- Infer `domain` from the source (ritual step → `personal_growth`, domain habit → that domain's canonical ID)
+- Do NOT suggest blocks that overlap with existing plan items
+- Do NOT suggest blocks for habits already logged today (e.g., don't suggest gym block if gym=1 already)
+
 #### 5.3 Confirm today's block plan (skippable)
 
 Show today's plan including:
