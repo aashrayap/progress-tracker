@@ -1,16 +1,16 @@
 {
   "identityScript": {
     "coreTraits": "The person behind all these domains: grounded, positive, present. The guy people feel better around — not performing, just being. Calm energy, real conversations, no front.",
-    "nonNegotiables": "",
+    "nonNegotiables": "Wim Hof every morning. Movement and gym. Meditation. Clean eating. Deep work. No substances. No video games. Quietness, reflection, and stillness.",
     "languageRules": {
-      "use": [],
-      "forbid": []
+      "use": ["Locked in", "Non-negotiable", "Just do it", "Embrace discomfort", "Embrace pain"],
+      "forbid": ["Tired", "Maybe", "Try", "I think"]
     },
-    "physicalPresence": "",
-    "socialFilter": "",
-    "decisionStyle": ""
+    "physicalPresence": "Kind to others. Confident. Assertive. But genuine.",
+    "socialFilter": "Kind, happy people who are self-motivated. Share interests. Genuine. Trustworthy. Unselfish.",
+    "decisionStyle": "Assertive. Uses learned tools to manage stress — Advaita, Wim Hof, cold showers, walks. Acts despite the discomfort."
   },
-  "antiVision": "",
+  "antiVision": "Smokes weed. Skips gym for any emotion or timing excuse. Watches porn. Isolates. Reactive. Overweight. Hates himself.",
   "domains": [
     {
       "id": "health",
@@ -18,9 +18,15 @@
       "hex": "#10b981",
       "canonicalIds": ["health"],
       "actual": "Hit planned gym sessions, run protein-first meals, prioritize sleep quality and emotional regulation during stress.",
-      "becoming": "200 lbs with an athletic Olympic lifter build.",
-      "timeline": "",
-      "habits": []
+      "becoming": "200 lbs with an athletic Olympic lifter build. Lean, strong, disciplined. Training is non-negotiable.",
+      "timeline": "December 2026",
+      "habits": [
+        "Train daily — no excuses for emotion or timing",
+        "No substances",
+        "Clean eating — protein-first every meal",
+        "Sleep by 9:30, protect sleep quality",
+        "Track via app"
+      ]
     },
     {
       "id": "wealth",
@@ -28,9 +34,15 @@
       "hex": "#f59e0b",
       "canonicalIds": ["career", "finances"],
       "actual": "Prioritize AI fluency and minimum two deep-work blocks/day on high-leverage output. Keep compounding systems steady and tie major spending decisions to explicit long-term intent.",
-      "becoming": "Deep AI expertise applied to domains I love — entrepreneurship, markets, poker, meditation, and consciousness. Strengthen capital trajectory toward eight-figure optionality through focused, high-upside value creation.",
-      "timeline": "",
-      "habits": []
+      "becoming": "100k/year providing premium value across AI, meditation, personal growth, and addiction recovery. Financial tracker app and productivity/self-improvement vision app as primary vehicles.",
+      "timeline": "December 2027",
+      "habits": [
+        "3 deep work blocks — 1 creative/reflective, 2 action/shipping",
+        "Structure deep work around 9-to-5 job",
+        "Build and ship on financial tracker app",
+        "Build and ship on productivity/vision app",
+        "Study and apply AI to domains I love"
+      ]
     },
     {
       "id": "love",
@@ -38,19 +50,32 @@
       "hex": "#ec4899",
       "canonicalIds": ["relationships"],
       "actual": "Reduce isolation with deliberate weekly social contact. Pursue honest relationship clarity conversations.",
-      "becoming": "Active local community I'm embedded in. A partner with shared vision — growing together, becoming the best versions of ourselves.",
+      "becoming": "Romantic: shared vision of future, alignment on daily and long-term routine and goals. Mutual respect. Excitement. Fulfilling relationship. Social: active local community, friends who push each other forward.",
       "timeline": "",
-      "habits": []
+      "habits": [
+        "Be grateful for parents, family, partner, friends — daily",
+        "Send one thoughtful text to partner every day",
+        "Check in with partner 2-3x/week with prepared topics",
+        "Smile to parents and ask about them",
+        "Initiate one social plan per week"
+      ]
     },
     {
       "id": "self",
       "label": "Self",
       "hex": "#a855f7",
       "canonicalIds": ["personal_growth", "fun", "environment"],
-      "actual": "Keep daily reflection/journaling and meditation active; protect sobriety streaks and interrupt urges immediately. Replace at least one zero-sum leisure loop with a positive-sum activity that creates energy and connection. TBD — score and define baseline.",
-      "becoming": "Calm, resilient, self-aware — understanding my own tendencies through meditation and AI. Consistently curious — reading, exploring, never stagnant. 3 years clean from weed, alcohol, and all substances. Have a full, chosen weekend life where home is restful by choice, not default isolation. Proximity to hobbies and community, access to nature, walkable.",
+      "actual": "Keep daily reflection/journaling and meditation active; protect sobriety streaks and interrupt urges immediately. Replace at least one zero-sum leisure loop with a positive-sum activity.",
+      "becoming": "Calm, resilient, self-aware. Mind protected at all costs. Morning priorities before others. Focused. Grounded. Proactive. 3 years clean from all substances. Consistently curious — reading, exploring, never stagnant.",
       "timeline": "",
-      "habits": []
+      "habits": [
+        "Wim Hof 2 rounds every morning",
+        "Meditate daily",
+        "Journal daily",
+        "Plan daily via app",
+        "No substances — non-negotiable",
+        "Protect mornings — my priorities before others"
+      ]
     }
   ],
   "intentions": {
@@ -59,36 +84,109 @@
   },
   "ritualBlueprint": {
     "morning": {
-      "steps": [],
-      "habitStacks": []
+      "steps": [
+        "Wake — no devices",
+        "Journal",
+        "Warm water",
+        "Wim Hof 2 rounds",
+        "Review identity script",
+        "Journal thoughts",
+        "Plan the day",
+        "Execute"
+      ],
+      "habitStacks": [
+        "After waking → no devices, journal first",
+        "After warm water → Wim Hof + identity script"
+      ]
     },
     "midday": {
-      "steps": [],
-      "habitStacks": []
+      "steps": [
+        "10-minute walk",
+        "Pull-ups and push-ups",
+        "Breathwork",
+        "Cold shower",
+        "Review identity script",
+        "Quick reflection",
+        "Prepare for deep work or rest of day"
+      ],
+      "habitStacks": [
+        "After lunch → walk first",
+        "After walk → bodyweight movement + breathwork"
+      ]
     },
     "evening": {
-      "steps": [],
-      "habitStacks": []
+      "steps": [
+        "Finish deep work or reflection",
+        "Review the day",
+        "Journal",
+        "Think about tomorrow",
+        "Warm tea",
+        "Brush teeth",
+        "Lights out by 9:30"
+      ],
+      "habitStacks": [
+        "After dinner → review the day",
+        "After journal → warm tea, wind down"
+      ]
     }
   },
   "inputControl": {
-    "mentors": [],
-    "books": [],
+    "mentors": ["Daniel Abrada"],
+    "books": ["As a Man Thinketh — James Allen", "The Perfume of Silence — Francis Lucille"],
     "podcasts": [],
     "playlists": [],
-    "nutritionRules": [],
+    "nutritionRules": [
+      "Protein-first every meal",
+      "Sustainable calorie deficit",
+      "Predictable grocery list — low decision friction",
+      "No junk defaults — if it's not helping, it's hurting"
+    ],
     "purgeList": []
   },
   "distractions": {
-    "digital": [],
+    "digital": [
+      "League of Legends",
+      "Poker apps",
+      "Instagram/social media scrolling",
+      "YouTube rabbit holes",
+      "Porn"
+    ],
     "physical": [],
     "social": [],
-    "mental": [],
-    "triggerReplacements": []
+    "mental": [
+      "Comparison spirals",
+      "Relationship rumination",
+      "Future fantasizing without action"
+    ],
+    "triggerReplacements": [
+      { "trigger": "Boredom after work", "replacement": "Walk with Cooper or cook" },
+      { "trigger": "Stress/overwhelm", "replacement": "Breathwork or cold shower" },
+      { "trigger": "Urge to game", "replacement": "Read or meditate" }
+    ]
   },
   "habitAudit": {
-    "productive": [],
-    "neutral": [],
-    "destructive": []
+    "productive": [
+      "Gym",
+      "Meditation",
+      "Deep work",
+      "Clean eating",
+      "Sleep routine",
+      "Journaling",
+      "Wim Hof"
+    ],
+    "neutral": [
+      "Cooking",
+      "Walking Cooper",
+      "Reading"
+    ],
+    "destructive": [
+      "Weed",
+      "League of Legends",
+      "Poker",
+      "Porn",
+      "Late-night scrolling",
+      "Skipping gym on emotion",
+      "Isolating"
+    ]
   }
 }
