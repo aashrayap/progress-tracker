@@ -169,7 +169,12 @@ export default function VisionPage() {
   const [vision, setVision] = useState<VisionData | null>(null);
   const [hub, setHub] = useState<HubData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [ritualTab, setRitualTab] = useState<RitualTab>("morning");
+  const [ritualTab, setRitualTab] = useState<RitualTab>(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "morning";
+    if (hour < 17) return "midday";
+    return "evening";
+  });
   const [reviewChecked, setReviewChecked] = useState<Record<string, boolean>>({ morning: false, afternoon: false, evening: false });
   const [activeHabitKey, setActiveHabitKey] = useState<ActiveKey | null>(null);
   const [hoveredCol, setHoveredCol] = useState<number | null>(null);
@@ -340,7 +345,11 @@ export default function VisionPage() {
       <div className="p-4 sm:p-6 pb-24">
         <div className="max-w-5xl mx-auto space-y-5">
 
-          {/* ── 1. Identity Script ─────────────────────────────────── */}
+          {/* ═══════════════════════════════════════════════════════════
+              ZONE 1: Daily Read (fits in ~1 viewport)
+              ═══════════════════════════════════════════════════════ */}
+
+          {/* ── 1. Identity Script (trimmed) ───────────────────────── */}
           <section className="p-4 bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl space-y-4">
             <h2 className="text-xs text-zinc-400 uppercase tracking-wide font-medium">Identity Script</h2>
 
@@ -368,300 +377,323 @@ export default function VisionPage() {
                 <p className="text-xs text-zinc-600 italic">Not set</p>
               )}
             </div>
-
-            <IdentityField label="Physical Presence" value={vision.identityScript.physicalPresence} />
-            <IdentityField label="Social Filter" value={vision.identityScript.socialFilter} />
-            <IdentityField label="Decision Style" value={vision.identityScript.decisionStyle} />
           </section>
 
-          {/* ── 2. North Star ──────────────────────────────────────── */}
-          <section className="space-y-3">
-            <h2 className="text-xs text-zinc-400 uppercase tracking-wide font-medium px-1">North Star</h2>
-            {vision.domains.map((domain) => (
-              <NorthStarCard key={domain.id} domain={domain} />
-            ))}
-          </section>
-
-          {/* ── 3. Ritual Blueprint ────────────────────────────────── */}
-          <section className="bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl">
-            <div className="p-4 pb-0">
-              <h2 className="text-xs text-zinc-400 uppercase tracking-wide font-medium mb-3">Ritual Blueprint</h2>
-              <div className="flex gap-3">
-                {RITUAL_TABS.map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setRitualTab(tab)}
-                    className={`text-xs cursor-pointer pb-1.5 capitalize ${
-                      ritualTab === tab
-                        ? "text-zinc-100 border-b border-zinc-100"
-                        : "text-zinc-500"
-                    }`}
-                  >
-                    {tab}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="p-4 space-y-3">
-              {currentRitual.steps.length > 0 ? (
-                <div>
-                  <p className="text-[10px] text-zinc-500 uppercase tracking-wide mb-1.5">Steps</p>
-                  <ol className="space-y-1">
-                    {currentRitual.steps.map((step, i) => (
-                      <li key={i} className="text-sm text-zinc-300 flex gap-2">
-                        <span className="text-zinc-600 shrink-0">{i + 1}.</span>
-                        {step}
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              ) : (
-                <p className="text-xs text-zinc-600 italic">No steps defined</p>
-              )}
-
-              {currentRitual.habitStacks.length > 0 && (
-                <div>
-                  <p className="text-[10px] text-zinc-500 uppercase tracking-wide mb-1.5">Habit Stacks</p>
-                  <ul className="space-y-1">
-                    {currentRitual.habitStacks.map((stack, i) => (
-                      <li key={i} className="text-sm text-zinc-300 flex gap-2">
-                        <span className="text-zinc-600">-</span>
-                        {stack}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Review checkbox */}
-              <div className="pt-2 border-t border-white/5">
-                <label className={`flex items-center gap-2 ${reviewChecked[reviewContext] ? "opacity-60" : "cursor-pointer"}`}>
-                  <input
-                    type="checkbox"
-                    checked={reviewChecked[reviewContext]}
-                    disabled={reviewChecked[reviewContext]}
-                    onChange={() => handleReview(reviewContext)}
-                    className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-emerald-500 focus:ring-0 focus:ring-offset-0 accent-emerald-500"
-                  />
-                  <span className="text-sm text-zinc-300 capitalize">
-                    {ritualTab} review complete
-                  </span>
-                </label>
-              </div>
-            </div>
-          </section>
-
-          {/* ── 4. Briefing Card ───────────────────────────────────── */}
-          {hub && (
-            <BriefingCard
-              briefing={hub.briefing}
-              fallbackInsight={hub.insight.insight}
-              fallbackQuote={hub.dailyQuote}
-            />
-          )}
-
-          {/* ── 5. Anti-Vision ─────────────────────────────────────── */}
-          <CollapsibleSection title="Anti-Vision">
+          {/* ── 2. Anti-Vision (always visible) ────────────────────── */}
+          <section className="p-4 bg-zinc-900/60 backdrop-blur-md border border-white/10 border-l-2 border-l-red-500/30 rounded-xl">
+            <h2 className="text-xs text-zinc-400 uppercase tracking-wide font-medium mb-3">Anti-Vision</h2>
             {vision.antiVision ? (
               <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-line">{vision.antiVision}</p>
             ) : (
               <p className="text-xs text-zinc-600 italic">Not set</p>
             )}
+          </section>
+
+          {/* ── 3. Intentions + Briefing (side by side) ────────────── */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {/* Left: Intentions */}
+            {hub && (() => {
+              const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+              const weekly = hub.weeklyIntention && hub.weeklyIntention.date >= sevenDaysAgo ? hub.weeklyIntention : null;
+              const daily = hub.dailyIntention && hub.dailyIntention.date === today ? hub.dailyIntention : null;
+              return (
+                <div className="px-4 py-3 bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl space-y-1">
+                  <p className="text-sm text-zinc-400">This week: {weekly ? <span className="text-zinc-200">{weekly.mantra}</span> : <span className="text-zinc-500">not set</span>}</p>
+                  <p className="text-sm text-zinc-400">Today: {daily ? <span className="text-zinc-200">{daily.mantra}</span> : <span className="text-zinc-500">not set</span>}</p>
+                </div>
+              );
+            })()}
+            {/* Right: Briefing */}
+            {hub && (
+              <BriefingCard
+                briefing={hub.briefing}
+                fallbackInsight={hub.insight.insight}
+                fallbackQuote={hub.dailyQuote}
+              />
+            )}
+          </div>
+
+          {/* ── 4. Ritual Checklist + Today's Plan (side by side) ─── */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {/* Left: Ritual Blueprint (auto-detected phase) */}
+            <section className="bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl">
+              <div className="p-4 pb-0">
+                <h2 className="text-xs text-zinc-400 uppercase tracking-wide font-medium mb-3">Ritual Blueprint</h2>
+                <div className="flex gap-3">
+                  {RITUAL_TABS.map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setRitualTab(tab)}
+                      className={`text-xs cursor-pointer pb-1.5 capitalize ${
+                        ritualTab === tab
+                          ? "text-zinc-100 border-b border-zinc-100"
+                          : "text-zinc-500"
+                      }`}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="p-4 space-y-3">
+                {currentRitual.steps.length > 0 ? (
+                  <div>
+                    <p className="text-[10px] text-zinc-500 uppercase tracking-wide mb-1.5">Steps</p>
+                    <ol className="space-y-1">
+                      {currentRitual.steps.map((step, i) => (
+                        <li key={i} className="text-sm text-zinc-300 flex gap-2">
+                          <span className="text-zinc-600 shrink-0">{i + 1}.</span>
+                          {step}
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                ) : (
+                  <p className="text-xs text-zinc-600 italic">No steps defined</p>
+                )}
+
+                {currentRitual.habitStacks.length > 0 && (
+                  <div>
+                    <p className="text-[10px] text-zinc-500 uppercase tracking-wide mb-1.5">Habit Stacks</p>
+                    <ul className="space-y-1">
+                      {currentRitual.habitStacks.map((stack, i) => (
+                        <li key={i} className="text-sm text-zinc-300 flex gap-2">
+                          <span className="text-zinc-600">-</span>
+                          {stack}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Review checkbox */}
+                <div className="pt-2 border-t border-white/5">
+                  <label className={`flex items-center gap-2 ${reviewChecked[reviewContext] ? "opacity-60" : "cursor-pointer"}`}>
+                    <input
+                      type="checkbox"
+                      checked={reviewChecked[reviewContext]}
+                      disabled={reviewChecked[reviewContext]}
+                      onChange={() => handleReview(reviewContext)}
+                      className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-emerald-500 focus:ring-0 focus:ring-offset-0 accent-emerald-500"
+                    />
+                    <span className="text-sm text-zinc-300 capitalize">
+                      {ritualTab} review complete
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </section>
+
+            {/* Right: Today's Plan */}
+            {hub && (
+              <PlanCard
+                plan={hub.todaysPlan}
+                planInsight={hub.briefing?.planInsight}
+                onRefresh={fetchAll}
+              />
+            )}
+          </div>
+
+          {/* ═══════════════════════════════════════════════════════════
+              ZONE SEPARATOR
+              ═══════════════════════════════════════════════════════ */}
+          <div className="flex items-center gap-3 py-2">
+            <div className="flex-1 border-t border-white/10" />
+            <span className="text-xs text-zinc-600 uppercase tracking-wide">Weekly / Monthly Review</span>
+            <div className="flex-1 border-t border-white/10" />
+          </div>
+
+          {/* ═══════════════════════════════════════════════════════════
+              ZONE 2: Deep Review (all collapsed by default)
+              ═══════════════════════════════════════════════════════ */}
+
+          {/* ── 5. North Star (collapsed) ──────────────────────────── */}
+          <CollapsibleSection title="North Star">
+            <div className="space-y-3">
+              {vision.domains.map((domain) => (
+                <NorthStarCard key={domain.id} domain={domain} />
+              ))}
+            </div>
           </CollapsibleSection>
 
-          {/* ── 6. Intentions ──────────────────────────────────────── */}
-          {hub && (() => {
-            const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
-            const weekly = hub.weeklyIntention && hub.weeklyIntention.date >= sevenDaysAgo ? hub.weeklyIntention : null;
-            const daily = hub.dailyIntention && hub.dailyIntention.date === today ? hub.dailyIntention : null;
-            return (
-              <div className="px-4 py-3 bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl space-y-1">
-                <p className="text-sm text-zinc-400">This week: {weekly ? <span className="text-zinc-200">{weekly.mantra}</span> : <span className="text-zinc-500">not set</span>}</p>
-                <p className="text-sm text-zinc-400">Today: {daily ? <span className="text-zinc-200">{daily.mantra}</span> : <span className="text-zinc-500">not set</span>}</p>
-              </div>
-            );
-          })()}
-
-          {/* ── 7. Habit Grid (28 Days) ────────────────────────────── */}
+          {/* ── 6. Habit Grid (collapsed) ──────────────────────────── */}
           {hub && (
-            <section className="p-4 bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs text-zinc-400 uppercase">Daily Habits — 28 Days</p>
-                <span className="text-xs text-zinc-600">Day {resetDay}/90</span>
-              </div>
-              {(() => {
-                const dates = hub.habitTracker.dates;
-                const weeks: number[][] = [];
-                let currentWeek: number[] = [];
-                for (let i = 0; i < dates.length; i++) {
-                  const [y, m, d] = dates[i].split("-").map(Number);
-                  const dow = new Date(y, m - 1, d).getDay();
-                  currentWeek.push(i);
-                  if (dow === 0 || i === dates.length - 1) {
-                    weeks.push(currentWeek);
-                    currentWeek = [];
+            <CollapsibleSection title="Daily Habits — 28 Days">
+              <div>
+                <div className="flex items-center justify-end mb-2">
+                  <span className="text-xs text-zinc-600">Day {resetDay}/90</span>
+                </div>
+                {(() => {
+                  const dates = hub.habitTracker.dates;
+                  const weeks: number[][] = [];
+                  let currentWeek: number[] = [];
+                  for (let i = 0; i < dates.length; i++) {
+                    const [y, m, d] = dates[i].split("-").map(Number);
+                    const dow = new Date(y, m - 1, d).getDay();
+                    currentWeek.push(i);
+                    if (dow === 0 || i === dates.length - 1) {
+                      weeks.push(currentWeek);
+                      currentWeek = [];
+                    }
                   }
-                }
-                const CELL = 28;
-                const GAP = 4;
-                const fullWeekWidth = 7 * CELL + 6 * GAP;
-                const fmtDate = (d: string) => {
-                  const [y, m, day] = d.split("-").map(Number);
-                  return new Date(y, m - 1, day).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-                };
-                const weekCells = (indices: number[], weekIndex: number, renderCell: (i: number) => React.ReactNode) => (
-                  <div key={weekIndex} className="flex gap-1" style={{ width: `${fullWeekWidth}px` }}>{indices.map(renderCell)}</div>
-                );
-                return (
-                  <div
-                    ref={gridRef}
-                    className="relative space-y-2.5"
-                    onMouseLeave={() => setHoveredCol(null)}
-                  >
-                    {hoveredCol !== null && dates[hoveredCol] && (() => {
-                      const entry = hub.dopamineReset.log.find((l) => l.date === dates[hoveredCol]);
-                      const isToday = hoveredCol === dates.length - 1;
-                      const { score } = computeDayScore(entry, isToday);
-                      return (
-                        <HabitTooltip
-                          dateStr={dates[hoveredCol]}
-                          columnIndex={hoveredCol}
-                          gridRef={gridRef}
-                          score={score}
-                        />
-                      );
-                    })()}
-                    {/* Date labels */}
-                    <div className="flex items-center gap-2.5">
-                      <span className="w-[4.5rem] shrink-0" />
-                      <div className="flex gap-3">
-                        {weeks.map((wk, wi) => (
-                          <div key={wi} style={{ width: `${fullWeekWidth}px` }}>
-                            <span className="text-[10px] text-zinc-600">{fmtDate(dates[wk[0]])}</span>
-                          </div>
-                        ))}
+                  const CELL = 28;
+                  const GAP = 4;
+                  const fullWeekWidth = 7 * CELL + 6 * GAP;
+                  const fmtDate = (d: string) => {
+                    const [y, m, day] = d.split("-").map(Number);
+                    return new Date(y, m - 1, day).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+                  };
+                  const weekCells = (indices: number[], weekIndex: number, renderCell: (i: number) => React.ReactNode) => (
+                    <div key={weekIndex} className="flex gap-1" style={{ width: `${fullWeekWidth}px` }}>{indices.map(renderCell)}</div>
+                  );
+                  return (
+                    <div
+                      ref={gridRef}
+                      className="relative space-y-2.5"
+                      onMouseLeave={() => setHoveredCol(null)}
+                    >
+                      {hoveredCol !== null && dates[hoveredCol] && (() => {
+                        const entry = hub.dopamineReset.log.find((l) => l.date === dates[hoveredCol]);
+                        const isToday = hoveredCol === dates.length - 1;
+                        const { score } = computeDayScore(entry, isToday);
+                        return (
+                          <HabitTooltip
+                            dateStr={dates[hoveredCol]}
+                            columnIndex={hoveredCol}
+                            gridRef={gridRef}
+                            score={score}
+                          />
+                        );
+                      })()}
+                      {/* Date labels */}
+                      <div className="flex items-center gap-2.5">
+                        <span className="w-[4.5rem] shrink-0" />
+                        <div className="flex gap-3">
+                          {weeks.map((wk, wi) => (
+                            <div key={wi} style={{ width: `${fullWeekWidth}px` }}>
+                              <span className="text-[10px] text-zinc-600">{fmtDate(dates[wk[0]])}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                    {/* Score row */}
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-xs text-zinc-300 w-[4.5rem] shrink-0 text-right font-medium">Score</span>
-                      <div className="flex gap-3">
-                        {weeks.map((wk, wi) => weekCells(wk, wi, (i) => {
-                          const dateStr = dates[i];
-                          const entry = hub.dopamineReset.log.find((l) => l.date === dateStr);
-                          const isToday = i === dates.length - 1;
-                          const { score, color } = computeDayScore(entry, isToday);
-                          return (
-                            <div
-                              key={dateStr}
-                              data-col={i}
-                              className={`w-7 h-7 rounded cursor-pointer ${color} ${isToday ? "ring-2 ring-zinc-400 ring-offset-1 ring-offset-zinc-950" : ""}`}
-                              title={score !== null ? `${score}/8` : "Not logged"}
-                              onMouseEnter={() => setHoveredCol(i)}
-                              onClick={() => setActiveHabitKey("score")}
-                            />
-                          );
-                        }))}
-                      </div>
-                    </div>
-                    {/* Separator */}
-                    <div className="flex items-center gap-2.5">
-                      <span className="w-[4.5rem] shrink-0" />
-                      <div className="flex-1 border-t border-white/5" />
-                    </div>
-                    {/* Habit rows */}
-                    {HABIT_ORDER.map((habitKey) => (
-                      <div key={habitKey} className="flex items-center gap-2.5">
-                        <span className="text-xs text-zinc-400 w-[4.5rem] shrink-0 text-right truncate">
-                          {HABIT_CONFIG[habitKey].label}
-                        </span>
+                      {/* Score row */}
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-xs text-zinc-300 w-[4.5rem] shrink-0 text-right font-medium">Score</span>
                         <div className="flex gap-3">
                           {weeks.map((wk, wi) => weekCells(wk, wi, (i) => {
                             const dateStr = dates[i];
-                            const isToday = i === hub.habitTracker.days.length - 1;
-
-                            // 3-segment vision_reviewed cell
-                            if (habitKey === "vision_reviewed") {
-                              const val = hub.habitTracker.days[i][habitKey];
-                              // TODO: 3-segment enhancement — hub API currently returns vision_reviewed
-                              // as a single boolean. To show morning/afternoon/evening segments
-                              // independently, the hub API would need to return per-context data.
-                              // For now, render the standard cell. When hub data includes
-                              // vision_reviewed context detail, replace with 3 vertical segments.
-                              return (
-                                <div
-                                  key={dateStr}
-                                  className={`w-7 h-7 rounded cursor-pointer flex flex-col justify-center items-center gap-px ${isToday ? "ring-2 ring-zinc-400 ring-offset-1 ring-offset-zinc-950" : ""}`}
-                                  onMouseEnter={() => setHoveredCol(i)}
-                                  onClick={() => setActiveHabitKey(habitKey)}
-                                  style={{ backgroundColor: "transparent" }}
-                                >
-                                  {val === true ? (
-                                    <>
-                                      <div className="w-5 h-1.5 rounded-sm bg-emerald-500" />
-                                      <div className="w-5 h-1.5 rounded-sm bg-emerald-500" />
-                                      <div className="w-5 h-1.5 rounded-sm bg-emerald-500" />
-                                    </>
-                                  ) : val === false ? (
-                                    <>
-                                      <div className="w-5 h-1.5 rounded-sm bg-red-500" />
-                                      <div className="w-5 h-1.5 rounded-sm bg-red-500" />
-                                      <div className="w-5 h-1.5 rounded-sm bg-red-500" />
-                                    </>
-                                  ) : (
-                                    <>
-                                      <div className="w-5 h-1.5 rounded-sm bg-zinc-800" />
-                                      <div className="w-5 h-1.5 rounded-sm bg-zinc-800" />
-                                      <div className="w-5 h-1.5 rounded-sm bg-zinc-800" />
-                                    </>
-                                  )}
-                                </div>
-                              );
-                            }
-
-                            const val = hub.habitTracker.days[i][habitKey];
+                            const entry = hub.dopamineReset.log.find((l) => l.date === dateStr);
+                            const isToday = i === dates.length - 1;
+                            const { score, color } = computeDayScore(entry, isToday);
                             return (
                               <div
                                 key={dateStr}
-                                className={`w-7 h-7 rounded cursor-pointer ${
-                                  val === true
-                                    ? "bg-emerald-500"
-                                    : val === false
-                                      ? "bg-red-500"
-                                      : "bg-zinc-800"
-                                } ${isToday ? "ring-2 ring-zinc-400 ring-offset-1 ring-offset-zinc-950" : ""}`}
+                                data-col={i}
+                                className={`w-7 h-7 rounded cursor-pointer ${color} ${isToday ? "ring-2 ring-zinc-400 ring-offset-1 ring-offset-zinc-950" : ""}`}
+                                title={score !== null ? `${score}/8` : "Not logged"}
                                 onMouseEnter={() => setHoveredCol(i)}
-                                onClick={() => setActiveHabitKey(habitKey)}
+                                onClick={() => setActiveHabitKey("score")}
                               />
                             );
                           }))}
                         </div>
                       </div>
-                    ))}
-                  </div>
-                );
-              })()}
-            </section>
+                      {/* Separator */}
+                      <div className="flex items-center gap-2.5">
+                        <span className="w-[4.5rem] shrink-0" />
+                        <div className="flex-1 border-t border-white/5" />
+                      </div>
+                      {/* Habit rows */}
+                      {HABIT_ORDER.map((habitKey) => (
+                        <div key={habitKey} className="flex items-center gap-2.5">
+                          <span className="text-xs text-zinc-400 w-[4.5rem] shrink-0 text-right truncate">
+                            {HABIT_CONFIG[habitKey].label}
+                          </span>
+                          <div className="flex gap-3">
+                            {weeks.map((wk, wi) => weekCells(wk, wi, (i) => {
+                              const dateStr = dates[i];
+                              const isToday = i === hub.habitTracker.days.length - 1;
+
+                              // 3-segment vision_reviewed cell
+                              if (habitKey === "vision_reviewed") {
+                                const val = hub.habitTracker.days[i][habitKey];
+                                return (
+                                  <div
+                                    key={dateStr}
+                                    className={`w-7 h-7 rounded cursor-pointer flex flex-row gap-px overflow-hidden ${isToday ? "ring-2 ring-zinc-400 ring-offset-1 ring-offset-zinc-950" : ""}`}
+                                    onMouseEnter={() => setHoveredCol(i)}
+                                    onClick={() => setActiveHabitKey(habitKey)}
+                                    style={{ backgroundColor: "transparent" }}
+                                  >
+                                    {val === true ? (
+                                      <>
+                                        <div className="flex-1 h-full bg-emerald-500" />
+                                        <div className="flex-1 h-full bg-emerald-500" />
+                                        <div className="flex-1 h-full bg-emerald-500" />
+                                      </>
+                                    ) : val === false ? (
+                                      <>
+                                        <div className="flex-1 h-full bg-red-500" />
+                                        <div className="flex-1 h-full bg-red-500" />
+                                        <div className="flex-1 h-full bg-red-500" />
+                                      </>
+                                    ) : (
+                                      <>
+                                        <div className="flex-1 h-full bg-zinc-800" />
+                                        <div className="flex-1 h-full bg-zinc-800" />
+                                        <div className="flex-1 h-full bg-zinc-800" />
+                                      </>
+                                    )}
+                                  </div>
+                                );
+                              }
+
+                              const val = hub.habitTracker.days[i][habitKey];
+                              return (
+                                <div
+                                  key={dateStr}
+                                  className={`w-7 h-7 rounded cursor-pointer ${
+                                    val === true
+                                      ? "bg-emerald-500"
+                                      : val === false
+                                        ? "bg-red-500"
+                                        : "bg-zinc-800"
+                                  } ${isToday ? "ring-2 ring-zinc-400 ring-offset-1 ring-offset-zinc-950" : ""}`}
+                                  onMouseEnter={() => setHoveredCol(i)}
+                                  onClick={() => setActiveHabitKey(habitKey)}
+                                />
+                              );
+                            }))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </div>
+            </CollapsibleSection>
           )}
 
-          {/* ── 8. Plan Card ───────────────────────────────────────── */}
+          {/* ── 7. Identity Details (collapsed) ────────────────────── */}
+          <CollapsibleSection title="Identity Details">
+            <div className="space-y-4">
+              <IdentityField label="Physical Presence" value={vision.identityScript.physicalPresence} />
+              <IdentityField label="Social Filter" value={vision.identityScript.socialFilter} />
+              <IdentityField label="Decision Style" value={vision.identityScript.decisionStyle} />
+            </div>
+          </CollapsibleSection>
+
+          {/* ── 8. Experiments (collapsed) ──────────────────────────── */}
           {hub && (
-            <PlanCard
-              plan={hub.todaysPlan}
-              planInsight={hub.briefing?.planInsight}
-              onRefresh={fetchAll}
-            />
+            <CollapsibleSection title="Experiments">
+              <ExperimentsTable
+                current={hub.experiments.current}
+                past={hub.experiments.past}
+              />
+            </CollapsibleSection>
           )}
 
-          {/* ── 9. Experiments ─────────────────────────────────────── */}
-          {hub && (
-            <ExperimentsTable
-              current={hub.experiments.current}
-              past={hub.experiments.past}
-            />
-          )}
-
-          {/* ── 10. Weekly Review Sections (collapsed) ─────────────── */}
+          {/* ── 9-11. Input Control, Distractions, Habit Audit ─────── */}
           <InputControlSection data={vision.inputControl} />
           <DistractionsSection data={vision.distractions} />
           <HabitAuditSection data={vision.habitAudit} />
