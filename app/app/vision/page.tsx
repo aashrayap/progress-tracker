@@ -178,6 +178,7 @@ export default function VisionPage() {
   const [reviewChecked, setReviewChecked] = useState<Record<string, boolean>>({ morning: false, afternoon: false, evening: false });
   const [activeHabitKey, setActiveHabitKey] = useState<ActiveKey | null>(null);
   const [hoveredCol, setHoveredCol] = useState<number | null>(null);
+  const [habitPageOffset, setHabitPageOffset] = useState(0); // 0 = most recent, 1 = previous 28 days, etc.
   const gridRef = useRef<HTMLDivElement>(null);
 
   const today = useMemo(() => {
@@ -343,7 +344,7 @@ export default function VisionPage() {
   return (
     <div className="min-h-screen bg-black text-zinc-100">
       <div className="p-4 sm:p-6 pb-24">
-        <div className="max-w-5xl mx-auto space-y-5">
+        <div className="max-w-[85rem] mx-auto space-y-5">
 
           {/* ═══════════════════════════════════════════════════════════
               ZONE 1: Daily Read (fits in ~1 viewport)
@@ -505,35 +506,41 @@ export default function VisionPage() {
               ZONE 2: Deep Review (all collapsed by default)
               ═══════════════════════════════════════════════════════ */}
 
-          {/* ── 5. North Star (collapsed) ──────────────────────────── */}
-          <CollapsibleSection title="North Star">
-            <div className="space-y-3">
-              {vision.domains.map((domain) => (
-                <NorthStarCard key={domain.id} domain={domain} />
-              ))}
-            </div>
-          </CollapsibleSection>
-
-          {/* ── 6. Habit Grid (collapsed) ──────────────────────────── */}
+          {/* ── 5. Habit Grid (open — daily/weekly frequency) ─────── */}
           {hub && (
-            <CollapsibleSection title="Daily Habits — 28 Days">
+            <CollapsibleSection title="Daily Habits" defaultOpen>
               <div>
-                <div className="flex items-center justify-end mb-2">
-                  <span className="text-xs text-zinc-600">Day {resetDay}/90</span>
-                </div>
                 {(() => {
-                  const dates = hub.habitTracker.dates;
-                  const weeks: number[][] = [];
+                  const allDates = hub.habitTracker.dates;
+                  // Group all dates into weeks (Mon-Sun)
+                  const allWeeks: number[][] = [];
                   let currentWeek: number[] = [];
-                  for (let i = 0; i < dates.length; i++) {
-                    const [y, m, d] = dates[i].split("-").map(Number);
+                  for (let i = 0; i < allDates.length; i++) {
+                    const [y, m, d] = allDates[i].split("-").map(Number);
                     const dow = new Date(y, m - 1, d).getDay();
                     currentWeek.push(i);
-                    if (dow === 0 || i === dates.length - 1) {
-                      weeks.push(currentWeek);
+                    if (dow === 0 || i === allDates.length - 1) {
+                      allWeeks.push(currentWeek);
                       currentWeek = [];
                     }
                   }
+                  // Paginate: show 4 full weeks at a time, offset from the end
+                  const WEEKS_PER_PAGE = 4;
+                  const maxPage = Math.max(0, Math.ceil(allWeeks.length / WEEKS_PER_PAGE) - 1);
+                  const safeOffset = Math.min(habitPageOffset, maxPage);
+                  const endWeekIdx = allWeeks.length - safeOffset * WEEKS_PER_PAGE;
+                  const startWeekIdx = Math.max(0, endWeekIdx - WEEKS_PER_PAGE);
+                  const weeks = allWeeks.slice(startWeekIdx, endWeekIdx);
+                  // Flatten for date range display
+                  const visibleIndices = weeks.flat();
+                  const firstDate = allDates[visibleIndices[0]];
+                  const lastDate = allDates[visibleIndices[visibleIndices.length - 1]];
+                  const fmtRange = (d: string) => {
+                    const [y, m, day] = d.split("-").map(Number);
+                    return new Date(y, m - 1, day).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+                  };
+                  const canGoBack = startWeekIdx > 0;
+                  const canGoForward = safeOffset > 0;
                   const CELL = 28;
                   const GAP = 4;
                   const fullWeekWidth = 7 * CELL + 6 * GAP;
@@ -544,19 +551,43 @@ export default function VisionPage() {
                   const weekCells = (indices: number[], weekIndex: number, renderCell: (i: number) => React.ReactNode) => (
                     <div key={weekIndex} className="flex gap-1" style={{ width: `${fullWeekWidth}px` }}>{indices.map(renderCell)}</div>
                   );
+                  const todayIdx = allDates.length - 1;
                   return (
                     <div
                       ref={gridRef}
                       className="relative space-y-2.5"
                       onMouseLeave={() => setHoveredCol(null)}
                     >
-                      {hoveredCol !== null && dates[hoveredCol] && (() => {
-                        const entry = hub.dopamineReset.log.find((l) => l.date === dates[hoveredCol]);
-                        const isToday = hoveredCol === dates.length - 1;
+                      {/* Navigation */}
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setHabitPageOffset(Math.min(safeOffset + 1, maxPage))}
+                            disabled={!canGoBack}
+                            className={`text-xs px-2 py-1 rounded ${canGoBack ? "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800" : "text-zinc-700 cursor-not-allowed"}`}
+                          >
+                            ◀
+                          </button>
+                          <span className="text-xs text-zinc-500">
+                            {fmtRange(firstDate)} – {fmtRange(lastDate)}
+                          </span>
+                          <button
+                            onClick={() => setHabitPageOffset(Math.max(safeOffset - 1, 0))}
+                            disabled={!canGoForward}
+                            className={`text-xs px-2 py-1 rounded ${canGoForward ? "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800" : "text-zinc-700 cursor-not-allowed"}`}
+                          >
+                            ▶
+                          </button>
+                        </div>
+                        <span className="text-xs text-zinc-600">Day {resetDay}/90</span>
+                      </div>
+                      {hoveredCol !== null && allDates[hoveredCol] && (() => {
+                        const entry = hub.dopamineReset.log.find((l) => l.date === allDates[hoveredCol]);
+                        const isToday = hoveredCol === todayIdx;
                         const { score } = computeDayScore(entry, isToday);
                         return (
                           <HabitTooltip
-                            dateStr={dates[hoveredCol]}
+                            dateStr={allDates[hoveredCol]}
                             columnIndex={hoveredCol}
                             gridRef={gridRef}
                             score={score}
@@ -569,7 +600,7 @@ export default function VisionPage() {
                         <div className="flex gap-3">
                           {weeks.map((wk, wi) => (
                             <div key={wi} style={{ width: `${fullWeekWidth}px` }}>
-                              <span className="text-[10px] text-zinc-600">{fmtDate(dates[wk[0]])}</span>
+                              <span className="text-[10px] text-zinc-600">{fmtDate(allDates[wk[0]])}</span>
                             </div>
                           ))}
                         </div>
@@ -579,9 +610,9 @@ export default function VisionPage() {
                         <span className="text-xs text-zinc-300 w-[4.5rem] shrink-0 text-right font-medium">Score</span>
                         <div className="flex gap-3">
                           {weeks.map((wk, wi) => weekCells(wk, wi, (i) => {
-                            const dateStr = dates[i];
+                            const dateStr = allDates[i];
                             const entry = hub.dopamineReset.log.find((l) => l.date === dateStr);
-                            const isToday = i === dates.length - 1;
+                            const isToday = i === todayIdx;
                             const { score, color } = computeDayScore(entry, isToday);
                             return (
                               <div
@@ -609,8 +640,8 @@ export default function VisionPage() {
                           </span>
                           <div className="flex gap-3">
                             {weeks.map((wk, wi) => weekCells(wk, wi, (i) => {
-                              const dateStr = dates[i];
-                              const isToday = i === hub.habitTracker.days.length - 1;
+                              const dateStr = allDates[i];
+                              const isToday = i === todayIdx;
 
                               // 3-segment vision_reviewed cell
                               if (habitKey === "vision_reviewed") {
@@ -671,6 +702,15 @@ export default function VisionPage() {
               </div>
             </CollapsibleSection>
           )}
+
+          {/* ── 6. North Star (collapsed) ──────────────────────────── */}
+          <CollapsibleSection title="North Star" defaultOpen>
+            <div className="grid grid-cols-2 gap-3">
+              {vision.domains.map((domain) => (
+                <NorthStarCard key={domain.id} domain={domain} />
+              ))}
+            </div>
+          </CollapsibleSection>
 
           {/* ── 7. Identity Details (collapsed) ────────────────────── */}
           <CollapsibleSection title="Identity Details">

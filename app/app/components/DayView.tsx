@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import SchedulerModal from "./SchedulerModal";
 import PlanBlock from "./PlanBlock";
 import NowLine, { getCurrentHour } from "./NowLine";
+import BriefingCard from "./BriefingCard";
 import type { PlanEvent, HabitMap, Todo, RitualBlueprint } from "../lib/types";
 import { toDateStr } from "../lib/utils";
 
@@ -29,13 +29,32 @@ interface IntentionSummary {
   mantra: string;
 }
 
-export default function DayView({ events, focusDate, onRefresh, todos: externalTodos, onTodosChange }: Props) {
-  const [editing, setEditing] = useState(false);
-  const [localTodos, setLocalTodos] = useState<Todo[]>([]);
+interface BriefingData {
+  state: "momentum" | "recovery" | "neutral" | "danger" | "explore" | "disruption";
+  insight: string;
+  priorities: string[];
+  quote: { text: string; author: string };
+  generated_at: string;
+  input_hash: string;
+  verified: boolean;
+  planInsight?: string;
+}
+
+interface HubData {
+  briefing: BriefingData | null;
+  insight: {
+    insight: { streak: string; warning: string | null; momentum: string };
+  };
+  dailyQuote: { text: string; author: string; source: string } | null;
+}
+
+export default function DayView({ events, focusDate, onRefresh }: Props) {
   const [dailyIntention, setDailyIntention] = useState<IntentionSummary | null>(null);
   const [weeklyIntention, setWeeklyIntention] = useState<IntentionSummary | null>(null);
   const [ritual, setRitual] = useState<RitualBlueprint | null>(null);
-  const [ritualOpen, setRitualOpen] = useState(false);
+  const [ritualOpen, setRitualOpen] = useState(true);
+  const [identityScript, setIdentityScript] = useState<{ coreTraits: string; nonNegotiables: string } | null>(null);
+  const [hubData, setHubData] = useState<HubData | null>(null);
   const dateStr = toDateStr(focusDate);
   const todayStr = toDateStr(new Date());
   const isToday = dateStr === todayStr;
@@ -75,10 +94,31 @@ export default function DayView({ events, focusDate, onRefresh, todos: externalT
         .then((data) => {
           if (!active) return;
           setRitual(data.ritualBlueprint ?? null);
+          if (data.identityScript) {
+            setIdentityScript({
+              coreTraits: data.identityScript.coreTraits ?? "",
+              nonNegotiables: data.identityScript.nonNegotiables ?? "",
+            });
+          }
         })
         .catch(() => {
           if (!active) return;
           setRitual(null);
+          setIdentityScript(null);
+        });
+
+      fetch("/api/hub")
+        .then((res) => {
+          if (!res.ok) throw new Error("Failed to fetch hub");
+          return res.json();
+        })
+        .then((data) => {
+          if (!active) return;
+          setHubData(data);
+        })
+        .catch(() => {
+          if (!active) return;
+          setHubData(null);
         });
     }
 
@@ -86,23 +126,6 @@ export default function DayView({ events, focusDate, onRefresh, todos: externalT
       active = false;
     };
   }, [dateStr, isToday]);
-
-  const todosForModal = externalTodos ?? localTodos;
-
-  const handleEdit = useCallback(async () => {
-    if (!externalTodos) {
-      const res = await fetch("/api/todos");
-      if (!res.ok) throw new Error("Failed to fetch todos");
-      const data = await res.json();
-      setLocalTodos(data);
-    }
-    setEditing(true);
-  }, [externalTodos]);
-
-  const handleSchedulerClose = useCallback(() => {
-    setEditing(false);
-    onRefresh();
-  }, [onRefresh]);
 
   const setPlanDone = useCallback(
     async (event: PlanEvent, done: "1" | "0" | "") => {
@@ -127,56 +150,7 @@ export default function DayView({ events, focusDate, onRefresh, todos: externalT
   return (
     <>
       <div className="space-y-4">
-        {/* Edit button for today — disabled */}
-        {isToday && (
-          <button
-            className="px-4 py-3 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-400 text-sm min-h-[44px] opacity-50 pointer-events-none"
-          >
-            Edit Plan
-          </button>
-        )}
-
-        {/* All-day events */}
-        {allDayEvents.length > 0 && (
-          <div className="p-4 bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10">
-            <h3 className="text-xs text-zinc-400 uppercase tracking-wide mb-3">
-              All Day
-            </h3>
-            <div className="space-y-2">
-              {allDayEvents.map((e, idx) => (
-                <div
-                  key={`${e.date}-${e.start}-${e.end}-${e.item}-${idx}`}
-                  className="flex items-center gap-3 p-2 rounded bg-purple-500/10 border border-purple-500/20"
-                >
-                  <span className="text-sm text-purple-300">{e.item}</span>
-                  {e.notes && (
-                    <span className="text-xs text-zinc-400">{e.notes}</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Intention banner */}
-        {hasIntentions && (
-          <div className="px-3 py-2 rounded-lg border border-cyan-400/20 bg-cyan-500/[0.06]">
-            {weeklyIntention?.mantra && (
-              <p className="text-xs text-zinc-500 italic">
-                <span className="text-zinc-600 not-italic">This week:</span>{" "}
-                {weeklyIntention.mantra}
-              </p>
-            )}
-            {dailyIntention?.mantra && (
-              <p className="text-sm text-zinc-300 italic mt-1">
-                <span className="text-zinc-500 not-italic">Today:</span>{" "}
-                {dailyIntention.mantra}
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* Ritual context strip — today only */}
+        {/* 1. Ritual checklist — today only, open by default */}
         {isToday && ritual && (() => {
           const phase = getRitualPhase();
           const block = ritual[phase];
@@ -211,7 +185,94 @@ export default function DayView({ events, focusDate, onRefresh, todos: externalT
           );
         })()}
 
-        {/* Schedule */}
+        {/* 2. Compact identity — today only */}
+        {isToday && identityScript && (identityScript.coreTraits || identityScript.nonNegotiables) && (
+          <div className="px-3 py-2 rounded-lg border border-white/5 bg-zinc-900/40">
+            {identityScript.coreTraits && (
+              <p className="text-sm text-zinc-300">
+                <span className="text-zinc-500 text-xs uppercase tracking-wide mr-2">Core traits</span>
+                {identityScript.coreTraits}
+              </p>
+            )}
+            {identityScript.nonNegotiables && (
+              <p className="text-sm text-zinc-300 mt-1">
+                <span className="text-zinc-500 text-xs uppercase tracking-wide mr-2">Non-negotiables</span>
+                {identityScript.nonNegotiables}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* 3. Intentions + Briefing — today only */}
+        {isToday && (
+          <div>
+            {hasIntentions && (
+              <div className="px-3 py-2 rounded-lg border border-cyan-400/20 bg-cyan-500/[0.06] mb-3">
+                {weeklyIntention?.mantra && (
+                  <p className="text-xs text-zinc-500 italic">
+                    <span className="text-zinc-600 not-italic">This week:</span>{" "}
+                    {weeklyIntention.mantra}
+                  </p>
+                )}
+                {dailyIntention?.mantra && (
+                  <p className="text-sm text-zinc-300 italic mt-1">
+                    <span className="text-zinc-500 not-italic">Today:</span>{" "}
+                    {dailyIntention.mantra}
+                  </p>
+                )}
+              </div>
+            )}
+            {hubData && (
+              <BriefingCard
+                briefing={hubData.briefing}
+                fallbackInsight={hubData.insight.insight}
+                fallbackQuote={hubData.dailyQuote}
+              />
+            )}
+          </div>
+        )}
+
+        {/* Non-today: show intentions only */}
+        {!isToday && hasIntentions && (
+          <div className="px-3 py-2 rounded-lg border border-cyan-400/20 bg-cyan-500/[0.06]">
+            {weeklyIntention?.mantra && (
+              <p className="text-xs text-zinc-500 italic">
+                <span className="text-zinc-600 not-italic">This week:</span>{" "}
+                {weeklyIntention.mantra}
+              </p>
+            )}
+            {dailyIntention?.mantra && (
+              <p className="text-sm text-zinc-300 italic mt-1">
+                <span className="text-zinc-500 not-italic">Today:</span>{" "}
+                {dailyIntention.mantra}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* 4. Today's Priorities (drafts) — any date */}
+        {allDayEvents.length > 0 && (
+          <div className="p-4 bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10">
+            <h3 className="text-xs text-zinc-400 uppercase tracking-wide mb-3">
+              Today&apos;s Priorities
+            </h3>
+            <div className="space-y-2">
+              {allDayEvents.map((e, idx) => (
+                <div
+                  key={`${e.date}-${e.start}-${e.end}-${e.item}-${idx}`}
+                  className="flex items-center gap-3 p-2 rounded bg-purple-500/10 border border-purple-500/20"
+                >
+                  <span className="text-sm text-purple-300">{e.item}</span>
+                  {e.notes && (
+                    <span className="text-xs text-zinc-400">{e.notes}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 5. Schedule */}
         <div className="p-4 bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10">
           <h3 className="text-xs text-zinc-400 uppercase tracking-wide mb-3">
             Schedule
@@ -257,21 +318,6 @@ export default function DayView({ events, focusDate, onRefresh, todos: externalT
         </div>
       </div>
 
-      {/* Scheduler overlay (today only) */}
-      {editing && (
-        <SchedulerModal
-          initialPlan={dayEvents.map((e) => ({
-            start: e.start,
-            end: e.end,
-            item: e.item,
-            done: e.done,
-            notes: e.notes,
-          }))}
-          initialTodos={todosForModal}
-          onClose={handleSchedulerClose}
-          onTodosChange={onTodosChange}
-        />
-      )}
     </>
   );
 }
