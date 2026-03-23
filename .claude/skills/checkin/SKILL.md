@@ -1,6 +1,6 @@
 ---
 name: checkin
-description: Guided daily, weekly, monthly, or quarterly check-in that captures habits, intentions, feelings, and reflections into canonical CSVs and vision.json.
+description: Guided daily, weekly, monthly, or quarterly check-in that captures habits, intentions, feelings, and reflections into canonical CSVs and vision.json. Single CLI entry point for all writes — absorbs former /plan skill actions.
 ---
 
 # Check-in
@@ -18,6 +18,11 @@ Never guess the current date or day of week. Run `date '+%Y-%m-%d %A'` at the st
 - `/checkin weekly` — force weekly check-in
 - `/checkin monthly` — force monthly check-in
 - `/checkin quarterly` — force quarterly check-in (full vision.json rebuild)
+- `/checkin add <item> <time>` — quick-add a plan block (inline command)
+- `/checkin done <item>` — mark a plan block done + auto-signal (inline command)
+- `/checkin move <item> <new-time>` — move a plan block (inline command)
+- `/checkin intention [text]` — set or view daily intention (inline command)
+- `/checkin show` — show today's plan + context (inline command)
 
 ## Auto-Detection (when user runs `/checkin` with no argument)
 
@@ -86,12 +91,9 @@ Append to `daily_signals.csv` after each check-in:
 
 ## Daily Check-in
 
-### Time Windows
+### Pre-Menu (always, in order)
 
-- **Morning** (`before 12:00 PM`): yesterday backfill + today setup
-- **Afternoon** (`12:00 PM or later`): yesterday backfill if missing + today progress + today adjustment
-
-### State Scan
+#### 1. State Scan
 
 Run `node scripts/precompute-checkin.js` and parse the JSON output.
 
@@ -111,7 +113,7 @@ The `digest` object contains structured data for AI reasoning in subsequent step
 
 After both cards, **ask about sleep before showing the menu**.
 
-### Sleep (always first, before the menu)
+#### 2. Sleep (always first, before the menu)
 
 Sleep is today's cornerstone habit — going to bed on time last night sets up today for success. It is ALWAYS logged on today's date and asked FIRST, before the menu appears.
 
@@ -120,7 +122,7 @@ Sleep is today's cornerstone habit — going to bed on time last night sets up t
 - Sleep is NEVER part of yesterday's backfill. If the user mentions sleep while listing yesterday's habits, log it on TODAY's date and clarify if needed.
 - Once sleep is answered, proceed to the daily intention check (if needed), then show the menu.
 
-### Daily Intention (only if not set today)
+#### 3. Daily Intention (only if not set today)
 
 If `digest.daily_intention` is null (not yet set today):
 
@@ -140,22 +142,29 @@ If `digest.daily_intention` is already set, skip this section entirely and go to
 
 ### Menu
 
-After sleep is handled, present options with live counts. The user picks what to do. After each option completes, writes happen immediately, then show the menu again with updated counts. When the user stops picking (or says "done"), the checkin ends.
+After sleep + intention are handled, present all options. No time-of-day gating — user picks freely. Labels are guidance, not auto-detected gates.
 
 ```
 What do you want to do?
 
-1. Log habits       (8 open today)
-2. Emotional check
-3. Reflect on yesterday
-4. Inbox triage     (3 items + 2 shipped PRs)
-5. Plan today
+── Morning ──
+  1. Log             (8 open today)
+  2. Anchor
+  3. Today's plan
+
+── Evening ──
+  4. Decompress
+  5. Reflect on today
+  6. Set tomorrow
+
+── Anytime ──
+  7. Brain state
 ```
 
 Rules:
-- Show counts from current state
+- Show counts from current state where applicable
 - Options with nothing to do still appear but show "(done)" or "(0 items)"
-- User can pick any option in any order
+- User can pick any option in any order regardless of time of day
 - User can pick the same option again (re-enterable)
 - After completing an option, ask "What next?" with the updated menu
 - When user says "done" or stops, write `checkin_daily=1` if not already written today
@@ -184,7 +193,7 @@ Write updates to `experiments.csv` immediately after each experiment is conclude
 
 ---
 
-### Option 1: Log Habits
+### Option 1: Log
 
 Ask ONLY about habits/addiction not yet logged for the relevant day.
 
@@ -210,13 +219,9 @@ Habits (skippable):
 
 If all signals for a category are already logged, skip with a quick note: "Yesterday's addiction habits are all logged -- moving on."
 
-**Today** — behavior depends on time of day:
+**Today** — ask about today's habits that are missing:
 
-Note: Sleep is handled BEFORE the menu (see "Sleep" section above). It is NOT part of Option 1.
-
-**Morning mode**: nothing to ask — all today habits (lifestyle AND addiction) aren't knowable yet. Do NOT ask about weed/lol/poker/gym/etc for today in the morning. If the user volunteers a today signal, accept and log it, but don't prompt for it.
-
-**Afternoon mode**: ask about today's habits that are missing:
+Note: Sleep is handled BEFORE the menu (see Pre-Menu section above). It is NOT part of Option 1.
 
 | Signal | Question |
 |--------|----------|
@@ -235,13 +240,200 @@ Write signals to `daily_signals.csv` immediately after this option completes.
 
 ---
 
-### Option 2: Emotional Check
+### Option 2: Anchor
+
+A mirror, not therapy. Reads the user's own pre-committed words back at the moment of decision. Target: ~2 minutes.
+
+#### Step 1: NAME IT
+
+Ask: "What's pulling you right now?"
+
+Accept free text. Store the response for use in subsequent steps.
+
+#### Step 2: STATE CHECK
+
+Ask two questions:
+- "Energy right now?" (depleted / ok / good)
+- "Clarity right now?" (foggy / clear)
+
+If depleted + foggy:
+> "You're in a low-reliability state. Decisions made here tend to serve the old identity."
+
+#### Step 3: IDENTITY LENS
+
+Surface from vision.json (read via `cat data/vision.json` — do NOT use API):
+
+1. **Core traits + decision style**: `identityScript.coreTraits` and `identityScript.decisionStyle`
+2. **Anti-vision**: `antiVision` (full text)
+3. **Matched trigger replacements**: scan `distractions.triggerReplacements` for keyword overlap with the user's "pull" from step 1. Show matches.
+4. **Matched destructive habits**: scan `habitAudit.destructive` for keyword overlap with the pull. Show matches.
+5. **Relevant recent reflections**: grep `data/reflections.csv` for keyword overlap with the pull (last 30 days). Show up to 3 matches with date and lesson.
+
+Present all surfaced content, then ask:
+
+> "Does the person you're becoming do this? Or does this serve who you used to be?"
+
+Keep it LEAN. Do NOT surface ABT(H) domains, becoming, timeline, or habits arrays.
+
+#### Step 4: DECIDE + LOG
+
+Wait for user's decision statement. Then:
+
+- Classify as: `chose_new` (aligned with identity), `chose_old` (served old patterns), or `chose_middle` (compromise/unclear)
+- Confirm classification with user: "I'd call that chose_new — sound right?"
+
+Write to `daily_signals.csv`:
+```
+date,signal,value,unit,context,source,capture_id,category
+<today>,crossroads,<chose_new|chose_old|chose_middle>,,<pull description> → <decision description>,chat,,personal_growth
+```
+
+Return to menu.
+
+---
+
+### Option 3: Today's Plan
+
+Surfaces existing drafts, assigns times, adds new blocks, handles rollover. Absorbs former /plan skill quick actions.
+
+#### 3.1 Surface Existing Drafts
+
+Read today's plan entries from `data/plan.csv` where `start=0` and `end=0`.
+
+If drafts exist:
+```
+Today's drafts (unscheduled):
+  1. "Deep work block" — assign time? (e.g., 9-10:30am)
+  2. "Gym session" — assign time?
+  3. "Weekly team sync" — assign time?
+
+  → assign times, skip, or add more
+```
+
+For each draft the user assigns a time:
+- Parse time to decimal hours
+- Update the row in plan.csv: set start and end to the parsed values
+- Confirm: "Scheduled: [item] at [time]"
+
+For drafts the user skips: leave as start=0, end=0.
+
+#### 3.2 Rollover (skippable)
+
+Use `digest.rollover_items` from the precompute output (each has `item` and `roll_count`).
+
+If any exist, present them one by one:
+
+**Rollover depth check:** Before presenting each item, check its `notes` field for a `[rolled:N]` tag.
+- If N >= 2: present differently: "This has rolled 2+ times. Drop it, convert to a todo, or force-keep?"
+  - `drop`: do not write a new plan row
+  - `todo`: write to `todos.csv` (`item=<text>, done=0, created=today, domain=<infer from item>`) and do not write a plan row
+  - `force-keep`: treat as regular keep (ask time, write plan row with `[rolled:N+1]` in notes)
+- If N < 2 or no tag: present normally: "Keep this today, defer it, or drop it?"
+
+Allowed responses: `keep`, `defer`, `drop`, `skip` (skip = stop rollover and leave remaining items untouched)
+
+For each choice:
+- `keep`:
+  - Ask: "What time should this happen today?"
+  - Accept either a range (`1:00-2:00`) or start + duration (`1pm for 45m`)
+  - Write a new `plan.csv` row for today with that time slot
+  - Add `[rolled:N+1]` to the notes field (N=0 if no prior tag, increment if exists)
+- `defer`:
+  - Ask: "What date should this move to?" (allow skip)
+  - If date provided, write a `plan.csv` row on that date with a placeholder time (`0,0`) unless user gives a time
+  - Add `[rolled:N+1]` to the notes field
+- `drop`:
+  - Do not write a new plan row
+
+If none are incomplete, say: "No incomplete plan items from yesterday."
+
+#### 3.3 Context-Aware Suggestions (skippable)
+
+Use digest fields from precompute output:
+- `digest.stale_todos` — open todos older than 7 days
+- `digest.recent_reflections` — last 14 days of reflections
+- `digest.habit_misses` and `digest.streak_breaks` — today's gaps and recent broken streaks
+- user's emotional context from Option 4 (if completed)
+- `digest.weekly_goals` — current week's goals
+- `digest.weekly_intention` — current week's mantra
+
+Use LLM reasoning over all of the above (not keyword matching) to propose up to 3 high-relevance candidate actions for today. Consider weekly goals alongside todos, reflections, and signals when proposing actions. If a weekly goal hasn't had blocks scheduled this week, it's a strong candidate.
+
+Merge goal-based and context-based suggestions into one round — do NOT add a separate "goals" prompt.
+
+For each suggestion:
+- show a 1-line reason tied to intention/feeling/state with source attribution: "(from weekly goal)", "(from reflection)", or "(from todo)"
+- ask: "Add this to today, keep as todo, or skip?"
+- if "add to today", ask "what time?" and write to `plan.csv`
+- if "keep as todo", leave in `todos.csv`
+- if "skip", ignore
+
+Allow global skip: "skip suggestions" keeps everything unchanged.
+
+#### 3.4 Ritual Block Suggestions (morning only, skippable)
+
+If the current time is before 12:00 PM and the user hasn't already planned ritual-aligned blocks:
+
+1. Read `data/vision.json` via `cat` — extract `ritualBlueprint.morning.steps` and `domains[].habits`
+2. Cross-reference with today's existing plan blocks
+3. Suggest up to 3 time blocks that aren't already scheduled:
+
+```
+Ritual-aligned blocks (from your blueprint + habits):
+
+1. "Wim Hof + Identity Review" — 5:45-6:15 AM (morning ritual)
+   → skip / add / adjust time
+
+2. "Deep Work Block 1" — 9:00-10:30 AM (wealth habit: 3 deep work blocks)
+   → skip / add / adjust time
+
+3. "Midday Reset" — 12:00-12:30 PM (midday ritual: walk + breathwork)
+   → skip / add / adjust time
+```
+
+Rules:
+- Only suggest in morning mode (before 12:00 PM)
+- Max 3 suggestions
+- Each maps to a ritual step or domain habit — show the source in parentheses
+- Accept "skip suggestions" to bypass all
+- For each "add": write to `plan.csv` with the suggested or adjusted time
+- Infer `domain` from the source (ritual step → `personal_growth`, domain habit → that domain's canonical ID)
+- Do NOT suggest blocks that overlap with existing plan items
+- Do NOT suggest blocks for habits already logged today (e.g., don't suggest gym block if gym=1 already)
+
+#### 3.5 Quick Actions
+
+After the planning flow, or if user enters a quick command:
+
+- **"add <item> <time>"**: Parse item and time, write plan.csv row. See Inline Commands for full spec.
+- **"done <item>"**: Find matching block, mark done=1, check signal map. See Inline Commands for full spec.
+- **"move <item> <new-time>"**: Find matching block, update start/end. See Inline Commands for full spec.
+
+#### 3.6 Confirm Plan (skippable)
+
+Show today's plan including:
+- existing today's blocks
+- kept/deferred items that were scheduled today
+- any surfaced actions added in 3.3
+- any drafts assigned times in 3.1
+
+Ask: "Anything else to adjust, or lock this in?"
+- If user adjusts timing/items, write updates to `plan.csv`.
+- If user says `skip`, keep current plan as-is.
+
+Write plan rows immediately.
+
+---
+
+### Option 4: Decompress
+
+Renamed from "Emotional check". Same core flow. New name reflects evening decompression framing.
 
 Ask: "How are you feeling right now? Anything unresolved you're carrying?"
 
 - Accept free text
 - If the user shares something substantive, write to `daily_signals.csv`:
-  - `signal=feeling`, `value=<1-word summary>`, `context=<their words>`, `category=mental`
+  - `signal=feeling`, `value=<1-word summary>`, `context=<their words>`, `category=health`
 - If "fine" / "good" / nothing notable, skip -- don't write empty feelings
 
 **Mind capture (opportunistic, not forced):**
@@ -254,7 +446,7 @@ If the user shares something substantive (not "fine"/"good"):
 If any trigger was identified, write a single `signal=mind` row to `daily_signals.csv`:
 - `value` = trigger keyword (infer from their words, e.g. `work_pressure`, `isolation`)
 - `context` = pipe-delimited: `thought: <X> | action: <Y> | circumstance: <Z>` (any subset -- not all fields required)
-- `category` = `mental` or `addiction` (infer from content)
+- `category` = `health` or `personal_growth` (infer from content)
 - `source` = `chat`
 
 Do NOT force the deeper questions. If user gives a feeling and moves on, just log the feeling signal. The mind capture is opportunistic -- no "mind" completion flag.
@@ -263,21 +455,122 @@ Write immediately after this option completes.
 
 ---
 
-### Option 3: Reflect on Yesterday
+### Option 5: Reflect on Today
 
-Check `reflections.csv` for yesterday. If no row exists:
+Captures reflection on TODAY. Intended for evening use but available anytime.
 
-1. "Quick win from yesterday?"
+Check `reflections.csv` for today. If no row exists:
+
+1. "Quick win from today?"
 2. "Anything you learned?"
 3. "What would you do differently?"
 
-Infer domain from answers. Write one row to `reflections.csv` immediately.
+Infer domain from answers. Write one row to `reflections.csv` with today's date immediately.
 
-If reflection exists, say: "Yesterday's reflection is already captured." and offer to view it.
+If reflection exists, say: "Today's reflection is already captured." and offer to view it.
 
 ---
 
-### Option 4: Inbox Triage
+### Option 6: Set Tomorrow
+
+Writes 2-3 draft blocks for tomorrow's date with start=0, end=0.
+
+#### Flow:
+
+1. Compute tomorrow's date: `date -v+1d '+%Y-%m-%d'`
+2. Show tomorrow's existing plan (if any): read plan.csv for tomorrow's date
+3. Ask: "What are tomorrow's 2-3 priorities?"
+4. Accept natural language list. For each item:
+   - Write to plan.csv: `date=<tomorrow>, start=0, end=0, item=<text>, done=, notes=, domain=<inferred>`
+   - Do NOT ask for times — these are drafts. Times are assigned in the morning via Option 3.
+5. Confirm: "Set [N] priorities for tomorrow."
+
+Rules:
+- Max 5 draft blocks per invocation
+- If tomorrow already has drafts, show them and ask: "Add to these or replace?"
+- If replace: do not delete old rows (append-only). Write new rows. Old 0,0 rows for tomorrow become orphaned drafts — acceptable.
+- Infer domain from content (e.g., "gym" → health, "deep work" → career, "call mom" → relationships)
+
+---
+
+### Option 7: Brain State
+
+Delegate to the `brain-state` agent. Do NOT perform this analysis inline — spawn the agent and present its output.
+
+The agent runs `node scripts/compute-brain-state.js`, receives pre-computed JSON (streaks, habit grid, vice load, sleep pattern, dopamine balance), and returns a neuroscience-informed assessment.
+
+No writes. Read-only analysis. Return to menu after presenting.
+
+---
+
+## Weekly Check-in
+
+Run on **Sundays only** (or `/checkin weekly` to force on demand).
+
+### Data Sources
+
+Run `node ~/Documents/2026/tracker/scripts/precompute-weekly.js` and parse the JSON output. Store the full output for use in Phases 1-7.
+
+Additional sources read directly by AI for interactive phases:
+- `docs/vision.md` — domain "Now" goals for grounding reflections
+
+### Phase 1: Quantitative Score Card (auto-generated, no user input)
+
+Display `display.score_card` **verbatim** — do not reformat, re-compute, or summarize it. The script handles all score computation, bar charts, streaks, execution stats, and briefing feedback.
+
+### Phase 2: Mood & Trigger Arc (auto-generated, no user input)
+
+Use `digest.mood_arc` and `digest.triggers` from the script output. Do not re-read raw CSVs for this phase.
+
+**Mood arc:** If `digest.mood_arc` has 3+ entries, present the emotional arc and detect patterns (correlation between mood shifts and habit misses/relapses, comparison to prior weeks). If fewer than 3, note "Not enough mood data this week."
+
+**Triggers:** If `digest.triggers` is non-empty, present triggers and detect patterns (time, circumstance, recurring patterns across prior 2-4 weeks). Flag recurring patterns explicitly.
+
+### Phase 3: Domain Spotlight (2-3 domains, data-selected, interactive)
+
+Use `digest.domain_spotlight_candidates` from the script output to select 2-3 domains. The script pre-computes candidates using: biggest decline, biggest improvement, stalled (3+ weeks flat), and vision-misaligned. AI picks the final 2-3 from the candidates.
+
+Use `digest.habit_by_domain` for per-domain habit breakdowns when presenting each spotlight.
+
+**For each spotlighted domain, show:**
+
+```
+─── HEALTH (biggest improvement) ──────────────────────────
+  This week: Gym 6/7, Sleep 5/7, Ate clean 5/7
+  Last week: Gym 5/7, Sleep 6/7, Ate clean 4/7
+
+  Vision (Now): "hit planned gym sessions, protein-first meals,
+                 prioritize sleep quality"
+
+  1. What went well this week in health?
+  2. What would you do differently?
+  3. One small experiment for next week?
+```
+
+Rules:
+- Pull the domain's "Now" horizon goal from `docs/vision.md` to ground reflection
+- 3 questions per domain, max 3 domains = 9 questions worst case
+- Accept short answers — this isn't journaling
+- Write each domain's reflection to `reflections.csv`: `domain=<domain>`, `win=<Q1 answer>`, `lesson=<Q2 answer>`, `change=<Q3 answer>`
+- Spotlighted domains are natural candidates for the experiment in Phase 5, but don't force it
+
+### Phase 4: Social Contact Check (one question, always asked)
+
+```
+SOCIAL
+  Did you have meaningful social contact this week?
+  If yes: with who / what?
+```
+
+- Always ask — vision says "reduce isolation with deliberate weekly social contact"
+- Write to `daily_signals.csv`:
+  - `signal=social_contact`
+  - `value=0|1`
+  - `context=<details if provided>`
+  - `category=relationships`
+  - `date` = Sunday (week-end date)
+
+### Phase 4.5: Inbox Triage
 
 #### GitHub Issue Sync (always run first)
 
@@ -349,186 +642,14 @@ Actions per item:
 Rules:
 - Cap at 5 items per triage round. If more exist, show count and offer "more" or "skip".
 - Auto-discard empty voice notes (empty raw_text) — never show these to the user.
-- Items processed here may create new todos that appear in Option 5 (Plan).
+- Items processed here may create new todos.
 - Write inbox status updates immediately per item.
-
----
-
-### Option 5: Plan Today
-
-Goal: turn check-in context into executable plan blocks.
-
-#### 5.1 Rollover incomplete items from yesterday (skippable)
-
-Use `digest.rollover_items` from the precompute output (each has `item` and `roll_count`).
-
-If any exist, present them one by one:
-
-**Rollover depth check:** Before presenting each item, check its `notes` field for a `[rolled:N]` tag.
-- If N >= 2: present differently: "This has rolled 2+ times. Drop it, convert to a todo, or force-keep?"
-  - `drop`: do not write a new plan row
-  - `todo`: write to `todos.csv` (`item=<text>, done=0, created=today, domain=<infer from item>`) and do not write a plan row
-  - `force-keep`: treat as regular keep (ask time, write plan row with `[rolled:N+1]` in notes)
-- If N < 2 or no tag: present normally: "Keep this today, defer it, or drop it?"
-
-Allowed responses: `keep`, `defer`, `drop`, `skip` (skip = stop rollover and leave remaining items untouched)
-
-For each choice:
-- `keep`:
-  - Ask: "What time should this happen today?"
-  - Accept either a range (`1:00-2:00`) or start + duration (`1pm for 45m`)
-  - Write a new `plan.csv` row for today with that time slot
-  - Add `[rolled:N+1]` to the notes field (N=0 if no prior tag, increment if exists)
-- `defer`:
-  - Ask: "What date should this move to?" (allow skip)
-  - If date provided, write a `plan.csv` row on that date with a placeholder time (`0,0`) unless user gives a time
-  - Add `[rolled:N+1]` to the notes field
-- `drop`:
-  - Do not write a new plan row
-
-If none are incomplete, say: "No incomplete plan items from yesterday."
-
-#### 5.2 Context-aware surfacing from todos/reflections/signals (skippable)
-
-Use digest fields from precompute output:
-- `digest.stale_todos` — open todos older than 7 days
-- `digest.recent_reflections` — last 14 days of reflections
-- `digest.habit_misses` and `digest.streak_breaks` — today's gaps and recent broken streaks
-- user's emotional context from Option 2 (if completed)
-- `digest.weekly_goals` — current week's goals
-- `digest.weekly_intention` — current week's mantra
-
-Use LLM reasoning over all of the above (not keyword matching) to propose up to 3 high-relevance candidate actions for today. Consider weekly goals alongside todos, reflections, and signals when proposing actions. If a weekly goal hasn't had blocks scheduled this week, it's a strong candidate.
-
-Merge goal-based and context-based suggestions into one round — do NOT add a separate "goals" prompt.
-
-For each suggestion:
-- show a 1-line reason tied to intention/feeling/state with source attribution: "(from weekly goal)", "(from reflection)", or "(from todo)"
-- ask: "Add this to today, keep as todo, or skip?"
-- if "add to today", ask "what time?" and write to `plan.csv`
-- if "keep as todo", leave in `todos.csv`
-- if "skip", ignore
-
-Allow global skip: "skip suggestions" keeps everything unchanged.
-
-#### 5.2b Ritual Block Suggestions (morning only, skippable)
-
-If the current time is before 12:00 PM and the user hasn't already planned ritual-aligned blocks:
-
-1. Read `data/vision.json` via `cat` — extract `ritualBlueprint.morning.steps` and `domains[].habits`
-2. Cross-reference with today's existing plan blocks
-3. Suggest up to 3 time blocks that aren't already scheduled:
-
-```
-Ritual-aligned blocks (from your blueprint + habits):
-
-1. "Wim Hof + Identity Review" — 5:45-6:15 AM (morning ritual)
-   → skip / add / adjust time
-
-2. "Deep Work Block 1" — 9:00-10:30 AM (wealth habit: 3 deep work blocks)
-   → skip / add / adjust time
-
-3. "Midday Reset" — 12:00-12:30 PM (midday ritual: walk + breathwork)
-   → skip / add / adjust time
-```
-
-Rules:
-- Only suggest in morning mode (before 12:00 PM)
-- Max 3 suggestions
-- Each maps to a ritual step or domain habit — show the source in parentheses
-- Accept "skip suggestions" to bypass all
-- For each "add": write to `plan.csv` with the suggested or adjusted time
-- Infer `domain` from the source (ritual step → `personal_growth`, domain habit → that domain's canonical ID)
-- Do NOT suggest blocks that overlap with existing plan items
-- Do NOT suggest blocks for habits already logged today (e.g., don't suggest gym block if gym=1 already)
-
-#### 5.3 Confirm today's block plan (skippable)
-
-Show today's plan including:
-- existing today's blocks
-- kept/deferred items that were scheduled today
-- any surfaced actions added in 5.2
-
-Ask: "Anything else to adjust, or lock this in?"
-- If user adjusts timing/items, write updates to `plan.csv`.
-- If user says `skip`, keep current plan as-is.
-
-Write plan rows immediately.
-
----
-
-## Weekly Check-in
-
-Run on **Sundays only** (or `/checkin weekly` to force on demand).
-
-### Data Sources
-
-Run `node ~/Documents/2026/tracker/scripts/precompute-weekly.js` and parse the JSON output. Store the full output for use in Phases 1-3.
-
-Additional sources read directly by AI for interactive phases:
-- `docs/vision.md` — domain "Now" goals for grounding reflections
-
-### Phase 1: Quantitative Score Card (auto-generated, no user input)
-
-Display `display.score_card` **verbatim** — do not reformat, re-compute, or summarize it. The script handles all score computation, bar charts, streaks, execution stats, and briefing feedback.
-
-### Phase 2: Mood & Trigger Arc (auto-generated, no user input)
-
-Use `digest.mood_arc` and `digest.triggers` from the script output. Do not re-read raw CSVs for this phase.
-
-**Mood arc:** If `digest.mood_arc` has 3+ entries, present the emotional arc and detect patterns (correlation between mood shifts and habit misses/relapses, comparison to prior weeks). If fewer than 3, note "Not enough mood data this week."
-
-**Triggers:** If `digest.triggers` is non-empty, present triggers and detect patterns (time, circumstance, recurring patterns across prior 2-4 weeks). Flag recurring patterns explicitly.
-
-### Phase 3: Domain Spotlight (2-3 domains, data-selected, interactive)
-
-Use `digest.domain_spotlight_candidates` from the script output to select 2-3 domains. The script pre-computes candidates using: biggest decline, biggest improvement, stalled (3+ weeks flat), and vision-misaligned. AI picks the final 2-3 from the candidates.
-
-Use `digest.habit_by_domain` for per-domain habit breakdowns when presenting each spotlight.
-
-**For each spotlighted domain, show:**
-
-```
-─── HEALTH (biggest improvement) ──────────────────────────
-  This week: Gym 6/7, Sleep 5/7, Ate clean 5/7
-  Last week: Gym 5/7, Sleep 6/7, Ate clean 4/7
-
-  Vision (Now): "hit planned gym sessions, protein-first meals,
-                 prioritize sleep quality"
-
-  1. What went well this week in health?
-  2. What would you do differently?
-  3. One small experiment for next week?
-```
-
-Rules:
-- Pull the domain's "Now" horizon goal from `docs/vision.md` to ground reflection
-- 3 questions per domain, max 3 domains = 9 questions worst case
-- Accept short answers — this isn't journaling
-- Write each domain's reflection to `reflections.csv`: `domain=<domain>`, `win=<Q1 answer>`, `lesson=<Q2 answer>`, `change=<Q3 answer>`
-- Spotlighted domains are natural candidates for the experiment in Phase 5, but don't force it
-
-### Phase 4: Social Contact Check (one question, always asked)
-
-```
-SOCIAL
-  Did you have meaningful social contact this week?
-  If yes: with who / what?
-```
-
-- Always ask — vision says "reduce isolation with deliberate weekly social contact"
-- Write to `daily_signals.csv`:
-  - `signal=social_contact`
-  - `value=0|1`
-  - `context=<details if provided>`
-  - `category=relationships`
-  - `date` = Sunday (week-end date)
 
 ### Phase 5: Experiment Loop
 
 **Step 1: Catch unconcluded experiments**
 
-Read `experiments.csv` for `status=active` where `today >= start_date + duration_days`. If any exist, run the conclude flow (same as the daily checkin flow):
+Read `experiments.csv` for `status=active` where `today >= start_date + duration_days`. If any exist, run the conclude flow:
 
 ```
 ─── EXPERIMENT EXPIRED ──────────────────────────────────
@@ -681,16 +802,17 @@ Only include pillars that changed. Always include `intentions.weekly` (set in Ph
 ### Weekly Phase Order Summary
 
 ```
-Phase 1   Score Card           auto-gen        0 min
-Phase 2   Mood & Triggers      auto-gen        0 min
-Phase 3   Domain Spotlight     interactive     3-5 min
-Phase 4   Social Contact       1 question      30 sec
-Phase 5   Experiment Loop      conclude + new  2 min
-Phase 6   Goals & Intention    review + set    3 min
-Phase 6b  Vision Update        interactive     2-3 min
-Phase 7   Stale Review         interactive     1 min
-                                          ──────────
-                               Target:     ~13 min
+Phase 1    Score Card           auto-gen        0 min
+Phase 2    Mood & Triggers      auto-gen        0 min
+Phase 3    Domain Spotlight     interactive     3-5 min
+Phase 4    Social Contact       1 question      30 sec
+Phase 4.5  Inbox Triage         interactive     2-3 min
+Phase 5    Experiment Loop      conclude + new  2 min
+Phase 6    Goals & Intention    review + set    3 min
+Phase 6b   Vision Update        interactive     2-3 min
+Phase 7    Stale Review         interactive     1 min
+                                           ──────────
+                                Target:     ~15 min
 ```
 
 ---
@@ -877,6 +999,83 @@ Write `checkin_quarterly=1` to `daily_signals.csv`.
 
 ---
 
+## Inline Commands
+
+These work outside the menu flow, as direct commands. They are the absorbed /plan skill quick actions.
+
+### `/checkin add <item> <time>`
+
+Same behavior as former `/plan add`:
+- Parse item and time. Accept: `3pm`, `15:00`, `3-4pm`, `3pm for 1h`
+- Convert to decimal hours
+- Default duration: 1 hour if no end time
+- All-day (no time given): start=0, end=0
+- Append to plan.csv
+- Confirm: "Added: [item] at [time]"
+
+### `/checkin done <item>`
+
+Same behavior as former `/plan done`:
+- Find matching block (case-insensitive substring)
+- Mark done=1
+- Check signal map for auto-signal: run `node scripts/precompute-plan.js` and use `digest.signal_map` for keyword matching. For each key-value pair in `signal_map`, check if the plan item contains the value (case-insensitive substring). If matched, write `{key}=1` to daily_signals.csv.
+- If no keyword match, ask about trackable signal: "Does this correspond to a trackable signal? (gym/sleep/meditate/deep_work/ate_clean/weed/lol/poker/clarity, or skip)"
+- If user names a signal, write it. If skip, no signal written.
+- Confirm: "Done: [item]" + "Logged: [signal]=1" if signal written
+
+### `/checkin move <item> <new-time>`
+
+Same behavior as former `/plan move`:
+- Find matching block (case-insensitive substring)
+- Parse new time to decimal hours
+- Update start/end in plan.csv
+- Confirm: "Moved: [item] → [new-time]"
+
+### `/checkin intention [text]`
+
+Same behavior as former `/plan intention`:
+
+**With argument** (`/checkin intention "bounce back clean"`):
+1. Use the quoted text as the mantra.
+2. Infer `domain` from the mantra.
+3. Write to `daily_signals.csv`:
+   - `signal=intention`
+   - `value=<domain>`
+   - `context=<mantra text>`
+   - `category=<domain>`
+4. Confirm: "Intention set: *{mantra}*"
+
+**Without argument** (`/checkin intention`):
+1. Read today's `intention` signal from `daily_signals.csv`.
+2. If already set: show it and ask "Want to change it?"
+3. If not set:
+   a. Read latest `weekly_intention` from `daily_signals.csv`.
+   b. If weekly exists: "This week: *{mantra}*. What's today's intention?"
+   c. If no weekly: "What's today's intention in mantra form?"
+4. Accept mantra, infer domain, write to `daily_signals.csv` (same fields as above).
+5. Allow skip: if user says `skip`, exit without writing.
+
+### `/checkin show`
+
+Show today's plan:
+1. Run `node scripts/precompute-plan.js`, display `display.today_plan`
+2. Show weekly goals and intention context
+3. Wait for user input
+
+### `/checkin week`
+
+Sketch the week:
+1. Read current week's `weekly_goal` signals
+2. Show: "Weekly goals: [goals]. What does this week look like?"
+3. Accept multi-day input like "gym MWF 9am, deep work daily 10-12"
+4. Parse into individual `plan.csv` rows for each specified day:
+   - `M` = Monday, `T` = Tuesday, `W` = Wednesday, `R` = Thursday, `F` = Friday, `S` = Saturday, `U` = Sunday
+   - `daily` = all 7 days, `weekdays` = Mon-Fri
+5. Append all rows to `plan.csv`
+6. Confirm: "Planned [N] blocks across [days]"
+
+---
+
 ## Rules
 
 - Read state FIRST. Never ask about something already logged.
@@ -896,4 +1095,7 @@ Write `checkin_quarterly=1` to `daily_signals.csv`.
 - When everything in a category is done, collapse it. Don't waste the user's time reading green checkmarks.
 - Writes happen immediately after each menu option completes — no batching to a final phase.
 - Auto-discard empty voice notes in inbox — never surface them to the user.
+- All time parsing produces decimal hours (9:30am = 9.5, 2:15pm = 14.25).
+- Default block duration: 1 hour if no end time given.
+- Accept natural language time ("morning" = 9am, "afternoon" = 2pm, "evening" = 7pm).
 - After the check-in completes, run `node scripts/reconcile.js` to auto-mark plan items that match today's logged signals.
