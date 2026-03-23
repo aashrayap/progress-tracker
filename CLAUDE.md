@@ -98,6 +98,7 @@ inbox:         capture_id,captured_at,source,raw_text,status,suggested_destinati
 groceries:     item,section,done,added
 resources:     title,author,type,domain,status,notes
 briefing_feedback: date,state,rating,feedback_text,briefing_hash
+experiments:        name,hypothesis,start_date,duration_days,domain,status,verdict,reflection
 ```
 
 ## Skills
@@ -107,8 +108,7 @@ briefing_feedback: date,state,rating,feedback_text,briefing_hash
 | `/log`           | Quick-fire utility for one-off CSV writes. `/checkin` + voice cover most logging — `/log` is best for quick weight entries and notes | `log weight`, `log note`, `log relapse` |
 | `/weekly-review` | Weekly accountability and planning      | `weekly review`, `plan the week`       |
 | `/review-notes`  | Cross-CSV activity summary              | `review notes`, `what happened`        |
-| `/checkin`       | Guided daily/weekly/monthly/quarterly check-in. Weekly+ writes vision.json. | `checkin`, `check in`, `morning check-in` |
-| `/plan`          | Fast plan mutations: add/done/move blocks, show day, sketch week | `plan`, `add block`, `plan week` |
+| `/checkin`       | Single entry point for all daily writes. Morning: log, anchor, plan. Evening: decompress, reflect, set tomorrow. Also handles weekly/monthly/quarterly. Absorbed /plan skill. | `checkin`, `check in`, `morning check-in`, `plan`, `add block` |
 | `/feature-interview` | Scope a feature: audit, interview, lock decisions, write spec | `feature interview`, `spec a feature`, `new feature` |
 | `/audit`         | Codebase health scan (read-only, versioned reports) | `audit`, `find dead code`, `cleanup scan` |
 | `/remove-slop`   | Strip AI-generated code slop from diff   | `remove slop`, `clean up slop`, `slop check` |
@@ -121,6 +121,7 @@ briefing_feedback: date,state,rating,feedback_text,briefing_hash
 - Keep logic in `lib/` and `api/`, not UI.
 - Voice + text both flow through the same inbox pipeline.
 - Keep navigation flat: use top-level routes for primary surfaces; avoid secondary route trees and prefer in-page tabs/sidebars/modals for depth.
+- **Agents are for reasoning, not computation.** Easily-defined compute (streaks, aggregations, date math, filtering, pivoting, grids, scoring) belongs in `scripts/`. Agents receive pre-computed JSON via stdout and reason over the residual. An agent that counts rows is wasting tokens.
 
 ## Health Metrics (must not degrade)
 

@@ -36,8 +36,8 @@ While building new features, these must not degrade:
 
 | Surface | Usage | Gravity | Ritual Role |
 |---------|-------|---------|-------------|
-| Vision | Daily | High — single entry point, ritual surface | Morning: direction + identity. Evening: review + reflect. |
-| Plan | Daily | Medium — execution surface | Midday: execute blocks + ritual reset strip. |
+| Plan/Day | Daily | High — daily home page, morning ritual + execution | Morning: ritual + identity + plan. Midday: execute blocks. Evening: review done/missed. |
+| Vision | Weekly+ | Medium — deep review surface (Sundays, on-demand) | Weekly: full identity review, habit grid audit, ABT(H) reflection. |
 | Health | Daily | High — workout logging, body metrics | On-demand: log workouts, track weight. |
 | Resources | Rare | Low — passive storage | On-demand: reference material. |
 
@@ -45,16 +45,17 @@ While building new features, these must not degrade:
 
 | Time | Surface | Action |
 |------|---------|--------|
-| Morning (before 12:00) | `/vision` | Read identity script, review morning ritual steps, set daily intention via `/checkin` |
-| Midday (12:00-5:00) | `/plan` | Execute plan blocks, midday ritual strip shows reset anchors |
-| Evening (after 5:00) | `/vision` | Review day, evening ritual steps, reflect, prepare tomorrow |
+| Morning | `/plan/day` | Read ritual checklist, identity anchor, intentions, run /checkin |
+| Midday | `/plan/day` | Execute plan blocks, toggle done, midday ritual reference |
+| Evening | `/plan/day` | Review day, run /checkin for decompress + reflect + set tomorrow |
+| Sunday | `/vision` | Weekly deep review, full identity, habit grid, ABT(H) cards |
 
-After the Vision Reinvention (March 2026), the app consolidated from 6 surfaces to 4 navigable routes (Vision, Plan, Health, Resources). Hub and Mind were absorbed or removed.
+After the Vision Reinvention (March 2026), the app consolidated from 6 surfaces to 4 navigable routes (Vision, Plan, Health, Resources). Hub and Mind were absorbed or removed. In the Unified Cadence update (March 2026), /plan/day became the daily home page and /vision shifted to a weekly+ deep review surface.
 
 ## Current Direction
 
 - Vision-driven, not feature-driven — every surface must trace back to the life vision
-- Vision as single entry point for daily execution
+- Plan/day as daily entry point, Vision as weekly+ deep review
 - CSV-first data model (no database migration)
 - Voice and text converge through one pipeline
 - Automation via idea-pipeline and voice-inbox (human gate = PR review only)
@@ -140,6 +141,13 @@ Append-only log. When a directional choice is made during a feature, record it h
 | 2026-03-18 | Vision page is read-only ritual surface | NO edit modals. Content authored via JSON edit or future skills. Page designed for daily morning read-through. |
 | 2026-03-20 | 4-pillar model overlays 7 canonical IDs | Health=[health], Wealth=[career,finances], Love=[relationships], Self=[personal_growth,fun,environment]. Pillars are human-facing; canonical IDs stay for CSV tagging. |
 | 2026-03-20 | Cadence contract: daily=signals, weekly=A+H, monthly=identity, quarterly=full rebuild | Write scopes locked — see life-playbook.md cadence rules. |
+| 2026-03-23 | /plan/day becomes daily home page, / redirects to /plan/day | Vision too dense for daily — lightweight plan surface for morning ritual + execution |
+| 2026-03-23 | /vision becomes weekly+ deep review surface (Sundays, on-demand) | Full identity + ABT(H) + habit grid belong in weekly review, not daily |
+| 2026-03-23 | /checkin absorbs /plan skill — single CLI write entry point | Eliminate skill duplication, one command for all writes |
+| 2026-03-23 | Draft blocks: plan.csv entries with start=0, end=0 | Sunday weekly → draft blocks for week, evening → draft blocks for tomorrow, morning → assign times |
+| 2026-03-23 | Anchor flow added to /checkin (crossroads signal) | Real-time trigger management using pre-committed identity content |
+| 2026-03-23 | SchedulerModal removed — no in-app plan editing | CLI-first writes, app is for reading + done toggles only |
+| 2026-03-23 | Evening flow added to /checkin (decompress, reflect, set tomorrow) | Evening shapes tomorrow — Daniel Abrada principle |
 
 ## Future Work
 

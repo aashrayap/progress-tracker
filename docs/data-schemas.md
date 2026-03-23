@@ -37,10 +37,11 @@ Common signals:
 - `trigger` (text)
 - `relapse` (text)
 - `reset` (`1`)
-- `mind` — trigger keyword in `value`, pipe-delimited context: `thought: X | action: Y | circumstance: Z`, `category` = `mental` or `addiction`
+- `mind` — trigger keyword in `value`, pipe-delimited context: `thought: X | action: Y | circumstance: Z`. `category` = `health` (emotional/mental content) or `personal_growth` (addiction/recovery content). Legacy rows with `category=mental` or `category=addiction` remain valid — do not backfill.
 - `category`: optional canonical domain ID for the signal context (`health`, `career`, `relationships`, `finances`, `fun`, `personal_growth`, `environment`)
+- `crossroads` — anchor decision point. `value` = `chose_new|chose_old|chose_middle`. `context` = `<pull description> → <decision description>`. `category=personal_growth`. Written by /checkin anchor flow (Option 2).
 - `social_contact` (`0|1`) — weekly signal for meaningful social contact, `category=relationships`
-- `vision_reviewed` (`1`) — review checkpoint, `context=morning|afternoon|evening`, `category=personal_growth`. Logged via ritual blueprint checkboxes on /vision.
+- `vision_reviewed` (`1`) — review checkpoint, `context=morning|afternoon|evening`, `category=personal_growth`. Logged via ritual blueprint checkboxes on /plan/day (morning ritual checklist).
 - `weekly_experiment` (text) — **legacy** (replaced by `data/experiments.csv`), `value=<domain>`, `context=<description>`
 - `experiment_result` (`yes|partial|no`) — **legacy**, `context=<what was learned>`
 - `weekly_goal` (text) — **legacy**, `value=<domain>`, `context=<goal text>`
@@ -55,6 +56,12 @@ date,workout,exercise,set,weight,reps,notes
 ```
 date,start,end,item,done,notes,domain
 ```
+
+Draft blocks: entries with `start=0` and `end=0` represent unscheduled priorities (drafts).
+- Written by /checkin "Set tomorrow" (Option 6) and weekly checkin goal-to-block conversion.
+- Rendered without time labels in DayView and PlanCard.
+- Converted to scheduled blocks when user assigns times via /checkin "Today's plan" (Option 3).
+- After time assignment, the row is updated in-place (start/end set to decimal hours).
 
 ## data/todos.csv
 ```
@@ -169,7 +176,7 @@ vision.json is written via `/api/vision` (PUT for full replace, PATCH for partia
 
 The `vision_reviewed` signal in daily_signals.csv tracks when the user reviewed vision.json content:
 - `signal=vision_reviewed`, `value=1`, `context=morning|afternoon|evening`, `category=personal_growth`
-- Logged via ritual blueprint checkboxes on /vision page
+- Logged via ritual blueprint checkboxes on /plan/day (morning ritual checklist)
 - One signal per context per day (morning, afternoon, evening)
 
 ## data/experiments.csv

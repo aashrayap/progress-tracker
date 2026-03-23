@@ -68,9 +68,10 @@ Rule: signals and evidence go to CSVs. Identity and direction go to vision.json.
 
 | Time | Surface | Purpose |
 |------|---------|---------|
-| Morning | `/vision` | Read identity script, review ritual steps, set direction |
-| Midday | `/plan` | Execute blocks, midday ritual strip for reset anchors |
-| Evening | `/vision` | Review the day, reflect, prepare tomorrow |
+| Morning | `/plan/day` | Read ritual checklist, identity anchor, review intentions + briefing, run /checkin |
+| Midday | `/plan/day` | Execute plan blocks, toggle done, midday ritual reference |
+| Evening | `/plan/day` | Review day, run /checkin for decompress + reflect + set tomorrow |
+| Sunday | `/vision` | Weekly deep review: full identity, habit grid, ABT(H), run /checkin weekly |
 
 ## Health Pillar Protocol
 

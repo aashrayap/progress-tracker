@@ -38,9 +38,9 @@ Core rule: Surfaces consume read models and trigger actions; semantics are owned
 `app/` contains the Next.js app.
 
 Current top-level routes:
-- `/vision` Vision (daily entry point — merged Hub + Vision)
-- `/` Redirect → `/vision`
-- `/plan` Plan
+- `/plan` Plan (/plan/day is daily home page, /plan/week|month|year for calendar views)
+- `/vision` Vision (weekly+ deep review — identity, anti-vision, ABT(H), habit grid)
+- `/` Redirect → `/plan/day`
 - `/health` Health
 - `/resources` Resources
 
@@ -112,7 +112,6 @@ Both iOS shortcuts (voice and text) flow through one processor:
 - `/api/hub` (consumed by /vision page — briefing, habits, plan, experiments)
 - `/api/daily-signals`
 - `/api/health`
-- `/api/reflections`
 - `/api/plan`
 - `/api/plan/range`
 - `/api/todos`
