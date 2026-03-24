@@ -127,7 +127,7 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
   const [identityScript, setIdentityScript] = useState<{ coreTraits: CoreTraits; nonNegotiables: string } | null>(null);
   const [hubData, setHubData] = useState<HubData | null>(null);
   const [reviewDone, setReviewDone] = useState<Record<string, boolean>>({});
-  const [habitSignals, setHabitSignals] = useState<Record<string, boolean>>({});
+  const [habitSignals, setHabitSignals] = useState<Record<string, boolean | null>>({});
   const [habitPageOffset, setHabitPageOffset] = useState(0);
   const [hoveredCol, setHoveredCol] = useState<number | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
@@ -213,19 +213,24 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
           setHubData(null);
         });
 
-      // Pre-populate review done state from today's signals
+      // Pre-populate review done + habit signals from today's signals
       fetch(`/api/daily-signals?start=${dateStr}&end=${dateStr}`)
         .then((res) => res.ok ? res.json() : [])
         .then((signals) => {
           if (!active || !Array.isArray(signals)) return;
           const done: Record<string, boolean> = {};
+          const habits: Record<string, boolean | null> = {};
           for (const s of signals) {
             if (["morning_review", "midday_review", "evening_review"].includes(s.signal) && s.value === "1") {
               const phase = s.signal.replace("_review", "");
               done[phase] = true;
             }
+            if (HABIT_ORDER.includes(s.signal)) {
+              habits[s.signal] = s.value === "1" ? true : s.value === "0" ? false : null;
+            }
           }
           setReviewDone(done);
+          setHabitSignals((prev) => ({ ...habits, ...prev }));
         })
         .catch(() => {});
     }
@@ -289,41 +294,106 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
 
   const handleHabitToggle = useCallback(
     async (signal: string) => {
-      if (habitSignals[signal]) return; // already done, no-op
-      setHabitSignals((prev) => ({ ...prev, [signal]: true }));
-      try {
-        const res = await fetch("/api/daily-signals", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            entries: [{
-              date: dateStr,
-              signal,
-              value: "1",
-              unit: "",
-              context: "",
-              source: "app",
-              captureId: "",
-              category: "personal_growth",
-            }],
-          }),
+      const current = habitSignals[signal]; // true=green, false=red, undefined/null=grey
+      // Cycle: grey→green, green→red, red→grey
+      const next = current === true ? false : current === false ? null : true;
+      const prev = current;
+      setHabitSignals((p) => {
+        const updated = { ...p };
+        if (next === null) { delete updated[signal]; } else { updated[signal] = next; }
+        return updated;
+      });
+      // Sync review state
+      if (signal.endsWith("_review")) {
+        const phase = signal.replace("_review", "");
+        setReviewDone((p) => {
+          const updated = { ...p };
+          if (next === true) { updated[phase] = true; } else { delete updated[phase]; }
+          return updated;
         });
-        if (!res.ok) throw new Error("Failed");
-        // Sync review done state if this is a review signal
-        if (signal.endsWith("_review")) {
-          const phase = signal.replace("_review", "");
-          setReviewDone((prev) => ({ ...prev, [phase]: true }));
+      }
+      try {
+        if (next === null) {
+          // Delete (unlog)
+          const res = await fetch(`/api/daily-signals?date=${dateStr}&signal=${signal}`, { method: "DELETE" });
+          if (!res.ok) throw new Error("Failed");
+        } else {
+          // Post value
+          const res = await fetch("/api/daily-signals", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              entries: [{
+                date: dateStr,
+                signal,
+                value: next ? "1" : "0",
+                unit: "",
+                context: "",
+                source: "app",
+                captureId: "",
+                category: "personal_growth",
+              }],
+            }),
+          });
+          if (!res.ok) throw new Error("Failed");
         }
       } catch {
-        setHabitSignals((prev) => {
-          const next = { ...prev };
-          delete next[signal];
-          return next;
+        // Revert on error
+        setHabitSignals((p) => {
+          const updated = { ...p };
+          if (prev === undefined || prev === null) { delete updated[signal]; } else { updated[signal] = prev; }
+          return updated;
         });
+        if (signal.endsWith("_review")) {
+          const phase = signal.replace("_review", "");
+          setReviewDone((p) => {
+            const updated = { ...p };
+            if (prev === true) { updated[phase] = true; } else { delete updated[phase]; }
+            return updated;
+          });
+        }
       }
     },
     [habitSignals, dateStr]
   );
+
+  // Signal name → DopamineDay key mapping for optimistic grid overlay
+  const SIGNAL_TO_DOPAMINE: Record<string, keyof DopamineDay> = {
+    weed: "weed", lol: "lol", poker: "poker", clarity: "clarity",
+    gym: "gym", sleep: "sleep", meditate: "meditate", deep_work: "deepWork",
+    ate_clean: "ateClean", morning_review: "morningReview", midday_review: "middayReview",
+    evening_review: "eveningReview", wim_hof_am: "wimHofAm", wim_hof_pm: "wimHofPm",
+  };
+
+  // Optimistic dopamine log: overlay habitSignals onto today's entry
+  const patchedLog = useMemo(() => {
+    if (!hubData?.dopamineReset?.log) return [];
+    return hubData.dopamineReset.log.map((entry) => {
+      if (entry.date !== todayStr) return entry;
+      const patched = { ...entry };
+      for (const [signal, val] of Object.entries(habitSignals)) {
+        const key = SIGNAL_TO_DOPAMINE[signal];
+        if (key && key !== "date") {
+          (patched as Record<string, boolean | null | string>)[key] = val;
+        }
+      }
+      return patched;
+    });
+  }, [hubData, habitSignals, todayStr]);
+
+  // Optimistic habitTracker days: overlay habitSignals onto today's entry
+  const patchedTrackerDays = useMemo(() => {
+    if (!hubData?.habitTracker) return [];
+    const dates = hubData.habitTracker.dates;
+    return hubData.habitTracker.days.map((day, i) => {
+      if (dates[i] !== todayStr) return day;
+      const patched = { ...day };
+      for (const [signal, val] of Object.entries(habitSignals)) {
+        patched[signal] = val === true;
+      }
+      return patched;
+    });
+  }, [hubData, habitSignals, todayStr]);
 
   // 90-day grid computations
   const gridData = useMemo(() => {
@@ -350,20 +420,24 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
         {signals.map((signal) => {
           const cfg = HABIT_CONFIG[signal as keyof typeof HABIT_CONFIG];
           if (!cfg) return null;
-          const done = habitSignals[signal] === true;
+          const val = habitSignals[signal]; // true=green, false=red, undefined/null=grey
+          const isGreen = val === true;
+          const isRed = val === false;
           return (
             <button
               key={signal}
               onClick={() => handleHabitToggle(signal)}
               className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs border cursor-pointer transition-colors ${
-                done
+                isGreen
                   ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400"
+                  : isRed
+                  ? "bg-red-500/15 border-red-500/30 text-red-400"
                   : "bg-zinc-800/60 border-white/5 text-zinc-500 hover:border-zinc-600"
               }`}
             >
               <span
                 className={`w-2 h-2 rounded-full ${
-                  done ? "bg-emerald-400" : "bg-zinc-600"
+                  isGreen ? "bg-emerald-400" : isRed ? "bg-red-400" : "bg-zinc-600"
                 }`}
               />
               {cfg.abbr}
@@ -580,7 +654,7 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
                 </div>
 
                 {hoveredCol !== null && allDates[hoveredCol] && (() => {
-                  const entry = hubData.dopamineReset.log.find((l) => l.date === allDates[hoveredCol]);
+                  const entry = patchedLog.find((l) => l.date === allDates[hoveredCol]);
                   const isTodayCell = hoveredCol === todayIdx;
                   const { score } = computeDayScore(entry, isTodayCell);
                   return (
@@ -611,7 +685,7 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
                   <div className="flex gap-3">
                     {weeks.map((wk, wi) => weekCells(wk, wi, (i) => {
                       const ds = allDates[i];
-                      const entry = hubData.dopamineReset.log.find((l) => l.date === ds);
+                      const entry = patchedLog.find((l) => l.date === ds);
                       const isTodayCell = i === todayIdx;
                       const { score, color } = computeDayScore(entry, isTodayCell);
                       return (
@@ -643,7 +717,7 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
                       {weeks.map((wk, wi) => weekCells(wk, wi, (i) => {
                         const ds = allDates[i];
                         const isTodayCell = i === todayIdx;
-                        const val = hubData.habitTracker.days[i]?.[habitKey];
+                        const val = patchedTrackerDays[i]?.[habitKey];
                         return (
                           <div
                             key={ds}

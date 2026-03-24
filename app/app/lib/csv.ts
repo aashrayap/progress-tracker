@@ -193,6 +193,11 @@ export function appendDailySignals(entries: DailySignalEntry[]): void {
   appendLines(DAILY_SIGNALS_PATH, DAILY_SIGNALS_HEADER, lines);
 }
 
+export function deleteDailySignal(date: string, signal: string): void {
+  const all = readDailySignals().filter((s) => !(s.date === date && s.signal === signal));
+  writeAll(DAILY_SIGNALS_PATH, DAILY_SIGNALS_HEADER, all.map(serializeDailySignal));
+}
+
 interface MetricHistoryEntry {
   date: string;
   value: string;

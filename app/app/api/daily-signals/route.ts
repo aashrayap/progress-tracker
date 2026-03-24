@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  appendDailySignals,
   readDailySignals,
+  deleteDailySignal,
   type DailySignalEntry,
 } from "../../lib/csv";
+import { writeAndSideEffect } from "../../lib/router";
 
 export async function GET(request: NextRequest) {
   try {
@@ -40,11 +41,26 @@ export async function POST(request: Request) {
       }
     }
 
-    appendDailySignals(entries);
-    return NextResponse.json({ success: true, added: entries.length });
+    const result = writeAndSideEffect("signal", entries);
+    return NextResponse.json({ success: true, added: entries.length, sideEffects: result.sideEffects });
   } catch (e) {
     console.error("POST /api/daily-signals error:", e);
     return NextResponse.json({ error: "Failed to write daily signals" }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const date = request.nextUrl.searchParams.get("date");
+    const signal = request.nextUrl.searchParams.get("signal");
+    if (!date || !signal) {
+      return NextResponse.json({ error: "date and signal are required" }, { status: 400 });
+    }
+    deleteDailySignal(date, signal);
+    return NextResponse.json({ success: true, deleted: signal });
+  } catch (e) {
+    console.error("DELETE /api/daily-signals error:", e);
+    return NextResponse.json({ error: "Failed to delete signal" }, { status: 500 });
   }
 }
 
