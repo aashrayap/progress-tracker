@@ -1,15 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { VisionData, VisionDomain, Distractions, InputControl, HabitAudit, RitualBlueprint } from "../lib/types";
-import LineTrendChart from "../components/LineTrendChart";
-import TrendModal from "../components/TrendModal";
-import HabitTooltip from "../components/HabitTooltip";
-import HabitLogHistory, { type HabitLogEntry } from "../components/HabitLogHistory";
-import { HABIT_CONFIG } from "../lib/config";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { VisionData, VisionDomain, Distractions, InputControl, HabitAudit } from "../lib/types";
 import BriefingCard from "../components/BriefingCard";
 import ExperimentsTable from "../components/ExperimentsTable";
-import PlanCard from "../components/PlanCard";
 
 // ── Hub data types (mirrored from page.tsx) ──────────────────────────
 
@@ -24,7 +18,11 @@ interface DopamineDay {
   meditate: boolean | null;
   deepWork: boolean | null;
   ateClean: boolean | null;
-  visionReviewed: boolean | null;
+  morningReview: boolean | null;
+  middayReview: boolean | null;
+  eveningReview: boolean | null;
+  wimHofAm: boolean | null;
+  wimHofPm: boolean | null;
 }
 
 interface IntentionSummary {
@@ -73,7 +71,7 @@ interface HubData {
     days: Record<string, boolean>[];
   };
   habitTrends: Record<string, { date: string; value: boolean | null }[]>;
-  habitLogs: Record<string, HabitLogEntry[]>;
+  habitLogs: Record<string, { date: string; value: string; context: string }[]>;
   dailyIntention: IntentionSummary | null;
   weeklyIntention: IntentionSummary | null;
   dailyQuote: DailyQuote | null;
@@ -85,52 +83,6 @@ interface HubData {
     past: { name: string; verdict: string; reflection: string; startDate: string }[];
   };
 }
-
-// ── Habit grid constants ─────────────────────────────────────────────
-
-const HABIT_ORDER = [
-  "sleep",
-  "gym",
-  "weed",
-  "ate_clean",
-  "deep_work",
-  "meditate",
-  "lol",
-  "poker",
-  "clarity",
-  "vision_reviewed",
-] as const;
-type HabitKey = keyof typeof HABIT_CONFIG;
-type ActiveKey = HabitKey | "score";
-
-function computeDayScore(entry: DopamineDay | undefined, isToday: boolean): { score: number | null; color: string } {
-  if (!entry) {
-    return isToday ? { score: null, color: "bg-zinc-800" } : { score: 0, color: "bg-red-500" };
-  }
-  if (isToday) {
-    const all = [entry.weed, entry.lol, entry.poker, entry.clarity, entry.gym, entry.sleep, entry.meditate, entry.deepWork, entry.ateClean];
-    if (!all.every((v) => v !== null)) return { score: null, color: "bg-zinc-800" };
-  }
-  const weed = entry.weed ?? false;
-  if (!weed) return { score: 0, color: "bg-red-500" };
-  const habitScore = [entry.gym, entry.sleep, entry.meditate, entry.deepWork, entry.ateClean].filter(Boolean).length;
-  const viceScore = [entry.lol, entry.poker, entry.clarity].reduce((s, v) => s + (v === true ? 1 : -1), 0);
-  const score = Math.max(0, habitScore + viceScore);
-  if (score <= 2) return { score, color: "bg-red-500" };
-  if (score <= 4) return { score, color: "bg-orange-500" };
-  if (score <= 6) return { score, color: "bg-lime-500" };
-  return { score, color: "bg-emerald-400" };
-}
-
-// ── Review signal types ──────────────────────────────────────────────
-
-type RitualTab = "morning" | "midday" | "evening";
-const RITUAL_TABS: RitualTab[] = ["morning", "midday", "evening"];
-const RITUAL_CONTEXT: Record<RitualTab, string> = {
-  morning: "morning",
-  midday: "afternoon",
-  evening: "evening",
-};
 
 // ── Collapsible section ──────────────────────────────────────────────
 
@@ -169,18 +121,6 @@ export default function VisionPage() {
   const [vision, setVision] = useState<VisionData | null>(null);
   const [hub, setHub] = useState<HubData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [ritualTab, setRitualTab] = useState<RitualTab>(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "morning";
-    if (hour < 17) return "midday";
-    return "evening";
-  });
-  const [reviewChecked, setReviewChecked] = useState<Record<string, boolean>>({ morning: false, afternoon: false, evening: false });
-  const [activeHabitKey, setActiveHabitKey] = useState<ActiveKey | null>(null);
-  const [hoveredCol, setHoveredCol] = useState<number | null>(null);
-  const [habitPageOffset, setHabitPageOffset] = useState(0); // 0 = most recent, 1 = previous 28 days, etc.
-  const gridRef = useRef<HTMLDivElement>(null);
-
   const today = useMemo(() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -190,134 +130,19 @@ export default function VisionPage() {
     Promise.all([
       fetch("/api/vision").then((r) => r.ok ? r.json() : null),
       fetch("/api/hub").then((r) => r.ok ? r.json() : null),
-      fetch(`/api/daily-signals?signal=vision_reviewed&start=${today}&end=${today}`).then((r) => r.ok ? r.json() : []),
-    ]).then(([visionData, hubData, signals]) => {
+    ]).then(([visionData, hubData]) => {
       setVision(visionData);
       setHub(hubData);
-      // Pre-fill review checkboxes from today's signals
-      const checked: Record<string, boolean> = { morning: false, afternoon: false, evening: false };
-      if (Array.isArray(signals)) {
-        for (const s of signals) {
-          if (s.signal === "vision_reviewed" && s.value === "1" && s.date === today) {
-            if (s.context === "morning" || s.context === "afternoon" || s.context === "evening") {
-              checked[s.context] = true;
-            }
-          }
-        }
-      }
-      setReviewChecked(checked);
       setLoading(false);
     }).catch((err) => {
       console.error("Failed to load vision data:", err);
       setLoading(false);
     });
-  }, [today]);
+  }, []);
 
   useEffect(() => {
     fetchAll();
   }, [fetchAll]);
-
-  const handleReview = useCallback(async (context: string) => {
-    if (reviewChecked[context]) return;
-    setReviewChecked((prev) => ({ ...prev, [context]: true }));
-    try {
-      await fetch("/api/daily-signals", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          entries: [{
-            date: today,
-            signal: "vision_reviewed",
-            value: "1",
-            unit: "",
-            context,
-            source: "app",
-            captureId: "",
-            category: "personal_growth",
-          }],
-        }),
-      });
-    } catch (err) {
-      console.error("Failed to log vision review:", err);
-      setReviewChecked((prev) => ({ ...prev, [context]: false }));
-    }
-  }, [reviewChecked, today]);
-
-  // ── Habit trend computations (mirrored from Hub) ───────────────────
-
-  const isScoreActive = activeHabitKey === "score";
-
-  const activeHabitTrendSeries = useMemo(() => {
-    if (!hub || !activeHabitKey || isScoreActive) return [];
-    return hub.habitTrends[activeHabitKey] || [];
-  }, [activeHabitKey, isScoreActive, hub]);
-
-  const scoreTrendPoints = useMemo(() => {
-    if (!hub || !isScoreActive) return [];
-    const { startDate, log } = hub.dopamineReset;
-    const [year, month, day] = startDate.split("-").map(Number);
-    const resetDay = Math.max(1, Math.min(hub.dopamineReset.dayNumber, hub.dopamineReset.days));
-    return Array.from({ length: resetDay }, (_, i) => {
-      const d = new Date(year, month - 1, day + i);
-      const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-      const entry = log.find((l) => l.date === dateStr);
-      const { score } = computeDayScore(entry, i + 1 === resetDay);
-      return { date: dateStr, value: score };
-    });
-  }, [hub, isScoreActive]);
-
-  const activeHabitTrendPoints = useMemo(() => {
-    if (isScoreActive) {
-      return scoreTrendPoints.map((entry, index) => {
-        const windowStart = Math.max(0, index - 6);
-        const window = scoreTrendPoints.slice(windowStart, index + 1).filter((p) => p.value !== null);
-        if (window.length === 0) return { date: entry.date, value: null };
-        const avg = window.reduce((s, p) => s + p.value!, 0) / window.length;
-        return { date: entry.date, value: Number(((avg / 8) * 100).toFixed(1)) };
-      });
-    }
-    return activeHabitTrendSeries.map((entry, index) => {
-      const windowStart = Math.max(0, index - 6);
-      const window = activeHabitTrendSeries
-        .slice(windowStart, index + 1)
-        .filter((point) => point.value !== null);
-      if (window.length === 0) return { date: entry.date, value: null };
-      const done = window.filter((point) => point.value === true).length;
-      return { date: entry.date, value: Number(((done / window.length) * 100).toFixed(1)) };
-    });
-  }, [isScoreActive, scoreTrendPoints, activeHabitTrendSeries]);
-
-  const activeHabitSummary = useMemo(() => {
-    if (!activeHabitKey) return null;
-    if (isScoreActive) {
-      const logged = scoreTrendPoints.filter((p) => p.value !== null);
-      if (logged.length === 0) return null;
-      const avg = logged.reduce((s, p) => s + p.value!, 0) / logged.length;
-      const recent = scoreTrendPoints.slice(-14).filter((p) => p.value !== null);
-      const recentAvg = recent.length === 0 ? 0 : recent.reduce((s, p) => s + p.value!, 0) / recent.length;
-      let currentStreak = 0;
-      for (let i = scoreTrendPoints.length - 1; i >= 0; i--) {
-        if (scoreTrendPoints[i].value !== null && scoreTrendPoints[i].value! >= 5) currentStreak++;
-        else break;
-      }
-      return { loggedDays: logged.length, adherence: Math.round((avg / 8) * 100), recentAdherence: Math.round((recentAvg / 8) * 100), currentStreak };
-    }
-    if (activeHabitTrendSeries.length === 0) return null;
-    const loggedDays = activeHabitTrendSeries.filter((point) => point.value !== null).length;
-    const doneDays = activeHabitTrendSeries.filter((point) => point.value === true).length;
-    const adherence = loggedDays === 0 ? 0 : Math.round((doneDays / loggedDays) * 100);
-    const recent = activeHabitTrendSeries.slice(-14).filter((point) => point.value !== null);
-    const recentDone = recent.filter((point) => point.value === true).length;
-    const recentAdherence = recent.length === 0 ? 0 : Math.round((recentDone / recent.length) * 100);
-    let currentStreak = 0;
-    for (let i = activeHabitTrendSeries.length - 1; i >= 0; i--) {
-      const value = activeHabitTrendSeries[i].value;
-      if (value === true) { currentStreak++; continue; }
-      if (value === null) continue;
-      break;
-    }
-    return { loggedDays, adherence, recentAdherence, currentStreak };
-  }, [activeHabitKey, isScoreActive, scoreTrendPoints, activeHabitTrendSeries]);
 
   // ── Loading / error states ─────────────────────────────────────────
 
@@ -337,10 +162,6 @@ export default function VisionPage() {
     );
   }
 
-  const resetDay = hub ? Math.max(1, Math.min(hub.dopamineReset.dayNumber, hub.dopamineReset.days)) : 0;
-  const currentRitual: RitualBlueprint[RitualTab] = vision.ritualBlueprint[ritualTab];
-  const reviewContext = RITUAL_CONTEXT[ritualTab];
-
   return (
     <div className="min-h-screen bg-black text-zinc-100">
       <div className="p-4 sm:p-6 pb-24">
@@ -354,7 +175,17 @@ export default function VisionPage() {
           <section className="p-4 bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl space-y-4">
             <h2 className="text-xs text-zinc-400 uppercase tracking-wide font-medium">Identity Script</h2>
 
-            <IdentityField label="Core Traits" value={vision.identityScript.coreTraits} />
+            <div>
+              <p className="text-[10px] text-zinc-500 uppercase tracking-wide mb-2">Core Traits</p>
+              <div className="space-y-2">
+                {(["health", "wealth", "love", "self"] as const).map((pillar) => (
+                  <div key={pillar} className="flex gap-3">
+                    <span className="text-zinc-500 text-xs uppercase tracking-wide w-14 shrink-0 pt-0.5">{pillar}</span>
+                    <span className="text-sm text-zinc-300">{vision.identityScript.coreTraits[pillar]}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
             <IdentityField label="Non-Negotiables" value={vision.identityScript.nonNegotiables} />
 
             {/* Language Rules */}
@@ -383,95 +214,17 @@ export default function VisionPage() {
           {/* ── 2. Anti-Vision (always visible) ────────────────────── */}
           <section className="p-4 bg-zinc-900/60 backdrop-blur-md border border-white/10 border-l-2 border-l-red-500/30 rounded-xl">
             <h2 className="text-xs text-zinc-400 uppercase tracking-wide font-medium mb-3">Anti-Vision</h2>
-            {vision.antiVision ? (
-              <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-line">{vision.antiVision}</p>
-            ) : (
-              <p className="text-xs text-zinc-600 italic">Not set</p>
-            )}
+            <div className="space-y-2">
+              {(["health", "wealth", "love", "self"] as const).map((pillar) => (
+                <div key={pillar} className="flex gap-3">
+                  <span className="text-zinc-500 text-xs uppercase tracking-wide w-14 shrink-0 pt-0.5">{pillar}</span>
+                  <span className="text-sm text-zinc-300">{vision.antiVision[pillar]}</span>
+                </div>
+              ))}
+            </div>
           </section>
 
-          {/* ── 3. Ritual Checklist + Today's Plan (side by side) ─── */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {/* Left: Ritual Blueprint (auto-detected phase) */}
-            <section className="bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl">
-              <div className="p-4 pb-0">
-                <h2 className="text-xs text-zinc-400 uppercase tracking-wide font-medium mb-3">Ritual Blueprint</h2>
-                <div className="flex gap-3">
-                  {RITUAL_TABS.map((tab) => (
-                    <button
-                      key={tab}
-                      onClick={() => setRitualTab(tab)}
-                      className={`text-xs cursor-pointer pb-1.5 capitalize ${
-                        ritualTab === tab
-                          ? "text-zinc-100 border-b border-zinc-100"
-                          : "text-zinc-500"
-                      }`}
-                    >
-                      {tab}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="p-4 space-y-3">
-                {currentRitual.steps.length > 0 ? (
-                  <div>
-                    <p className="text-[10px] text-zinc-500 uppercase tracking-wide mb-1.5">Steps</p>
-                    <ol className="space-y-1">
-                      {currentRitual.steps.map((step, i) => (
-                        <li key={i} className="text-sm text-zinc-300 flex gap-2">
-                          <span className="text-zinc-600 shrink-0">{i + 1}.</span>
-                          {step}
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
-                ) : (
-                  <p className="text-xs text-zinc-600 italic">No steps defined</p>
-                )}
-
-                {currentRitual.habitStacks.length > 0 && (
-                  <div>
-                    <p className="text-[10px] text-zinc-500 uppercase tracking-wide mb-1.5">Habit Stacks</p>
-                    <ul className="space-y-1">
-                      {currentRitual.habitStacks.map((stack, i) => (
-                        <li key={i} className="text-sm text-zinc-300 flex gap-2">
-                          <span className="text-zinc-600">-</span>
-                          {stack}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {/* Review checkbox */}
-                <div className="pt-2 border-t border-white/5">
-                  <label className={`flex items-center gap-2 ${reviewChecked[reviewContext] ? "opacity-60" : "cursor-pointer"}`}>
-                    <input
-                      type="checkbox"
-                      checked={reviewChecked[reviewContext]}
-                      disabled={reviewChecked[reviewContext]}
-                      onChange={() => handleReview(reviewContext)}
-                      className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-emerald-500 focus:ring-0 focus:ring-offset-0 accent-emerald-500"
-                    />
-                    <span className="text-sm text-zinc-300 capitalize">
-                      {ritualTab} review complete
-                    </span>
-                  </label>
-                </div>
-              </div>
-            </section>
-
-            {/* Right: Today's Plan */}
-            {hub && (
-              <PlanCard
-                plan={hub.todaysPlan}
-                planInsight={hub.briefing?.planInsight}
-                onRefresh={fetchAll}
-              />
-            )}
-          </div>
-
-          {/* ── 4. Intentions + Briefing (merged, full width) ────────── */}
+          {/* ── 3. Intentions + Briefing (merged, full width) ────────── */}
           {hub && (() => {
             const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
             const weekly = hub.weeklyIntention && hub.weeklyIntention.date >= sevenDaysAgo ? hub.weeklyIntention : null;
@@ -506,204 +259,7 @@ export default function VisionPage() {
               ZONE 2: Deep Review (all collapsed by default)
               ═══════════════════════════════════════════════════════ */}
 
-          {/* ── 5. Habit Grid (open — daily/weekly frequency) ─────── */}
-          {hub && (
-            <CollapsibleSection title="Daily Habits" defaultOpen>
-              <div>
-                {(() => {
-                  const allDates = hub.habitTracker.dates;
-                  // Group all dates into weeks (Mon-Sun)
-                  const allWeeks: number[][] = [];
-                  let currentWeek: number[] = [];
-                  for (let i = 0; i < allDates.length; i++) {
-                    const [y, m, d] = allDates[i].split("-").map(Number);
-                    const dow = new Date(y, m - 1, d).getDay();
-                    currentWeek.push(i);
-                    if (dow === 0 || i === allDates.length - 1) {
-                      allWeeks.push(currentWeek);
-                      currentWeek = [];
-                    }
-                  }
-                  // Paginate: show 4 full weeks at a time, offset from the end
-                  const WEEKS_PER_PAGE = 4;
-                  const maxPage = Math.max(0, Math.ceil(allWeeks.length / WEEKS_PER_PAGE) - 1);
-                  const safeOffset = Math.min(habitPageOffset, maxPage);
-                  const endWeekIdx = allWeeks.length - safeOffset * WEEKS_PER_PAGE;
-                  const startWeekIdx = Math.max(0, endWeekIdx - WEEKS_PER_PAGE);
-                  const weeks = allWeeks.slice(startWeekIdx, endWeekIdx);
-                  // Flatten for date range display
-                  const visibleIndices = weeks.flat();
-                  const firstDate = allDates[visibleIndices[0]];
-                  const lastDate = allDates[visibleIndices[visibleIndices.length - 1]];
-                  const fmtRange = (d: string) => {
-                    const [y, m, day] = d.split("-").map(Number);
-                    return new Date(y, m - 1, day).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-                  };
-                  const canGoBack = startWeekIdx > 0;
-                  const canGoForward = safeOffset > 0;
-                  const CELL = 28;
-                  const GAP = 4;
-                  const fullWeekWidth = 7 * CELL + 6 * GAP;
-                  const fmtDate = (d: string) => {
-                    const [y, m, day] = d.split("-").map(Number);
-                    return new Date(y, m - 1, day).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-                  };
-                  const weekCells = (indices: number[], weekIndex: number, renderCell: (i: number) => React.ReactNode) => (
-                    <div key={weekIndex} className="flex gap-1" style={{ width: `${fullWeekWidth}px` }}>{indices.map(renderCell)}</div>
-                  );
-                  const todayIdx = allDates.length - 1;
-                  return (
-                    <div
-                      ref={gridRef}
-                      className="relative space-y-2.5"
-                      onMouseLeave={() => setHoveredCol(null)}
-                    >
-                      {/* Navigation */}
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => setHabitPageOffset(Math.min(safeOffset + 1, maxPage))}
-                            disabled={!canGoBack}
-                            className={`text-xs px-2 py-1 rounded ${canGoBack ? "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800" : "text-zinc-700 cursor-not-allowed"}`}
-                          >
-                            ◀
-                          </button>
-                          <span className="text-xs text-zinc-500">
-                            {fmtRange(firstDate)} – {fmtRange(lastDate)}
-                          </span>
-                          <button
-                            onClick={() => setHabitPageOffset(Math.max(safeOffset - 1, 0))}
-                            disabled={!canGoForward}
-                            className={`text-xs px-2 py-1 rounded ${canGoForward ? "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800" : "text-zinc-700 cursor-not-allowed"}`}
-                          >
-                            ▶
-                          </button>
-                        </div>
-                        <span className="text-xs text-zinc-600">Day {resetDay}/90</span>
-                      </div>
-                      {hoveredCol !== null && allDates[hoveredCol] && (() => {
-                        const entry = hub.dopamineReset.log.find((l) => l.date === allDates[hoveredCol]);
-                        const isToday = hoveredCol === todayIdx;
-                        const { score } = computeDayScore(entry, isToday);
-                        return (
-                          <HabitTooltip
-                            dateStr={allDates[hoveredCol]}
-                            columnIndex={hoveredCol}
-                            gridRef={gridRef}
-                            score={score}
-                          />
-                        );
-                      })()}
-                      {/* Date labels */}
-                      <div className="flex items-center gap-2.5">
-                        <span className="w-[4.5rem] shrink-0" />
-                        <div className="flex gap-3">
-                          {weeks.map((wk, wi) => (
-                            <div key={wi} style={{ width: `${fullWeekWidth}px` }}>
-                              <span className="text-[10px] text-zinc-600">{fmtDate(allDates[wk[0]])}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      {/* Score row */}
-                      <div className="flex items-center gap-2.5">
-                        <span className="text-xs text-zinc-300 w-[4.5rem] shrink-0 text-right font-medium">Score</span>
-                        <div className="flex gap-3">
-                          {weeks.map((wk, wi) => weekCells(wk, wi, (i) => {
-                            const dateStr = allDates[i];
-                            const entry = hub.dopamineReset.log.find((l) => l.date === dateStr);
-                            const isToday = i === todayIdx;
-                            const { score, color } = computeDayScore(entry, isToday);
-                            return (
-                              <div
-                                key={dateStr}
-                                data-col={i}
-                                className={`w-7 h-7 rounded cursor-pointer ${color} ${isToday ? "ring-2 ring-zinc-400 ring-offset-1 ring-offset-zinc-950" : ""}`}
-                                title={score !== null ? `${score}/8` : "Not logged"}
-                                onMouseEnter={() => setHoveredCol(i)}
-                                onClick={() => setActiveHabitKey("score")}
-                              />
-                            );
-                          }))}
-                        </div>
-                      </div>
-                      {/* Separator */}
-                      <div className="flex items-center gap-2.5">
-                        <span className="w-[4.5rem] shrink-0" />
-                        <div className="flex-1 border-t border-white/5" />
-                      </div>
-                      {/* Habit rows */}
-                      {HABIT_ORDER.map((habitKey) => (
-                        <div key={habitKey} className="flex items-center gap-2.5">
-                          <span className="text-xs text-zinc-400 w-[4.5rem] shrink-0 text-right truncate">
-                            {HABIT_CONFIG[habitKey].label}
-                          </span>
-                          <div className="flex gap-3">
-                            {weeks.map((wk, wi) => weekCells(wk, wi, (i) => {
-                              const dateStr = allDates[i];
-                              const isToday = i === todayIdx;
-
-                              // 3-segment vision_reviewed cell
-                              if (habitKey === "vision_reviewed") {
-                                const val = hub.habitTracker.days[i][habitKey];
-                                return (
-                                  <div
-                                    key={dateStr}
-                                    className={`w-7 h-7 rounded cursor-pointer flex flex-row gap-px overflow-hidden ${isToday ? "ring-2 ring-zinc-400 ring-offset-1 ring-offset-zinc-950" : ""}`}
-                                    onMouseEnter={() => setHoveredCol(i)}
-                                    onClick={() => setActiveHabitKey(habitKey)}
-                                    style={{ backgroundColor: "transparent" }}
-                                  >
-                                    {val === true ? (
-                                      <>
-                                        <div className="flex-1 h-full bg-emerald-500" />
-                                        <div className="flex-1 h-full bg-emerald-500" />
-                                        <div className="flex-1 h-full bg-emerald-500" />
-                                      </>
-                                    ) : val === false ? (
-                                      <>
-                                        <div className="flex-1 h-full bg-red-500" />
-                                        <div className="flex-1 h-full bg-red-500" />
-                                        <div className="flex-1 h-full bg-red-500" />
-                                      </>
-                                    ) : (
-                                      <>
-                                        <div className="flex-1 h-full bg-zinc-800" />
-                                        <div className="flex-1 h-full bg-zinc-800" />
-                                        <div className="flex-1 h-full bg-zinc-800" />
-                                      </>
-                                    )}
-                                  </div>
-                                );
-                              }
-
-                              const val = hub.habitTracker.days[i][habitKey];
-                              return (
-                                <div
-                                  key={dateStr}
-                                  className={`w-7 h-7 rounded cursor-pointer ${
-                                    val === true
-                                      ? "bg-emerald-500"
-                                      : val === false
-                                        ? "bg-red-500"
-                                        : "bg-zinc-800"
-                                  } ${isToday ? "ring-2 ring-zinc-400 ring-offset-1 ring-offset-zinc-950" : ""}`}
-                                  onMouseEnter={() => setHoveredCol(i)}
-                                  onClick={() => setActiveHabitKey(habitKey)}
-                                />
-                              );
-                            }))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })()}
-              </div>
-            </CollapsibleSection>
-          )}
-
-          {/* ── 6. North Star (collapsed) ──────────────────────────── */}
+          {/* ── 4. North Star (collapsed) ──────────────────────────── */}
           <CollapsibleSection title="North Star" defaultOpen>
             <div className="grid grid-cols-2 gap-3">
               {vision.domains.map((domain) => (
@@ -739,50 +295,6 @@ export default function VisionPage() {
         </div>
       </div>
 
-      {/* Trend Modal */}
-      {hub && (
-        <TrendModal
-          open={Boolean(activeHabitKey)}
-          onClose={() => setActiveHabitKey(null)}
-          title={isScoreActive ? "Daily Score" : activeHabitKey ? HABIT_CONFIG[activeHabitKey as HabitKey].label : "Habit Trend"}
-          subtitle={isScoreActive ? "Rolling 7-day average (% of max 8)" : "Rolling 7-day adherence"}
-          sidebar={
-            activeHabitKey && !isScoreActive && hub.habitLogs?.[activeHabitKey] ? (
-              <HabitLogHistory logs={hub.habitLogs[activeHabitKey]} />
-            ) : undefined
-          }
-        >
-          <div className="space-y-4">
-            <LineTrendChart
-              points={activeHabitTrendPoints}
-              minY={0}
-              maxY={100}
-              color="#34d399"
-              valueFormatter={(value) => `${Math.round(value)}%`}
-              emptyLabel="No habit logs available for this period."
-            />
-            {activeHabitSummary ? (
-              <div className="grid grid-cols-3 gap-2">
-                <div className="rounded-lg border border-white/10 bg-zinc-900/60 p-3">
-                  <p className="text-[11px] uppercase tracking-wide text-zinc-500">Logged Days</p>
-                  <p className="mt-1 font-mono text-sm text-zinc-100">{activeHabitSummary.loggedDays}</p>
-                  <p className="mt-1 text-xs text-zinc-500">{isScoreActive ? "90-day reset" : "Last 90 days"}</p>
-                </div>
-                <div className="rounded-lg border border-white/10 bg-zinc-900/60 p-3">
-                  <p className="text-[11px] uppercase tracking-wide text-zinc-500">{isScoreActive ? "Avg Score" : "Adherence"}</p>
-                  <p className="mt-1 font-mono text-sm text-emerald-300">{activeHabitSummary.adherence}%</p>
-                  <p className="mt-1 text-xs text-zinc-500">{isScoreActive ? "% of max 8" : "Overall completion"}</p>
-                </div>
-                <div className="rounded-lg border border-white/10 bg-zinc-900/60 p-3">
-                  <p className="text-[11px] uppercase tracking-wide text-zinc-500">{isScoreActive ? "Good Streak" : "Current Streak"}</p>
-                  <p className="mt-1 font-mono text-sm text-zinc-100">{activeHabitSummary.currentStreak}d</p>
-                  <p className="mt-1 text-xs text-zinc-500">Last 14d: {activeHabitSummary.recentAdherence}%</p>
-                </div>
-              </div>
-            ) : null}
-          </div>
-        </TrendModal>
-      )}
     </div>
   );
 }
