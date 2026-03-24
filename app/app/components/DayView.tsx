@@ -752,13 +752,12 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
                             />
                           );
                         }
-                        // Compound cell: render subsections
-                        const isVertical = row.signals.length <= 2;
+                        // Compound cell: vertical slices (side by side)
                         return (
                           <div
                             key={ds}
                             data-col={i}
-                            className={`w-7 h-7 rounded overflow-hidden flex ${isVertical ? "flex-col" : "flex-col"} ${
+                            className={`w-7 h-7 rounded overflow-hidden flex flex-row ${
                               isTodayCell ? "ring-2 ring-zinc-400 ring-offset-1 ring-offset-zinc-950" : ""
                             }`}
                             onMouseEnter={() => setHoveredCol(i)}
