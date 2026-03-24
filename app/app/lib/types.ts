@@ -58,7 +58,7 @@ export interface WorkoutSet {
   notes: string;
 }
 
-export interface GroupedExercise {
+interface GroupedExercise {
   name: string;
   id: string;
   sets: WorkoutSet[];
@@ -109,7 +109,7 @@ export interface GymReflection {
   change: string;
 }
 
-export interface EatingSummary {
+interface EatingSummary {
   clean: number;
   total: number;
 }
@@ -183,13 +183,13 @@ export interface ResourceEntry {
   notes: string;
 }
 
-export interface LanguageRules {
+interface LanguageRules {
   use: string[];
   forbid: string[];
 }
 
-export interface IdentityScript {
-  coreTraits: string;
+interface IdentityScript {
+  coreTraits: { health: string; wealth: string; love: string; self: string };
   nonNegotiables: string;
   languageRules: LanguageRules;
   physicalPresence: string;
@@ -197,7 +197,7 @@ export interface IdentityScript {
   decisionStyle: string;
 }
 
-export interface RitualBlock {
+interface RitualBlock {
   steps: string[];
   habitStacks: string[];
 }
@@ -208,7 +208,7 @@ export interface RitualBlueprint {
   evening: RitualBlock;
 }
 
-export interface TriggerReplacement {
+interface TriggerReplacement {
   trigger: string;
   replacement: string;
 }
@@ -249,7 +249,7 @@ export interface VisionDomain {
 
 export interface VisionData {
   identityScript: IdentityScript;
-  antiVision: string;
+  antiVision: { health: string; wealth: string; love: string; self: string };
   domains: VisionDomain[];
   intentions: {
     daily: string;

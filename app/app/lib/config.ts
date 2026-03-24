@@ -9,16 +9,20 @@ export interface RotationDay {
 }
 
 export const HABIT_CONFIG = {
-  weed: { label: "No Weed", abbr: "W" },
-  lol: { label: "No LoL", abbr: "L" },
-  poker: { label: "No Poker", abbr: "P" },
-  clarity: { label: "Clarity", abbr: "C" },
-  gym: { label: "Gym", abbr: "G" },
-  sleep: { label: "Sleep", abbr: "S" },
-  meditate: { label: "Meditate", abbr: "M" },
-  deep_work: { label: "Deep Work", abbr: "D" },
-  ate_clean: { label: "Ate Clean", abbr: "E" },
-  vision_reviewed: { label: "Vision", abbr: "V" },
+  weed:           { label: "No Weed",       abbr: "W"  },
+  lol:            { label: "No LoL",        abbr: "L"  },
+  poker:          { label: "No Poker",      abbr: "P"  },
+  clarity:        { label: "Clarity",       abbr: "C"  },
+  gym:            { label: "Gym",           abbr: "G"  },
+  sleep:          { label: "Sleep",         abbr: "S"  },
+  meditate:       { label: "Meditate",      abbr: "M"  },
+  deep_work:      { label: "Deep Work",     abbr: "D"  },
+  ate_clean:      { label: "Ate Clean",     abbr: "E"  },
+  morning_review: { label: "Morning",       abbr: "AM" },
+  midday_review:  { label: "Midday",        abbr: "MD" },
+  evening_review: { label: "Evening",       abbr: "PM" },
+  wim_hof_am:     { label: "Wim Hof AM",   abbr: "WA" },
+  wim_hof_pm:     { label: "Wim Hof PM",   abbr: "WP" },
 } satisfies Record<string, HabitConfigEntry>;
 
 const LEGACY_WORKOUT_ALIASES: Record<string, string> = {

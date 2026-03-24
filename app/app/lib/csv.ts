@@ -55,7 +55,7 @@ export interface PlanEntry {
   domain?: string;
 }
 
-export interface TodoEntry {
+interface TodoEntry {
   id: number;
   item: string;
   done: number; // 0 | 1
@@ -193,7 +193,7 @@ export function appendDailySignals(entries: DailySignalEntry[]): void {
   appendLines(DAILY_SIGNALS_PATH, DAILY_SIGNALS_HEADER, lines);
 }
 
-export interface MetricHistoryEntry {
+interface MetricHistoryEntry {
   date: string;
   value: string;
   context: string;
@@ -435,7 +435,7 @@ export function getCurrentIntentions(): CurrentIntentions {
 }
 
 export function getHabitsForDate(signals: DailySignalEntry[], date: string): Record<string, boolean> {
-  const habitMetrics = ["weed", "lol", "poker", "clarity", "gym", "sleep", "meditate", "deep_work", "ate_clean", "vision_reviewed"];
+  const habitMetrics = ["weed", "lol", "poker", "clarity", "gym", "sleep", "meditate", "deep_work", "ate_clean", "morning_review", "midday_review", "evening_review", "wim_hof_am", "wim_hof_pm"];
   const dayEntries = signals.filter((e) => e.date === date && habitMetrics.includes(e.signal));
   const habits: Record<string, boolean> = {};
   for (const entry of dayEntries) {
@@ -724,24 +724,6 @@ export function appendReflection(entry: ReflectionEntry): void {
   appendLines(REFLECTIONS_PATH, REFLECTIONS_HEADER, [line]);
 }
 
-export function archiveReflection(date: string, domain: string, index: number): void {
-  const all = readReflections();
-  let matchCount = 0;
-  for (let i = 0; i < all.length; i++) {
-    if (all[i].date === date && all[i].domain === domain && all[i].archived !== "1") {
-      if (matchCount === index) {
-        all[i].archived = "1";
-        break;
-      }
-      matchCount++;
-    }
-  }
-  const lines = all.map(
-    (r) =>
-      `${r.date},${r.domain},${csvQuote(r.win)},${csvQuote(r.lesson)},${csvQuote(r.change)},${r.archived || ""}`
-  );
-  writeAll(REFLECTIONS_PATH, REFLECTIONS_HEADER, lines);
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Groceries
@@ -839,7 +821,7 @@ export interface BriefingData {
   verified: boolean;
 }
 
-export interface BriefingFeedbackEntry {
+interface BriefingFeedbackEntry {
   date: string;
   state: string;
   rating: string;
@@ -924,19 +906,3 @@ export function readExperiments(): ExperimentEntry[] {
   });
 }
 
-export function appendExperiment(entry: ExperimentEntry): void {
-  appendLines(EXPERIMENTS_PATH, EXPERIMENTS_HEADER, [serializeExperiment(entry)]);
-}
-
-export function updateExperiment(
-  name: string,
-  startDate: string,
-  updates: Partial<ExperimentEntry>
-): void {
-  const rows = readExperiments();
-  const idx = rows.findIndex((r) => r.name === name && r.startDate === startDate);
-  if (idx === -1) return;
-  rows[idx] = { ...rows[idx], ...updates };
-  const lines = rows.map(serializeExperiment);
-  writeAll(EXPERIMENTS_PATH, EXPERIMENTS_HEADER, lines);
-}

@@ -1,6 +1,11 @@
 {
   "identityScript": {
-    "coreTraits": "The person behind all these domains: grounded, positive, present. The guy people feel better around — not performing, just being. Calm energy, real conversations, no front.",
+    "coreTraits": {
+      "health": "I am a 200lb Olympic lifter who never skips training. I eat clean, sleep by 9:30, and treat my body like the foundation everything else is built on.",
+      "wealth": "I am building a 100k/year business providing premium value across AI, meditation, personal growth, and addiction recovery. I ship daily. I do deep work, not busy work.",
+      "love": "I am genuine, caring, and a leader in my relationships. I show up — present, honest, initiating. I put in effort and build real connections, not convenient ones.",
+      "self": "I am 3 years clean, calm, curious, never stagnant. I protect my mind at all costs. I read, reflect, and sit in stillness. Morning priorities before anyone else's."
+    },
     "nonNegotiables": "Wim Hof every morning. Movement and gym. Meditation. Clean eating. Deep work. No substances. No video games. Quietness, reflection, and stillness.",
     "languageRules": {
       "use": ["Locked in", "Non-negotiable", "Just do it", "Embrace discomfort", "Embrace pain"],
@@ -10,7 +15,12 @@
     "socialFilter": "Kind, happy people who are self-motivated. Share interests. Genuine. Trustworthy. Unselfish.",
     "decisionStyle": "Assertive. Uses learned tools to manage stress — Advaita, Wim Hof, cold showers, walks. Acts despite the discomfort."
   },
-  "antiVision": "Smokes weed. Skips gym for any emotion or timing excuse. Watches porn. Isolates. Reactive. Overweight. Hates himself.",
+  "antiVision": {
+    "health": "Skips gym on any excuse. Eats junk. Overweight. No discipline. Numbs with food instead of facing discomfort.",
+    "wealth": "Coasts at the 9-5. Never ships. Consumes instead of creates. Wastes evenings on League and poker instead of building.",
+    "love": "Isolates. Avoids hard conversations. Lets relationships decay. Too comfortable to initiate. Takes people for granted.",
+    "self": "Smokes weed. Watches porn. Plays League all night. Gambles on poker apps. Reactive. Hates himself. Zero self-respect."
+  },
   "domains": [
     {
       "id": "health",
@@ -85,48 +95,46 @@
   "ritualBlueprint": {
     "morning": {
       "steps": [
-        "Wake — no devices",
-        "Journal",
-        "Warm water",
-        "Wim Hof 2 rounds",
+        "Wake — no snooze",
+        "Open /plan/day (blueprint)",
+        "Brush teeth + warm water",
+        "Wim Hof (1 round)",
+        "Journal (top priorities)",
         "Review identity script",
-        "Journal thoughts",
-        "Plan the day",
-        "Execute"
+        "Plan day (or confirm last night's drafts)",
+        "Start work"
       ],
       "habitStacks": [
-        "After waking → no devices, journal first",
-        "After warm water → Wim Hof + identity script"
+        "Open laptop → blueprint first, nothing else",
+        "After warm water → Wim Hof immediately"
       ]
     },
     "midday": {
       "steps": [
-        "10-minute walk",
-        "Pull-ups and push-ups",
-        "Breathwork",
+        "Finish morning work block",
+        "Walk / Gym",
         "Cold shower",
-        "Review identity script",
-        "Quick reflection",
-        "Prepare for deep work or rest of day"
+        "Short meditation (outside)",
+        "Lunch",
+        "Resume work"
       ],
       "habitStacks": [
-        "After lunch → walk first",
-        "After walk → bodyweight movement + breathwork"
+        "After gym → cold shower immediately",
+        "After meditation → eat, then resume"
       ]
     },
     "evening": {
       "steps": [
-        "Finish deep work or reflection",
-        "Review the day",
-        "Journal",
-        "Think about tomorrow",
-        "Warm tea",
-        "Brush teeth",
-        "Lights out by 9:30"
+        "Finish work — 5pm hard stop",
+        "Walk Cooper",
+        "Wim Hof",
+        "Deep work session (personal)",
+        "Set tomorrow",
+        "Wind down + lights out"
       ],
       "habitStacks": [
-        "After dinner → review the day",
-        "After journal → warm tea, wind down"
+        "After Cooper → Wim Hof immediately",
+        "After deep work → set tomorrow before anything else"
       ]
     }
   },
@@ -161,7 +169,8 @@
     "triggerReplacements": [
       { "trigger": "Boredom after work", "replacement": "Walk with Cooper or cook" },
       { "trigger": "Stress/overwhelm", "replacement": "Breathwork or cold shower" },
-      { "trigger": "Urge to game", "replacement": "Read or meditate" }
+      { "trigger": "Urge to game", "replacement": "Read or meditate" },
+      { "trigger": "After lunch — YouTube pull", "replacement": "Walk first, or short meditation outside" }
     ]
   },
   "habitAudit": {
