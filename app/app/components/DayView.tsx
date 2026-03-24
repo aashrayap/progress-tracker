@@ -365,31 +365,36 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
     evening_review: "eveningReview", wim_hof_am: "wimHofAm", wim_hof_pm: "wimHofPm",
   };
 
-  // Optimistic dopamine log: overlay habitSignals onto today's entry
+  // Optimistic dopamine log: rebuild today's entry from habitSignals
   const patchedLog = useMemo(() => {
     if (!hubData?.dopamineReset?.log) return [];
     return hubData.dopamineReset.log.map((entry) => {
       if (entry.date !== todayStr) return entry;
       const patched = { ...entry };
-      for (const [signal, val] of Object.entries(habitSignals)) {
-        const key = SIGNAL_TO_DOPAMINE[signal];
-        if (key && key !== "date") {
-          (patched as Record<string, boolean | null | string>)[key] = val;
-        }
+      // For today, habitSignals is the source of truth for all signals
+      for (const [signal, key] of Object.entries(SIGNAL_TO_DOPAMINE)) {
+        if (key === "date") continue;
+        const val = habitSignals[signal];
+        // undefined/absent in habitSignals = null (unlogged)
+        (patched as Record<string, boolean | null | string>)[key] = val === true ? true : val === false ? false : null;
       }
       return patched;
     });
   }, [hubData, habitSignals, todayStr]);
 
-  // Optimistic habitTracker days: overlay habitSignals onto today's entry
+  // Optimistic habitTracker days: rebuild today's entry from habitSignals
   const patchedTrackerDays = useMemo(() => {
     if (!hubData?.habitTracker) return [];
     const dates = hubData.habitTracker.dates;
     return hubData.habitTracker.days.map((day, i) => {
       if (dates[i] !== todayStr) return day;
-      const patched = { ...day };
-      for (const [signal, val] of Object.entries(habitSignals)) {
-        patched[signal] = val === true;
+      const patched: Record<string, boolean | undefined> = { ...day };
+      for (const signal of Object.keys(SIGNAL_TO_DOPAMINE)) {
+        const val = habitSignals[signal];
+        // true=green, false=red, undefined/null=grey (remove key so cell renders as grey)
+        if (val === true) patched[signal] = true;
+        else if (val === false) patched[signal] = false;
+        else delete patched[signal];
       }
       return patched;
     });
