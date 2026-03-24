@@ -229,6 +229,11 @@ Note: Sleep is handled BEFORE the menu (see Pre-Menu section above). It is NOT p
 | `deep_work` | Deep work today? |
 | `meditate` | Meditate today? |
 | `ate_clean` | Eating clean today? |
+| `wim_hof_am` | Wim Hof this morning? |
+| `wim_hof_pm` | Wim Hof this evening? |
+| `morning_review` | Morning protocol complete? |
+| `midday_review` | Midday protocol complete? |
+| `evening_review` | Evening protocol complete? |
 | `weed` | Clean from weed today? |
 | `lol` | Clean from League today? |
 | `poker` | Clean from poker today? |
@@ -381,13 +386,13 @@ If the current time is before 12:00 PM and the user hasn't already planned ritua
 ```
 Ritual-aligned blocks (from your blueprint + habits):
 
-1. "Wim Hof + Identity Review" — 5:45-6:15 AM (morning ritual)
+1. "Wim Hof AM + Identity Review" — 5:45-6:15 AM (morning ritual steps 4+6)
    → skip / add / adjust time
 
 2. "Deep Work Block 1" — 9:00-10:30 AM (wealth habit: 3 deep work blocks)
    → skip / add / adjust time
 
-3. "Midday Reset" — 12:00-12:30 PM (midday ritual: walk + breathwork)
+3. "Midday Reset" — 12:00-12:30 PM (midday ritual: walk/gym + cold shower + meditation)
    → skip / add / adjust time
 ```
 
@@ -953,10 +958,31 @@ Show the current values for each. Accept rewrites or keep.
 
 ```
 ─── RITUAL BLUEPRINT ──────────────────────────────────
-  Morning steps (current):
-  1. Wake — no devices
-  2. Journal
-  ...
+  Morning steps (current, 8 steps):
+  1. Wake — no snooze
+  2. Open /plan/day (blueprint)
+  3. Brush teeth + warm water
+  4. Wim Hof (1 round)
+  5. Journal (top priorities)
+  6. Review identity script
+  7. Plan day (or confirm last night's drafts)
+  8. Start work
+
+  Midday steps (current, 6 steps):
+  1. Finish morning work block
+  2. Walk / Gym
+  3. Cold shower
+  4. Short meditation (outside)
+  5. Lunch
+  6. Resume work
+
+  Evening steps (current, 6 steps):
+  1. Finish work — 5pm hard stop
+  2. Walk Cooper
+  3. Wim Hof
+  4. Deep work session (personal)
+  5. Set tomorrow
+  6. Wind down + lights out
 
   Keep, rewrite, or adjust?
 ```
@@ -1019,7 +1045,7 @@ Same behavior as former `/plan done`:
 - Find matching block (case-insensitive substring)
 - Mark done=1
 - Check signal map for auto-signal: run `node scripts/precompute-plan.js` and use `digest.signal_map` for keyword matching. For each key-value pair in `signal_map`, check if the plan item contains the value (case-insensitive substring). If matched, write `{key}=1` to daily_signals.csv.
-- If no keyword match, ask about trackable signal: "Does this correspond to a trackable signal? (gym/sleep/meditate/deep_work/ate_clean/weed/lol/poker/clarity, or skip)"
+- If no keyword match, ask about trackable signal: "Does this correspond to a trackable signal? (gym/sleep/meditate/deep_work/ate_clean/wim_hof_am/wim_hof_pm/morning_review/midday_review/evening_review/weed/lol/poker/clarity, or skip)"
 - If user names a signal, write it. If skip, no signal written.
 - Confirm: "Done: [item]" + "Logged: [signal]=1" if signal written
 

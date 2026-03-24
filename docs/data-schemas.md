@@ -31,8 +31,9 @@ date,signal,value,unit,context,source,capture_id,category
 
 Common signals:
 - `weight` (number)
-- `lol`, `weed`, `poker` (`0|1`)
-- `gym`, `sleep`, `meditate`, `deep_work`, `ate_clean` (`0|1`)
+- `lol`, `weed`, `poker`, `clarity` (`0|1`) — avoidance signals (1=clean)
+- `gym`, `sleep`, `meditate`, `deep_work`, `ate_clean`, `wim_hof_am`, `wim_hof_pm` (`0|1`) — habit signals
+- `morning_review`, `midday_review`, `evening_review` (`0|1`) — protocol review signals
 - `calories` (number)
 - `trigger` (text)
 - `relapse` (text)
@@ -41,7 +42,11 @@ Common signals:
 - `category`: optional canonical domain ID for the signal context (`health`, `career`, `relationships`, `finances`, `fun`, `personal_growth`, `environment`)
 - `crossroads` — anchor decision point. `value` = `chose_new|chose_old|chose_middle`. `context` = `<pull description> → <decision description>`. `category=personal_growth`. Written by /checkin anchor flow (Option 2).
 - `social_contact` (`0|1`) — weekly signal for meaningful social contact, `category=relationships`
-- `vision_reviewed` (`1`) — review checkpoint, `context=morning|afternoon|evening`, `category=personal_growth`. Logged via ritual blueprint checkboxes on /plan/day (morning ritual checklist).
+- `morning_review` (`0|1`) — morning protocol completion, `category=personal_growth`. Logged via mark-complete button on /plan/day.
+- `midday_review` (`0|1`) — midday protocol completion, `category=personal_growth`. Logged via mark-complete button on /plan/day.
+- `evening_review` (`0|1`) — evening protocol completion, `category=personal_growth`. Logged via mark-complete button on /plan/day.
+- `wim_hof_am` (`0|1`) — morning Wim Hof breathing, `category=health`. Logged via habit toggle on /plan/day.
+- `wim_hof_pm` (`0|1`) — evening Wim Hof breathing, `category=health`. Logged via habit toggle on /plan/day.
 - `weekly_experiment` (text) — **legacy** (replaced by `data/experiments.csv`), `value=<domain>`, `context=<description>`
 - `experiment_result` (`yes|partial|no`) — **legacy**, `context=<what was learned>`
 - `weekly_goal` (text) — **legacy**, `value=<domain>`, `context=<goal text>`
@@ -123,14 +128,14 @@ Reinvention Formula schema — 4-domain ABT(H) model with identity script, ritua
 ```json
 {
   "identityScript": {
-    "coreTraits": "<string>",
+    "coreTraits": { "health": "<string>", "wealth": "<string>", "love": "<string>", "self": "<string>" },
     "nonNegotiables": "<string>",
     "languageRules": { "use": ["<string>"], "forbid": ["<string>"] },
     "physicalPresence": "<string>",
     "socialFilter": "<string>",
     "decisionStyle": "<string>"
   },
-  "antiVision": "<string>",
+  "antiVision": { "health": "<string>", "wealth": "<string>", "love": "<string>", "self": "<string>" },
   "domains": [
     {
       "id": "health|wealth|love|self",
@@ -174,10 +179,12 @@ vision.json is written via `/api/vision` (PUT for full replace, PATCH for partia
 | Quarterly | `/checkin quarterly` | All fields | Full replace via PUT |
 | Manual | JSON edit | Any | Full replace via PUT |
 
-The `vision_reviewed` signal in daily_signals.csv tracks when the user reviewed vision.json content:
-- `signal=vision_reviewed`, `value=1`, `context=morning|afternoon|evening`, `category=personal_growth`
-- Logged via ritual blueprint checkboxes on /plan/day (morning ritual checklist)
-- One signal per context per day (morning, afternoon, evening)
+Protocol completion is tracked via three review signals in daily_signals.csv:
+- `morning_review` — morning protocol (8 steps) complete
+- `midday_review` — midday protocol (6 steps) complete
+- `evening_review` — evening protocol (6 steps) complete
+- Logged via mark-complete buttons on /plan/day (one per protocol phase)
+- Historical `vision_reviewed` rows remain valid — not backfilled or deleted
 
 ## data/experiments.csv
 ```
