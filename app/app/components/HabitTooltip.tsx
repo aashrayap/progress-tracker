@@ -45,7 +45,7 @@ export default function HabitTooltip({ dateStr, columnIndex, gridRef, score }: H
       }}
     >
       <div className="px-2.5 py-1.5 bg-zinc-800 border border-white/20 rounded-lg text-xs text-zinc-200 whitespace-nowrap shadow-xl">
-        {label}{score !== null && score !== undefined ? ` · ${score}/10` : ""}
+        {label}{score !== null && score !== undefined ? ` · ${score}/9` : ""}
       </div>
       <div className="flex justify-center">
         <div

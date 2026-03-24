@@ -34,6 +34,22 @@ const HABIT_ORDER = [
   "evening_review", "wim_hof_am", "wim_hof_pm",
 ] as const;
 
+// Grid display rows — compound rows merge multiple signals into one cell with subsections
+type GridRow = { label: string; signals: string[] };
+const GRID_ROWS: GridRow[] = [
+  { label: "Sleep", signals: ["sleep"] },
+  { label: "Gym", signals: ["gym"] },
+  { label: "No Weed", signals: ["weed"] },
+  { label: "Ate Clean", signals: ["ate_clean"] },
+  { label: "Deep Work", signals: ["deep_work"] },
+  { label: "Meditate", signals: ["meditate"] },
+  { label: "No LoL", signals: ["lol"] },
+  { label: "No Poker", signals: ["poker"] },
+  { label: "Clarity", signals: ["clarity"] },
+  { label: "Protocol", signals: ["morning_review", "midday_review", "evening_review"] },
+  { label: "Wim Hof", signals: ["wim_hof_am", "wim_hof_pm"] },
+];
+
 type HabitKey = keyof typeof HABIT_CONFIG;
 
 interface Props {
@@ -110,7 +126,8 @@ function computeDayScore(entry: DopamineDay | undefined, isToday: boolean): { sc
   }
   const weed = entry.weed ?? false;
   if (!weed) return { score: 0, color: "bg-red-500" };
-  const habitScore = [entry.gym, entry.sleep, entry.meditate, entry.deepWork, entry.ateClean, entry.wimHofAm, entry.wimHofPm].filter(Boolean).length;
+  const habitScore = [entry.gym, entry.sleep, entry.meditate, entry.deepWork, entry.ateClean].filter(Boolean).length
+    + (entry.wimHofAm ? 0.5 : 0) + (entry.wimHofPm ? 0.5 : 0);
   const viceScore = [entry.lol, entry.poker, entry.clarity].reduce((s, v) => s + (v === true ? 1 : -1), 0);
   const score = Math.max(0, habitScore + viceScore);
   if (score <= 2) return { score, color: "bg-red-500" };
@@ -698,7 +715,7 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
                           key={ds}
                           data-col={i}
                           className={`w-7 h-7 rounded ${color} ${isTodayCell ? "ring-2 ring-zinc-400 ring-offset-1 ring-offset-zinc-950" : ""}`}
-                          title={score !== null ? `${score}/10` : "Not logged"}
+                          title={score !== null ? `${score}/9` : "Not logged"}
                           onMouseEnter={() => setHoveredCol(i)}
                         />
                       );
@@ -713,29 +730,51 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
                 </div>
 
                 {/* Habit rows */}
-                {HABIT_ORDER.map((habitKey) => (
-                  <div key={habitKey} className="flex items-center gap-2.5">
+                {GRID_ROWS.map((row) => (
+                  <div key={row.label} className="flex items-center gap-2.5">
                     <span className="text-xs text-zinc-400 w-[4.5rem] shrink-0 text-right truncate">
-                      {HABIT_CONFIG[habitKey].label}
+                      {row.label}
                     </span>
                     <div className="flex gap-3">
                       {weeks.map((wk, wi) => weekCells(wk, wi, (i) => {
                         const ds = allDates[i];
                         const isTodayCell = i === todayIdx;
-                        const val = patchedTrackerDays[i]?.[habitKey];
+                        if (row.signals.length === 1) {
+                          const val = patchedTrackerDays[i]?.[row.signals[0]];
+                          return (
+                            <div
+                              key={ds}
+                              data-col={i}
+                              className={`w-7 h-7 rounded ${
+                                val === true ? "bg-emerald-500" : val === false ? "bg-red-500" : "bg-zinc-800"
+                              } ${isTodayCell ? "ring-2 ring-zinc-400 ring-offset-1 ring-offset-zinc-950" : ""}`}
+                              onMouseEnter={() => setHoveredCol(i)}
+                            />
+                          );
+                        }
+                        // Compound cell: render subsections
+                        const isVertical = row.signals.length <= 2;
                         return (
                           <div
                             key={ds}
                             data-col={i}
-                            className={`w-7 h-7 rounded ${
-                              val === true
-                                ? "bg-emerald-500"
-                                : val === false
-                                  ? "bg-red-500"
-                                  : "bg-zinc-800"
-                            } ${isTodayCell ? "ring-2 ring-zinc-400 ring-offset-1 ring-offset-zinc-950" : ""}`}
+                            className={`w-7 h-7 rounded overflow-hidden flex ${isVertical ? "flex-col" : "flex-col"} ${
+                              isTodayCell ? "ring-2 ring-zinc-400 ring-offset-1 ring-offset-zinc-950" : ""
+                            }`}
                             onMouseEnter={() => setHoveredCol(i)}
-                          />
+                          >
+                            {row.signals.map((sig) => {
+                              const val = patchedTrackerDays[i]?.[sig];
+                              return (
+                                <div
+                                  key={sig}
+                                  className={`flex-1 ${
+                                    val === true ? "bg-emerald-500" : val === false ? "bg-red-500" : "bg-zinc-800"
+                                  }`}
+                                />
+                              );
+                            })}
+                          </div>
                         );
                       }))}
                     </div>

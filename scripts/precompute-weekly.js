@@ -88,7 +88,9 @@ function loadPlan() {
 // Weed is gatekeeper: if weed=0, day score=0
 // 5 habit points: gym, sleep, meditate, deep_work, ate_clean (+1 each if value=1)
 // 3 vice adjustments: lol, poker, clarity (+1 if clean/value=1, -1 if relapse/value=0)
-// Daily score = max(0, habit_sum + vice_adjustments), range 0-8
+// Wim Hof: 0.5 per round (AM + PM), max 1 point
+// Protocol reviews: 0 points (tracked but not scored)
+// Daily score = max(0, habit_sum + wim_hof + vice_adjustments), range 0-9
 
 function computeDayScore(daySignals) {
   const lookup = {};
@@ -106,13 +108,16 @@ function computeDayScore(daySignals) {
   for (const h of ["gym", "sleep", "meditate", "deep_work", "ate_clean"]) {
     if (lookup[h] === "1") score++;
   }
+  // Wim Hof: 0.5 per round
+  if (lookup.wim_hof_am === "1") score += 0.5;
+  if (lookup.wim_hof_pm === "1") score += 0.5;
   // 3 vice adjustments
   for (const v of ["lol", "poker", "clarity"]) {
     if (lookup[v] === "1") score++;
     else if (lookup[v] === "0") score--;
   }
 
-  return Math.max(0, Math.min(8, score));
+  return Math.max(0, Math.min(9, score));
 }
 
 function getHabitCount(signals, dateRange, habit) {
