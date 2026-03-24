@@ -4,6 +4,7 @@ import {
   getCurrentIntentions,
   readBriefing,
   readDailySignals,
+  readExperiments,
   getDaysSince,
   getHabitsForDate,
   getStreak,
@@ -14,10 +15,12 @@ import {
   readTodos,
   readWorkouts,
   type DailySignalEntry,
+  type ExperimentEntry,
   type WorkoutSetEntry,
 } from "../../lib/csv";
 import { config, HABIT_CONFIG } from "../../lib/config";
 import { computeInsightResponse } from "../../lib/insight";
+import { getWeekStartStr } from "../../lib/date-utils";
 
 function getNowWindow(): "morning" | "day" | "evening" {
   const hour = new Date().getHours();
@@ -26,22 +29,13 @@ function getNowWindow(): "morning" | "day" | "evening" {
   return "day";
 }
 
-function getWeekStartDate(): string {
-  const now = new Date();
-  const day = now.getDay(); // 0=Sun, 1=Mon, ...
-  const diff = day === 0 ? 6 : day - 1; // days since Monday
-  const monday = new Date(now);
-  monday.setDate(now.getDate() - diff);
-  return `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, "0")}-${String(monday.getDate()).padStart(2, "0")}`;
-}
-
 function getMonthStartDate(): string {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
 }
 
 function computeCheckinStatus(signals: DailySignalEntry[], today: string) {
-  const weekStart = getWeekStartDate();
+  const weekStart = getWeekStartStr();
   const monthStart = getMonthStartDate();
 
   const dailyDone = signals.some(
@@ -225,7 +219,7 @@ export async function GET() {
     const dopamineDates = [
       ...new Set(
         signals
-          .filter((e) => ["lol", "weed", "poker", "clarity", "gym", "sleep", "meditate", "deep_work", "ate_clean"].includes(e.signal))
+          .filter((e) => ["lol", "weed", "poker", "clarity", "gym", "sleep", "meditate", "deep_work", "ate_clean", "morning_review", "midday_review", "evening_review", "wim_hof_am", "wim_hof_pm"].includes(e.signal))
           .map((e) => e.date)
       ),
     ].sort();
@@ -248,6 +242,11 @@ export async function GET() {
         deepWork: get("deep_work"),
         ateClean: get("ate_clean"),
         clarity: get("clarity"),
+        morningReview: get("morning_review"),
+        middayReview: get("midday_review"),
+        eveningReview: get("evening_review"),
+        wimHofAm: get("wim_hof_am"),
+        wimHofPm: get("wim_hof_pm"),
       };
     });
 
@@ -287,9 +286,9 @@ export async function GET() {
       ateClean: getBool(todayEntries, "ate_clean"),
     };
 
-    // 28-day habit tracker: always start on a Monday, show through today
-    const todayDow = new Date().getDay(); // 0=Sun
-    const daysBack = 27 + ((todayDow + 6) % 7); // extend back to nearest Monday
+    // 90-day habit tracker: always start on a Monday, show through today
+    const todayDow = new Date(todayLocal() + "T12:00:00").getDay(); // 0=Sun, from local date
+    const daysBack = 89 + ((todayDow + 6) % 7); // extend back to nearest Monday, 90+ days
     const habitDates = Array.from({ length: daysBack + 1 }, (_, i) => daysAgoStr(daysBack - i));
     const habitTracker = {
       dates: habitDates,
@@ -339,6 +338,38 @@ export async function GET() {
       dailyQuote = { text: pick.text, author: pick.author, source: pick.source };
     }
 
+    // Experiments: split into current (active) and past (concluded)
+    const allExperiments = readExperiments();
+    const todayMs = new Date(todayStr).getTime();
+    const experimentsCurrent = allExperiments
+      .filter((e) => e.status === "active")
+      .map((e) => {
+        const startMs = new Date(e.startDate).getTime();
+        const dayCount = Math.floor((todayMs - startMs) / 86400000) + 1;
+        const isExpired = dayCount > e.durationDays;
+        return {
+          name: e.name,
+          dayCount,
+          durationDays: e.durationDays,
+          domain: e.domain,
+          isExpired,
+        };
+      })
+      .sort((a, b) => {
+        if (a.isExpired !== b.isExpired) return a.isExpired ? -1 : 1;
+        return b.dayCount - a.dayCount;
+      });
+    const experimentsPast = allExperiments
+      .filter((e) => e.status === "concluded")
+      .sort((a, b) => b.startDate.localeCompare(a.startDate))
+      .slice(0, 10)
+      .map((e) => ({
+        name: e.name,
+        verdict: e.verdict,
+        reflection: e.reflection,
+        startDate: e.startDate,
+      }));
+
     return NextResponse.json({
       briefing,
       checkinStatus,
@@ -358,6 +389,7 @@ export async function GET() {
         },
       },
       todaysPlan: todaysPlan.map((p) => ({
+        date: p.date,
         start: p.start,
         end: p.end,
         item: p.item,
@@ -381,6 +413,10 @@ export async function GET() {
       openTodos,
       openTodosCount,
       dailyQuote,
+      experiments: {
+        current: experimentsCurrent,
+        past: experimentsPast,
+      },
     });
   } catch (e) {
     console.error("GET /api/hub error:", e);
