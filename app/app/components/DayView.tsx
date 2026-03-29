@@ -3,8 +3,10 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import PlanBlock from "./PlanBlock";
 import NowLine, { getCurrentHour } from "./NowLine";
-import BriefingCard from "./BriefingCard";
 import HabitTooltip from "./HabitTooltip";
+import TrendModal from "./TrendModal";
+import LineTrendChart from "./LineTrendChart";
+import HabitLogHistory, { type HabitLogEntry } from "./HabitLogHistory";
 import type { PlanEvent, HabitMap, Todo, RitualBlueprint } from "../lib/types";
 import { HABIT_CONFIG } from "../lib/config";
 import { toDateStr } from "../lib/utils";
@@ -112,9 +114,10 @@ interface HubData {
     dates: string[];
     days: Record<string, boolean>[];
   };
+  habitTrends: Record<string, { date: string; value: boolean | null }[]>;
+  habitLogs: Record<string, HabitLogEntry[]>;
 }
 
-type CoreTraits = { health: string; wealth: string; love: string; self: string };
 
 function computeDayScore(entry: DopamineDay | undefined, isToday: boolean): { score: number | null; color: string } {
   if (!entry) {
@@ -141,12 +144,13 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
   const [weeklyIntention, setWeeklyIntention] = useState<IntentionSummary | null>(null);
   const [ritual, setRitual] = useState<RitualBlueprint | null>(null);
   const [ritualOpen, setRitualOpen] = useState(true);
-  const [identityScript, setIdentityScript] = useState<{ coreTraits: CoreTraits; nonNegotiables: string } | null>(null);
   const [hubData, setHubData] = useState<HubData | null>(null);
   const [reviewDone, setReviewDone] = useState<Record<string, boolean>>({});
   const [habitSignals, setHabitSignals] = useState<Record<string, boolean | null>>({});
   const [habitPageOffset, setHabitPageOffset] = useState(0);
   const [hoveredCol, setHoveredCol] = useState<number | null>(null);
+  const [activeHabitKey, setActiveHabitKey] = useState<HabitKey | null>(null);
+  const [scoreTrendOpen, setScoreTrendOpen] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
 
   const dateStr = toDateStr(focusDate);
@@ -203,17 +207,10 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
         .then((data) => {
           if (!active) return;
           setRitual(data.ritualBlueprint ?? null);
-          if (data.identityScript) {
-            setIdentityScript({
-              coreTraits: data.identityScript.coreTraits ?? { health: "", wealth: "", love: "", self: "" },
-              nonNegotiables: data.identityScript.nonNegotiables ?? "",
-            });
-          }
         })
         .catch(() => {
           if (!active) return;
           setRitual(null);
-          setIdentityScript(null);
         });
 
       fetch("/api/hub")
@@ -435,6 +432,74 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
     return { allDates, allWeeks };
   }, [hubData]);
 
+  // Trend modal: compute rolling 7-day adherence points + summary stats
+  const activeHabitTrendPoints = useMemo(() => {
+    if (!activeHabitKey || !hubData?.habitTrends?.[activeHabitKey]) return [];
+    const raw = hubData.habitTrends[activeHabitKey];
+    const WINDOW = 7;
+    return raw.map((_, idx) => {
+      const start = Math.max(0, idx - WINDOW + 1);
+      const window = raw.slice(start, idx + 1);
+      const logged = window.filter((d) => d.value !== null);
+      if (logged.length === 0) return { date: raw[idx].date, value: null };
+      const pct = (logged.filter((d) => d.value === true).length / logged.length) * 100;
+      return { date: raw[idx].date, value: Math.round(pct) };
+    });
+  }, [activeHabitKey, hubData]);
+
+  const activeHabitSummary = useMemo(() => {
+    if (!activeHabitKey || !hubData?.habitTrends?.[activeHabitKey]) return null;
+    const raw = hubData.habitTrends[activeHabitKey];
+    const logged = raw.filter((d) => d.value !== null);
+    const adherent = logged.filter((d) => d.value === true).length;
+    const recent14 = raw.slice(-14).filter((d) => d.value !== null);
+    const recent14Adherent = recent14.filter((d) => d.value === true).length;
+    // Current streak
+    let streak = 0;
+    for (let i = raw.length - 1; i >= 0; i--) {
+      if (raw[i].value === true) streak++;
+      else break;
+    }
+    return {
+      loggedDays: logged.length,
+      adherence: logged.length > 0 ? Math.round((adherent / logged.length) * 100) : 0,
+      currentStreak: streak,
+      recentAdherence: recent14.length > 0 ? Math.round((recent14Adherent / recent14.length) * 100) : 0,
+    };
+  }, [activeHabitKey, hubData]);
+
+  // Score trend: daily score over 90 days + rolling 7-day average
+  const scoreTrendData = useMemo(() => {
+    if (!patchedLog || !gridData) return { daily: [], rolling: [], summary: null };
+    const { allDates } = gridData;
+    const todayIdx = allDates.length - 1;
+    const daily = allDates.map((ds, i) => {
+      const entry = patchedLog.find((l) => l.date === ds);
+      const isTodayCell = i === todayIdx;
+      const { score } = computeDayScore(entry, isTodayCell);
+      return { date: ds, value: score };
+    });
+    const WINDOW = 7;
+    const rolling = daily.map((_, idx) => {
+      const start = Math.max(0, idx - WINDOW + 1);
+      const window = daily.slice(start, idx + 1);
+      const valid = window.filter((d) => d.value !== null) as { date: string; value: number }[];
+      if (valid.length === 0) return { date: daily[idx].date, value: null };
+      const avg = valid.reduce((s, d) => s + d.value, 0) / valid.length;
+      return { date: daily[idx].date, value: Math.round(avg * 10) / 10 };
+    });
+    const scored = daily.filter((d) => d.value !== null) as { date: string; value: number }[];
+    const avg = scored.length > 0 ? Math.round((scored.reduce((s, d) => s + d.value, 0) / scored.length) * 10) / 10 : 0;
+    const recent14 = daily.slice(-14).filter((d) => d.value !== null) as { date: string; value: number }[];
+    const recentAvg = recent14.length > 0 ? Math.round((recent14.reduce((s, d) => s + d.value, 0) / recent14.length) * 10) / 10 : 0;
+    const best = scored.length > 0 ? Math.max(...scored.map((d) => d.value)) : 0;
+    return {
+      daily,
+      rolling,
+      summary: { avg, recentAvg, best, loggedDays: scored.length },
+    };
+  }, [patchedLog, gridData]);
+
   const renderHabitToggleRow = (signals: string[], label: string) => (
     <div key={label}>
       <p className="text-[10px] text-zinc-500 uppercase tracking-wide mb-1.5">{label}</p>
@@ -446,24 +511,28 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
           const isGreen = val === true;
           const isRed = val === false;
           return (
-            <button
-              key={signal}
-              onClick={() => handleHabitToggle(signal)}
-              className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs border cursor-pointer transition-colors ${
-                isGreen
-                  ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400"
-                  : isRed
-                  ? "bg-red-500/15 border-red-500/30 text-red-400"
-                  : "bg-zinc-800/60 border-white/5 text-zinc-500 hover:border-zinc-600"
-              }`}
-            >
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  isGreen ? "bg-emerald-400" : isRed ? "bg-red-400" : "bg-zinc-600"
+            <div key={signal} className="relative group">
+              <button
+                onClick={() => handleHabitToggle(signal)}
+                className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs border cursor-pointer transition-colors ${
+                  isGreen
+                    ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400"
+                    : isRed
+                    ? "bg-red-500/15 border-red-500/30 text-red-400"
+                    : "bg-zinc-800/60 border-white/5 text-zinc-500 hover:border-zinc-600"
                 }`}
-              />
-              {cfg.abbr}
-            </button>
+              >
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    isGreen ? "bg-emerald-400" : isRed ? "bg-red-400" : "bg-zinc-600"
+                  }`}
+                />
+                {cfg.abbr}
+              </button>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-zinc-800 border border-white/20 rounded text-[11px] text-zinc-200 whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+                {cfg.label}
+              </div>
+            </div>
           );
         })}
       </div>
@@ -493,7 +562,18 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
                 <div className="px-3 pb-3 space-y-2">
                   <ol className="list-decimal list-inside space-y-0.5">
                     {block.steps.map((step, i) => (
-                      <li key={i} className="text-sm text-zinc-400">{step}</li>
+                      <li key={i} className="text-sm text-zinc-400">
+                        {step.toLowerCase().includes("morning report") ? (
+                          <a
+                            href={`/artifacts/morning-report-${dateStr}.html`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline decoration-zinc-600 hover:text-zinc-200 transition-colors"
+                          >
+                            {step}
+                          </a>
+                        ) : step}
+                      </li>
                     ))}
                   </ol>
                   {block.habitStacks?.length > 0 && (
@@ -523,62 +603,8 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
           );
         })()}
 
-        {/* 2. Compact identity — per-pillar — today only */}
-        {isToday && identityScript && (identityScript.coreTraits || identityScript.nonNegotiables) && (
-          <div className="px-3 py-2 rounded-lg border border-white/5 bg-zinc-900/40 space-y-2">
-            {identityScript.coreTraits && (
-              <div>
-                <p className="text-zinc-500 text-xs uppercase tracking-wide mb-1.5">Core traits</p>
-                <div className="space-y-1">
-                  {(["health", "wealth", "love", "self"] as const).map((pillar) => (
-                    <div key={pillar} className="flex gap-2">
-                      <span className="text-zinc-500 text-xs uppercase tracking-wide w-16 shrink-0 pt-0.5">{pillar}</span>
-                      <span className="text-sm text-zinc-300">{identityScript.coreTraits[pillar]}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            {identityScript.nonNegotiables && (
-              <p className="text-sm text-zinc-300 mt-1">
-                <span className="text-zinc-500 text-xs uppercase tracking-wide mr-2">Non-negotiables</span>
-                {identityScript.nonNegotiables}
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* 3. Intentions + Briefing — today only */}
-        {isToday && (
-          <div>
-            {hasIntentions && (
-              <div className="px-3 py-2 rounded-lg border border-cyan-400/20 bg-cyan-500/[0.06] mb-3">
-                {weeklyIntention?.mantra && (
-                  <p className="text-xs text-zinc-500 italic">
-                    <span className="text-zinc-600 not-italic">This week:</span>{" "}
-                    {weeklyIntention.mantra}
-                  </p>
-                )}
-                {dailyIntention?.mantra && (
-                  <p className="text-sm text-zinc-300 italic mt-1">
-                    <span className="text-zinc-500 not-italic">Today:</span>{" "}
-                    {dailyIntention.mantra}
-                  </p>
-                )}
-              </div>
-            )}
-            {hubData && (
-              <BriefingCard
-                briefing={hubData.briefing}
-                fallbackInsight={hubData.insight.insight}
-                fallbackQuote={hubData.dailyQuote}
-              />
-            )}
-          </div>
-        )}
-
-        {/* Non-today: show intentions only */}
-        {!isToday && hasIntentions && (
+        {/* Intentions — any date */}
+        {hasIntentions && (
           <div className="px-3 py-2 rounded-lg border border-cyan-400/20 bg-cyan-500/[0.06]">
             {weeklyIntention?.mantra && (
               <p className="text-xs text-zinc-500 italic">
@@ -703,7 +729,10 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
 
                 {/* Score row */}
                 <div className="flex items-center gap-2.5">
-                  <span className="text-xs text-zinc-300 w-[4.5rem] shrink-0 text-right font-medium">Score</span>
+                  <span
+                    className="text-xs text-zinc-300 w-[4.5rem] shrink-0 text-right font-medium cursor-pointer hover:text-zinc-100 transition-colors"
+                    onClick={() => setScoreTrendOpen(true)}
+                  >Score</span>
                   <div className="flex gap-3">
                     {weeks.map((wk, wi) => weekCells(wk, wi, (i) => {
                       const ds = allDates[i];
@@ -714,9 +743,10 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
                         <div
                           key={ds}
                           data-col={i}
-                          className={`w-7 h-7 rounded ${color} ${isTodayCell ? "ring-2 ring-zinc-400 ring-offset-1 ring-offset-zinc-950" : ""}`}
+                          className={`w-7 h-7 rounded cursor-pointer ${color} ${isTodayCell ? "ring-2 ring-zinc-400 ring-offset-1 ring-offset-zinc-950" : ""}`}
                           title={score !== null ? `${score}/9` : "Not logged"}
                           onMouseEnter={() => setHoveredCol(i)}
+                          onClick={() => setScoreTrendOpen(true)}
                         />
                       );
                     }))}
@@ -732,7 +762,10 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
                 {/* Habit rows */}
                 {GRID_ROWS.map((row) => (
                   <div key={row.label} className="flex items-center gap-2.5">
-                    <span className="text-xs text-zinc-400 w-[4.5rem] shrink-0 text-right truncate">
+                    <span
+                      className="text-xs text-zinc-400 w-[4.5rem] shrink-0 text-right truncate cursor-pointer hover:text-zinc-200 transition-colors"
+                      onClick={() => setActiveHabitKey(row.signals[0] as HabitKey)}
+                    >
                       {row.label}
                     </span>
                     <div className="flex gap-3">
@@ -745,10 +778,11 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
                             <div
                               key={ds}
                               data-col={i}
-                              className={`w-7 h-7 rounded ${
+                              className={`w-7 h-7 rounded cursor-pointer ${
                                 val === true ? "bg-emerald-500" : val === false ? "bg-red-500" : "bg-zinc-800"
                               } ${isTodayCell ? "ring-2 ring-zinc-400 ring-offset-1 ring-offset-zinc-950" : ""}`}
                               onMouseEnter={() => setHoveredCol(i)}
+                              onClick={() => setActiveHabitKey(row.signals[0] as HabitKey)}
                             />
                           );
                         }
@@ -757,10 +791,11 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
                           <div
                             key={ds}
                             data-col={i}
-                            className={`w-7 h-7 rounded overflow-hidden flex flex-row ${
+                            className={`w-7 h-7 rounded overflow-hidden flex flex-row cursor-pointer ${
                               isTodayCell ? "ring-2 ring-zinc-400 ring-offset-1 ring-offset-zinc-950" : ""
                             }`}
                             onMouseEnter={() => setHoveredCol(i)}
+                            onClick={() => setActiveHabitKey(row.signals[0] as HabitKey)}
                           >
                             {row.signals.map((sig) => {
                               const val = patchedTrackerDays[i]?.[sig];
@@ -852,6 +887,91 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
         </div>
       </div>
 
+      {/* Score trend modal */}
+      <TrendModal
+        open={scoreTrendOpen}
+        onClose={() => setScoreTrendOpen(false)}
+        title="Total Score"
+        subtitle="Rolling 7-day average (0–9)"
+      >
+        <div className="space-y-4">
+          <LineTrendChart
+            points={scoreTrendData.rolling}
+            minY={0}
+            maxY={9}
+            color="#60a5fa"
+            valueFormatter={(value) => `${value}`}
+            emptyLabel="No score data available."
+          />
+          {scoreTrendData.summary ? (
+            <div className="grid grid-cols-4 gap-2">
+              <div className="rounded-lg border border-white/10 bg-zinc-900/60 p-3">
+                <p className="text-[11px] uppercase tracking-wide text-zinc-500">Logged Days</p>
+                <p className="mt-1 font-mono text-sm text-zinc-100">{scoreTrendData.summary.loggedDays}</p>
+                <p className="mt-1 text-xs text-zinc-500">Last 90 days</p>
+              </div>
+              <div className="rounded-lg border border-white/10 bg-zinc-900/60 p-3">
+                <p className="text-[11px] uppercase tracking-wide text-zinc-500">Average</p>
+                <p className="mt-1 font-mono text-sm text-zinc-100">{scoreTrendData.summary.avg}/9</p>
+                <p className="mt-1 text-xs text-zinc-500">Overall</p>
+              </div>
+              <div className="rounded-lg border border-white/10 bg-zinc-900/60 p-3">
+                <p className="text-[11px] uppercase tracking-wide text-zinc-500">Recent</p>
+                <p className="mt-1 font-mono text-sm text-emerald-300">{scoreTrendData.summary.recentAvg}/9</p>
+                <p className="mt-1 text-xs text-zinc-500">Last 14 days</p>
+              </div>
+              <div className="rounded-lg border border-white/10 bg-zinc-900/60 p-3">
+                <p className="text-[11px] uppercase tracking-wide text-zinc-500">Best Day</p>
+                <p className="mt-1 font-mono text-sm text-zinc-100">{scoreTrendData.summary.best}/9</p>
+                <p className="mt-1 text-xs text-zinc-500">Peak score</p>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </TrendModal>
+
+      {/* Habit trend modal */}
+      <TrendModal
+        open={Boolean(activeHabitKey)}
+        onClose={() => setActiveHabitKey(null)}
+        title={activeHabitKey ? HABIT_CONFIG[activeHabitKey].label : "Habit Trend"}
+        subtitle="Rolling 7-day adherence"
+        sidebar={
+          activeHabitKey && hubData?.habitLogs?.[activeHabitKey] ? (
+            <HabitLogHistory logs={hubData.habitLogs[activeHabitKey]} />
+          ) : undefined
+        }
+      >
+        <div className="space-y-4">
+          <LineTrendChart
+            points={activeHabitTrendPoints}
+            minY={0}
+            maxY={100}
+            color="#34d399"
+            valueFormatter={(value) => `${Math.round(value)}%`}
+            emptyLabel="No habit logs available for this period."
+          />
+          {activeHabitSummary ? (
+            <div className="grid grid-cols-3 gap-2">
+              <div className="rounded-lg border border-white/10 bg-zinc-900/60 p-3">
+                <p className="text-[11px] uppercase tracking-wide text-zinc-500">Logged Days</p>
+                <p className="mt-1 font-mono text-sm text-zinc-100">{activeHabitSummary.loggedDays}</p>
+                <p className="mt-1 text-xs text-zinc-500">Last 90 days</p>
+              </div>
+              <div className="rounded-lg border border-white/10 bg-zinc-900/60 p-3">
+                <p className="text-[11px] uppercase tracking-wide text-zinc-500">Adherence</p>
+                <p className="mt-1 font-mono text-sm text-emerald-300">{activeHabitSummary.adherence}%</p>
+                <p className="mt-1 text-xs text-zinc-500">Overall completion</p>
+              </div>
+              <div className="rounded-lg border border-white/10 bg-zinc-900/60 p-3">
+                <p className="text-[11px] uppercase tracking-wide text-zinc-500">Current Streak</p>
+                <p className="mt-1 font-mono text-sm text-zinc-100">{activeHabitSummary.currentStreak}d</p>
+                <p className="mt-1 text-xs text-zinc-500">Last 14d: {activeHabitSummary.recentAdherence}%</p>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </TrendModal>
     </>
   );
 }

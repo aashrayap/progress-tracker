@@ -1,86 +1,163 @@
 date,start,end,item,done,notes,domain
-2026-02-07,13,14,Gym,,
-2026-02-07,14,14.5,Haircut,,
-2026-02-07,9,9.5,Shower/sauna,,
-2026-02-07,22,22,Sleep by 10pm,,
-2026-02-19,9,10,Deep Work,,DVN
-2026-02-19,10,11,Gym,,
-2026-02-20,11,12,Gym,,
-2026-02-20,14,15,Buy ring,,
-2026-02-25,21,21,Sleep,,
-2026-02-26,7,7,Wake up,,
-2026-02-26,7,7.5,Meditate outside with Cooper,,
-2026-02-26,7.5,8,Journal and plan day,,
-2026-02-26,8,9,Work meeting,,
-2026-02-26,9,10,Deep work,,
-2026-02-26,10,10.5,Loose work / clearance,,
-2026-02-26,11,12,Gym - Day A,,squat/bench/lat_pulldown
-2026-02-26,21,21,Sleep,,
-2026-02-28,11,12,Diamonds Direct - appointment with mom,,
-2026-04-01,0,0,Poland - fly out,,KLM IAH→WRO 3:20pm - X8XN7K
-2026-05-15,0,0,Poland - fly home,,KLM WRO→IAH 6:00am - X8XN7K
-2026-07-11,0,0,Wedding - Shreyak (Day 1),,Nepal
-2026-07-12,0,0,Wedding - Shreyak (Day 2),,Nepal
-2026-08-02,0,0,Wedding - Rhonda,,Calgary
-2026-09-26,0,0,Wedding - Allan,,Calgary
-2026-12-21,0,0,Wedding - Simran (Day 1),,India
-2026-12-22,0,0,Wedding - Simran (Day 2),,India
-2026-06-05,18,0,Shreyak Stag (Day 1 - Fri evening),,Europe TBC - ~£400-500pp
-2026-06-06,0,0,Shreyak Stag (Day 2 - Big night),,Europe TBC
-2026-06-07,0,0,Shreyak Stag (Day 3 - Fly home),,Europe TBC
-2026-06-17,17,0,Wedding - Niru: Mehendi & Haldi,,Bearspaw Lions Club 25240 Nagway Rd Calgary - pw: marigoldmomo
-2026-06-18,13,0,Wedding - Niru: Hindu Ceremony,,Bearspaw Lions Club 25240 Nagway Rd Calgary - pw: shaadiperogy
-2026-06-20,14,17,Wedding - Niru: Catholic Ceremony + Reception,,Church: 704 6 St NE Calgary 2pm / Reception: The Brownstone 221 10 Ave SE #120 5pm - pw: rotarypark
-2026-03-06,0,0,PTO - B Schedule,,2026 Corp Calendar
-2026-03-20,0,0,PTO - B Schedule,,2026 Corp Calendar
-2026-04-03,0,0,PTO - B Schedule,,2026 Corp Calendar
-2026-04-11,0,0,Warsaw weekend with Basia (Sat),,Easter weekend trip
-2026-04-12,0,0,Warsaw weekend with Basia (Sun),,Easter weekend trip
-2026-04-13,0,0,Work training,,
-2026-04-17,0,0,PTO - B Schedule,,2026 Corp Calendar
-2026-05-01,0,0,PTO - B Schedule,,2026 Corp Calendar
-2026-05-15,0,0,PTO - B Schedule,,2026 Corp Calendar
-2026-05-29,0,0,PTO - B Schedule,,2026 Corp Calendar
-2026-06-12,0,0,PTO - B Schedule,,2026 Corp Calendar
-2026-06-26,0,0,PTO - B Schedule,,2026 Corp Calendar
-2026-07-10,0,0,PTO - B Schedule,,2026 Corp Calendar
-2026-07-24,0,0,PTO - B Schedule,,2026 Corp Calendar
-2026-08-07,0,0,PTO - B Schedule,,2026 Corp Calendar
-2026-08-21,0,0,PTO - B Schedule,,2026 Corp Calendar
-2026-09-04,0,0,PTO - B Schedule,,2026 Corp Calendar
-2026-09-18,0,0,PTO - B Schedule,,2026 Corp Calendar
-2026-10-02,0,0,PTO - B Schedule,,2026 Corp Calendar
-2026-10-16,0,0,PTO - B Schedule,,2026 Corp Calendar
-2026-10-30,0,0,PTO - B Schedule,,2026 Corp Calendar
-2026-11-13,0,0,PTO - B Schedule,,2026 Corp Calendar
-2026-11-27,0,0,PTO - B Schedule,,2026 Corp Calendar
-2026-12-11,0,0,PTO - B Schedule,,2026 Corp Calendar
-2026-12-25,0,0,PTO - B Schedule,,2026 Corp Calendar
-2026-02-26,20.5,21,Wind down routine,,
-2026-02-27,7,7.5,Wake up + morning routine,,
-2026-02-27,8,9,Deep work,,
-2026-02-27,9,10,Work meeting,,
-2026-02-27,10,10.5,Canada passport photo,1,
-2026-02-27,11,12,Gym,1,
-2026-02-27,20.5,21,Wind down routine,,
-2026-02-27,21,21,Sleep,,
-2026-02-27,12,13,Get Canadian passport photo,1,
-2026-03-03,6,6.5,Wake + coffee,,
-2026-03-03,6.5,7.5,Gym - Day D (front squat / incline bench / cable row),,
-2026-03-03,7.5,8,Shower,,
-2026-03-03,8,8.5,Breakfast - meal prep something clean,,
-2026-03-03,8.5,9,Grocery store,,
-2026-03-03,9,9.5,Meditate,,
-2026-03-03,9.5,12,Deep work block 1,,
-2026-03-03,12,12.5,Lunch,,
-2026-03-03,12.5,15,Deep work block 2,,
-2026-03-03,22,22,Sleep by 10pm,,
-2026-03-04,8,8,ETK Standup,,
-2026-03-04,8,10,Deep Work 1,,
-2026-03-04,10,11,Buffer / shallow work,0,
-2026-03-04,11,11,Devon LL ETK AI Work,0,
-2026-03-04,11,12,Gym - Day E (Lunges OHP Pull-Up),0,
-2026-03-04,12,13,Lunch,0,
-2026-03-04,13,14,Shallow work / prep,0,
-2026-03-04,14,15,Team Meeting Arrow/Analytics,0,
-2026-03-04,15,16,Deep Work 2,0,
+2026-02-07,13,14,Gym,,,
+2026-02-07,14,14.5,Haircut,,,
+2026-02-07,9,9.5,Shower/sauna,,,
+2026-02-07,22,22,Sleep by 10pm,,,
+2026-02-19,9,10,Deep Work,,DVN,
+2026-02-19,10,11,Gym,,,
+2026-02-20,11,12,Gym,,,
+2026-02-20,14,15,Buy ring,,,
+2026-02-25,21,21,Sleep,,,
+2026-02-26,7,7,Wake up,,,
+2026-02-26,7,7.5,Meditate outside with Cooper,,,
+2026-02-26,7.5,8,Journal and plan day,,,
+2026-02-26,8,9,Work meeting,,,
+2026-02-26,9,10,Deep work,,,
+2026-02-26,10,10.5,Loose work / clearance,,,
+2026-02-26,11,12,Gym - Day A,,squat/bench/lat_pulldown,
+2026-02-26,21,21,Sleep,,,
+2026-02-28,11,12,Diamonds Direct - appointment with mom,,,
+2026-04-01,0,0,Poland - fly out,,KLM IAH→WRO 3:20pm - X8XN7K,
+2026-05-15,0,0,Poland - fly home,,KLM WRO→IAH 6:00am - X8XN7K,
+2026-07-11,0,0,Wedding - Shreyak (Day 1),,Nepal,
+2026-07-12,0,0,Wedding - Shreyak (Day 2),,Nepal,
+2026-08-02,0,0,Wedding - Rhonda,,Calgary,
+2026-09-26,0,0,Wedding - Allan,,Calgary,
+2026-12-21,0,0,Wedding - Simran (Day 1),,India,
+2026-12-22,0,0,Wedding - Simran (Day 2),,India,
+2026-06-05,18,0,Shreyak Stag (Day 1 - Fri evening),,Europe TBC - ~£400-500pp,
+2026-06-06,0,0,Shreyak Stag (Day 2 - Big night),,Europe TBC,
+2026-06-07,0,0,Shreyak Stag (Day 3 - Fly home),,Europe TBC,
+2026-06-17,17,0,Wedding - Niru: Mehendi & Haldi,,Bearspaw Lions Club 25240 Nagway Rd Calgary - pw: marigoldmomo,
+2026-06-18,13,0,Wedding - Niru: Hindu Ceremony,,Bearspaw Lions Club 25240 Nagway Rd Calgary - pw: shaadiperogy,
+2026-06-20,14,17,Wedding - Niru: Catholic Ceremony + Reception,,Church: 704 6 St NE Calgary 2pm / Reception: The Brownstone 221 10 Ave SE #120 5pm - pw: rotarypark,
+2026-03-06,0,0,PTO - B Schedule,,2026 Corp Calendar,
+2026-03-20,0,0,PTO - B Schedule,,2026 Corp Calendar,
+2026-04-03,0,0,PTO - B Schedule,,2026 Corp Calendar,
+2026-04-11,0,0,Warsaw weekend with Basia (Sat),,Easter weekend trip,
+2026-04-12,0,0,Warsaw weekend with Basia (Sun),,Easter weekend trip,
+2026-04-13,0,0,Work training,,,
+2026-04-17,0,0,PTO - B Schedule,,2026 Corp Calendar,
+2026-05-01,0,0,PTO - B Schedule,,2026 Corp Calendar,
+2026-05-15,0,0,PTO - B Schedule,,2026 Corp Calendar,
+2026-05-29,0,0,PTO - B Schedule,,2026 Corp Calendar,
+2026-06-12,0,0,PTO - B Schedule,,2026 Corp Calendar,
+2026-06-26,0,0,PTO - B Schedule,,2026 Corp Calendar,
+2026-07-10,0,0,PTO - B Schedule,,2026 Corp Calendar,
+2026-07-24,0,0,PTO - B Schedule,,2026 Corp Calendar,
+2026-08-07,0,0,PTO - B Schedule,,2026 Corp Calendar,
+2026-08-21,0,0,PTO - B Schedule,,2026 Corp Calendar,
+2026-09-04,0,0,PTO - B Schedule,,2026 Corp Calendar,
+2026-09-18,0,0,PTO - B Schedule,,2026 Corp Calendar,
+2026-10-02,0,0,PTO - B Schedule,,2026 Corp Calendar,
+2026-10-16,0,0,PTO - B Schedule,,2026 Corp Calendar,
+2026-10-30,0,0,PTO - B Schedule,,2026 Corp Calendar,
+2026-11-13,0,0,PTO - B Schedule,,2026 Corp Calendar,
+2026-11-27,0,0,PTO - B Schedule,,2026 Corp Calendar,
+2026-12-11,0,0,PTO - B Schedule,,2026 Corp Calendar,
+2026-12-25,0,0,PTO - B Schedule,,2026 Corp Calendar,
+2026-02-26,20.5,21,Wind down routine,,,
+2026-02-27,7,7.5,Wake up + morning routine,,,
+2026-02-27,8,9,Deep work,,,
+2026-02-27,9,10,Work meeting,,,
+2026-02-27,10,10.5,Canada passport photo,1,,
+2026-02-27,11,12,Gym,1,,
+2026-02-27,20.5,21,Wind down routine,,,
+2026-02-27,21,21,Sleep,,,
+2026-02-27,12,13,Get Canadian passport photo,1,,
+2026-03-03,6,6.5,Wake + coffee,,,
+2026-03-03,6.5,7.5,Gym - Day D (front squat / incline bench / cable row),,,
+2026-03-03,7.5,8,Shower,,,
+2026-03-03,8,8.5,Breakfast - meal prep something clean,,,
+2026-03-03,8.5,9,Grocery store,,,
+2026-03-03,9,9.5,Meditate,,,
+2026-03-03,9.5,12,Deep work block 1,,,
+2026-03-03,12,12.5,Lunch,,,
+2026-03-03,12.5,15,Deep work block 2,,,
+2026-03-03,22,22,Sleep by 10pm,,,
+2026-03-04,8,8,ETK Standup,,,
+2026-03-04,8,10,Deep Work 1,,,
+2026-03-04,10,11,Buffer / shallow work,0,,
+2026-03-04,11,11,Devon LL ETK AI Work,0,,
+2026-03-04,11,12,Gym - Day E (Lunges OHP Pull-Up),0,,
+2026-03-04,12,13,Lunch,0,,
+2026-03-04,13,14,Shallow work / prep,0,,
+2026-03-04,14,15,Team Meeting Arrow/Analytics,0,,
+2026-03-04,15,16,Deep Work 2,0,,
+2026-03-10,12,14,Gym - Day B + HEB grocery run,1,,health
+2026-03-10,13.5,14.5,Eat + chill,1,,
+2026-03-10,14.5,15,Walk Cooper,1,,health
+2026-03-10,15,15.5,AI meeting,1,,career
+2026-03-10,17,18.5,Deep work,1,,
+2026-03-10,18.5,19,Meditate,1,,personal_growth
+2026-03-10,19,20.5,Chill,1,,fun
+2026-03-10,20.5,21.5,Tea + research + bedtime routine,1,,personal_growth
+2026-03-11,10,10.5,ProdOps Analytics Weekly Touchbase,,,career
+2026-03-11,11,11.5,Devon LL ETK AI Workflows Standup,,,career
+2026-03-11,11.5,13,Developer Lunch,,,career
+2026-03-11,13,13.5,ETK AI Sync up,,,career
+2026-03-11,14,15,Team Meeting — Arrow/Analytics,,,career
+2026-03-12,9,9.5,ETK Checkin,,,career
+2026-03-12,11,11.5,Devon LL ETK AI Workflows Standup,,,career
+2026-03-11,5.5,7,Gym - Day C,,,health
+2026-03-11,7,8.5,Deep work 1,,,career
+2026-03-11,9.5,11,Deep work 2,,,career
+2026-03-11,15,15.5,Walk Cooper,,,health
+2026-03-11,17,18.5,Deep work 3,,,career
+2026-03-11,21,21.5,Bedtime routine,,,personal_growth
+2026-03-12,21,21.5,Bedtime routine,,,personal_growth
+2026-03-11,8.5,9.5,Strategic consumption/research,,,personal_growth
+2026-03-11,16,17,Strategic consumption/research,,,personal_growth
+2026-03-13,7,11,Deep work,career,
+2026-03-13,11,12,Gym - Day C,health,
+2026-03-13,13,15,Deep work,,,career
+2026-03-13,17,26,Poker,,,fun
+2026-03-23,11,13,Gym,,,health
+2026-03-24,11.5,13,Gym,,,health
+2026-03-25,11,13,Gym,,,health
+2026-03-26,11.25,13,Gym,,,health
+2026-03-23,9,10.5,Deep work,,,career
+2026-03-24,6.5,8,Deep work — personal,,,personal_growth
+2026-03-25,9,10.5,Deep work,,,career
+2026-03-26,9.5,11,Deep work,,,career
+2026-03-28,9,11.5,Deep work,,,career
+2026-03-28,11.5,12,Pack gym bag + finish morning routine,,,health
+2026-03-28,12,13,Deep work,,,career
+2026-03-28,13,15,Gym + sauna + cold shower + As A Man Thinketh,,,health
+2026-03-28,15,15.5,Eat (light food),,,health
+2026-03-28,16,18,Deep work,,,career
+2026-03-28,18,18.25,Wim Hof,,,personal_growth
+2026-03-28,18.25,19.5,Cooper dog park,,,health
+2026-03-28,19.5,21,Read + chill with parents,,,fun
+2026-03-28,21,21,Bed,,,health
+2026-03-29,9.5,11,Deep work,,,career
+2026-03-29,11,12,Weigh in + weekly check-in,,,health
+2026-03-29,21.5,21.5,Bed,,,health
+2026-03-23,17.5,18.5,Meditate + Wim Hof + Cooper walk,,,personal_growth
+2026-03-24,17.5,18.5,Meditate + Wim Hof + Cooper walk,,,personal_growth
+2026-03-25,17.5,18.5,Meditate + Wim Hof + Cooper walk,,,personal_growth
+2026-03-26,17.5,19,Evening ritual (meditate/Wim Hof/Cooper walk),,,personal_growth
+2026-03-24,8.25,8.5,ETK Standup,,,career
+2026-03-24,8.5,9.5,IOC Analytics in ETK Touch Base,,,career
+2026-03-24,10,10.5,ETK dev meeting,,,career
+2026-03-24,11,11.5,Devon LL ETK AI Workflows Standup,,,career
+2026-03-24,13.5,14,React Apps in ETK,,,career
+2026-03-24,14.5,15.5,Mid-point Check point,,,career
+2026-03-25,11,11.5,Devon LL ETK AI Workflows,,,career
+2026-03-25,13,13.5,Data Science Community Meeting,,,career
+2026-03-25,14,15,Team Meeting - Arrow/Analytics,,,career
+2026-03-26,11,11.5,Devon LL ETK AI Workflows,,,career
+2026-03-26,14,15,Bryce meeting,,,career
+2026-03-26,15.5,16,Tristan meeting,,,career
+2026-03-26,13,14,Lunch + chill (stocks/twitter/journal/youtube),,,fun
+2026-03-26,16,17.5,Deep work,,,career
+2026-03-26,19,20.5,Deep work (personal),,,personal_growth
+2026-03-26,20.5,21.5,Chill — Breaking Bad + dinner,,,fun
+2026-03-26,21.5,21.5,Sleep,,,health
+2026-03-27,9,9.5,ETK host app meeting,,,career
+2026-03-27,11,12.5,Diamonds Direct,,,personal_growth
+2026-03-27,13,14,Running eval framework for new modules,,,career
+2026-03-27,9.5,10.5,Deep work — Rigby + schedule task,,,career
+2026-03-27,12.5,13,Lunch,,,health
+2026-03-27,14.5,15.5,Gym,,,health
+2026-03-27,16,17.5,Deep work,,,career

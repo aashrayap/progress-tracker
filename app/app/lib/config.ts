@@ -1,5 +1,76 @@
 import type { DailyTaskConfig, ExerciseDef, HabitConfigEntry } from "./types";
 
+export type PairLabel = "A" | "B" | "finisher";
+
+export interface ProgramExercise {
+  id: string;
+  name: string;
+  scheme: string;
+  pair: PairLabel;
+}
+
+export interface ProgramDay {
+  key: string;
+  label: string;
+  isRest: boolean;
+  exercises: ProgramExercise[];
+}
+
+export const WEEKLY_PROGRAM: ProgramDay[] = [
+  {
+    key: "Mon", label: "Monday", isRest: false,
+    exercises: [
+      { id: "power_clean",   name: "Power Clean",   scheme: "5×3",     pair: "A" },
+      { id: "barbell_row",   name: "Barbell Row",    scheme: "4×6-8",   pair: "A" },
+      { id: "incline_bench", name: "Incline Bench",  scheme: "4×6-8",   pair: "B" },
+      { id: "lat_pulldown",  name: "Lat Pulldown",   scheme: "3×8-10",  pair: "B" },
+      { id: "face_pull",     name: "Face Pull",      scheme: "3×12-15", pair: "finisher" },
+    ],
+  },
+  {
+    key: "Tue", label: "Tuesday", isRest: false,
+    exercises: [
+      { id: "squat",         name: "Back Squat",     scheme: "4×6-8",   pair: "A" },
+      { id: "rdl",           name: "RDL",            scheme: "4×6-8",   pair: "A" },
+      { id: "pullup",        name: "Pull-Up",        scheme: "3×8-10",  pair: "B" },
+      { id: "dip",           name: "Dip",            scheme: "3×8-10",  pair: "B" },
+      { id: "lat_raise",     name: "Lateral Raise",  scheme: "3×12-15", pair: "finisher" },
+    ],
+  },
+  {
+    key: "Wed", label: "Wednesday", isRest: false,
+    exercises: [
+      { id: "deadlift",      name: "Deadlift",       scheme: "4×6-8",   pair: "A" },
+      { id: "barbell_row",   name: "Barbell Row",    scheme: "4×6-8",   pair: "A" },
+      { id: "incline_bench", name: "Incline Bench",  scheme: "4×6-8",   pair: "B" },
+      { id: "face_pull",     name: "Face Pull",      scheme: "3×12-15", pair: "B" },
+      { id: "neck_curl",     name: "Neck Curl",      scheme: "3×12-15", pair: "finisher" },
+    ],
+  },
+  {
+    key: "Thu", label: "Thursday", isRest: false,
+    exercises: [
+      { id: "hang_clean",    name: "Hang Clean",     scheme: "5×3",     pair: "A" },
+      { id: "front_squat",   name: "Front Squat",    scheme: "3×8-10",  pair: "A" },
+      { id: "lunges",        name: "Lunges",         scheme: "3×8-10",  pair: "B" },
+      { id: "barbell_shrug", name: "Barbell Shrug",  scheme: "3×12-15", pair: "B" },
+      { id: "lat_raise",     name: "Lateral Raise",  scheme: "3×12-15", pair: "finisher" },
+    ],
+  },
+  {
+    key: "Fri", label: "Friday", isRest: false,
+    exercises: [
+      { id: "power_clean",        name: "Power Clean",        scheme: "5×3",     pair: "A" },
+      { id: "ohp",                name: "OHP",                scheme: "4×6-8",   pair: "A" },
+      { id: "hanging_leg_raise",  name: "Hanging Leg Raise",  scheme: "3×12-15", pair: "B" },
+      { id: "machine_bicep_curl", name: "Machine Bicep Curl", scheme: "3×12-15", pair: "B" },
+      { id: "lat_pulldown",       name: "Lat Pulldown",       scheme: "3×8-10",  pair: "finisher" },
+    ],
+  },
+  { key: "Sat", label: "Saturday", isRest: true, exercises: [] },
+  { key: "Sun", label: "Sunday",   isRest: true, exercises: [] },
+];
+
 export interface RotationDay {
   key: string;
   kind: "lift" | "cardio";
@@ -136,9 +207,17 @@ export const config = {
     ],
     power: [
       { id: "clean", name: "Barbell Clean", sets: 3, reps: "3-5" },
+      { id: "power_clean", name: "Power Clean", sets: 5, reps: "3" },
+      { id: "hang_clean", name: "Hang Clean", sets: 5, reps: "3" },
     ],
     core: [
       { id: "pushup", name: "Push-Up", sets: 3, reps: "submax" },
+      { id: "hanging_leg_raise", name: "Hanging Leg Raise", sets: 3, reps: "12-15" },
+      { id: "neck_curl", name: "Neck Curl", sets: 3, reps: "12-15" },
+      { id: "barbell_shrug", name: "Barbell Shrug", sets: 3, reps: "12-15" },
+      { id: "face_pull", name: "Face Pull", sets: 3, reps: "12-15" },
+      { id: "dip", name: "Dip", sets: 3, reps: "8-10" },
+      { id: "deadlift", name: "Deadlift", sets: 4, reps: "6-8" },
     ],
   } as Record<string, ExerciseDef[]>,
 

@@ -9,11 +9,13 @@ import TrendModal from "./TrendModal";
 interface ExerciseHistoryProps {
   exerciseProgress: Record<string, ExerciseProgressEntry[]>;
   workoutHistory: WorkoutDay[];
+  exerciseIds?: string[];
 }
 
 export default function ExerciseHistory({
   exerciseProgress,
   workoutHistory,
+  exerciseIds,
 }: ExerciseHistoryProps) {
   const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
   const [expandedExercises, setExpandedExercises] = useState<Set<string>>(new Set());
@@ -21,9 +23,30 @@ export default function ExerciseHistory({
   const [activeExerciseId, setActiveExerciseId] = useState<string | null>(null);
   const [graphMetric, setGraphMetric] = useState<"bestWeight" | "estimated1RM">("bestWeight");
 
+  const filteredProgress = useMemo(() => {
+    if (!exerciseIds) return exerciseProgress;
+    if (exerciseIds.length === 0) return {};
+    const filtered: Record<string, ExerciseProgressEntry[]> = {};
+    for (const id of exerciseIds) {
+      if (exerciseProgress[id]) filtered[id] = exerciseProgress[id];
+    }
+    return filtered;
+  }, [exerciseProgress, exerciseIds]);
+
+  const filteredWorkoutHistory = useMemo(() => {
+    if (!exerciseIds) return workoutHistory;
+    if (exerciseIds.length === 0) return [];
+    return workoutHistory
+      .map((day) => ({
+        ...day,
+        exercises: day.exercises.filter((e) => exerciseIds.includes(e.id)),
+      }))
+      .filter((day) => day.exercises.length > 0);
+  }, [workoutHistory, exerciseIds]);
+
   const exerciseNameById = useMemo(() => {
     const map = new Map<string, string>();
-    for (const day of workoutHistory) {
+    for (const day of filteredWorkoutHistory) {
       for (const exercise of day.exercises) {
         if (!map.has(exercise.id)) {
           map.set(exercise.id, exercise.name);
@@ -31,11 +54,11 @@ export default function ExerciseHistory({
       }
     }
     return map;
-  }, [workoutHistory]);
+  }, [filteredWorkoutHistory]);
 
   const progressEntries = useMemo(
-    () => Object.entries(exerciseProgress),
-    [exerciseProgress]
+    () => Object.entries(filteredProgress),
+    [filteredProgress]
   );
 
   const activeExerciseEntries = useMemo<ExerciseProgressEntry[]>(
@@ -105,7 +128,7 @@ export default function ExerciseHistory({
       >
         <h2 className="text-lg font-semibold">Training History</h2>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-zinc-400">{workoutHistory.length} sessions</span>
+          <span className="text-xs text-zinc-400">{filteredWorkoutHistory.length} sessions</span>
           <span className="text-zinc-400 text-sm">{showDetails ? "Hide" : "Show"}</span>
         </div>
       </button>
@@ -198,14 +221,14 @@ export default function ExerciseHistory({
 
           <div className="space-y-2">
             <p className="text-xs text-zinc-500 uppercase px-1">Workout Sessions</p>
-            {workoutHistory.length === 0 ? (
+            {filteredWorkoutHistory.length === 0 ? (
               <div className="p-4 bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10">
                 <p className="text-sm text-zinc-600 text-center">
                   No workouts logged yet. Voice-log your sets at the gym!
                 </p>
               </div>
             ) : (
-              workoutHistory.map((day) => {
+              filteredWorkoutHistory.map((day) => {
                 const isExpanded = expandedDays.has(day.date);
                 return (
                   <div

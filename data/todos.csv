@@ -1,18 +1,18 @@
 id,item,done,created,domain
 1,Book Poland flight,1,2026-02-07,
-2,Buy ring,0,2026-02-07,
+2,Buy ring,1,2026-02-07,
 3,Car wash + clean inside,0,2026-02-19,
 4,Go to Costco with mom - diamond ring,1,2026-02-25,
 5,Look into Ghostty,1,2026-02-25,
 6,Clean room,0,2026-02-26,
 7,Get Canadian passport photo,1,2026-02-26,
-8,Move sleep to guest room - separate office from sleep space,0,2026-02-26,
+8,Move sleep to guest room - separate office from sleep space,1,2026-02-26,
 9,Order diet boxes for April to mid-May during Poland trip,1,2026-02-27,
 10,Ask about MultiSport card on March 14,1,2026-02-27,
 11,Buy good earplugs and face mask,0,2026-02-27,
 12,Buy for Basia Crest Whitestrips,1,2026-02-27,
 13,Buy for Basia Burt's Bees chapstick,1,2026-02-27,
-14,Buy for Basia pink blush (color TBD): https://www.rhodeskin.com/products/pocket-blush-spicy-marg,0,2026-02-27,
+14,Buy for Basia pink blush (color TBD): https://www.rhodeskin.com/products/pocket-blush-spicy-marg,1,2026-02-27,
 15,When I give a suggestion - explore whether Claude should investigate and give a,1,2026-02-26,
 16,Idea: notifications should give a contextual response after looking things up in,1,2026-02-26,
 17,Feature idea: add graphs to weight and workout logging + habit tracking - show p,1,2026-02-26,
@@ -26,9 +26,9 @@ id,item,done,created,domain
 25,Feature: voice notes should trigger Claude to investigate and make incremental repo improvements autonomously,1,2026-03-01,
 27,Clarify: 'Create shortcut except without instead of dictation type' - likely about iOS Shortcut with text input instead of dictation. Re-record or clarify.,1,2026-03-01,
 28,Feature: idea cards with Claude pre-investigation — voice idea → Claude scans repo against core pillars/3 layers → presents concise investigation on idea card → user approves → PR created automatically,1,2026-03-01,
-29,Talk through habit/reward/fitness/eating goal neuroscience with Claude,0,2026-03-03,
+29,Talk through habit/reward/fitness/eating goal neuroscience with Claude,1,2026-03-03,
 30,Try fitting 1 bicep exercise per week into rotation,1,2026-03-03,
-31,Transcribe 'As A Man Thinketh' and add quotes page to app,50,2026-03-03,2026-03-08
+31,Transcribe 'As A Man Thinketh' and add quotes page to app,1,2026-03-03,2026-03-08
 32,add cleans to workout fun,1,2026-03-06,
 33,Clarify: 'I can put my poker hand' — unclear voice note about poker. Re-record or clarify intent.,1,2026-03-06,
 34,Clarify: empty voice note issue #97 — re-record or discard,1,2026-03-07,
@@ -37,11 +37,15 @@ id,item,done,created,domain
 37,Clarify: empty voice note (issue #94),1,2026-03-07,
 38,Clarify: empty voice note issue #90 — re-record or discard,1,2026-03-07,
 39,Clarify: empty voice note (issue #87),1,2026-03-07,
-40,Document consumption channels and evaluate against calm mind goal,0,2026-03-08,personal_growth
-41,Create habit system with explicit rules for consumption channels (poker/Twitter/YouTube) — define when and why each is allowed,0,2026-03-08,personal_growth
+40,Document consumption channels and evaluate against calm mind goal,1,2026-03-08,personal_growth
+41,Create habit system with explicit rules for consumption channels (poker/Twitter/YouTube) — define when and why each is allowed,1,2026-03-08,personal_growth
 42,Clarify: empty voice note (issue #106),1,2026-03-09,
-43,Add 'thoughts crystallize into habits' section from As A Man Thinketh to resources,0,2026-03-07,personal_growth
-44,Add purpose/weakness quote from As A Man Thinketh to vision section,0,2026-03-07,personal_growth
-45,Clarify: empty voice note (issue #107),0,2026-03-10,
-46,Clarify: empty voice note (issue #109),0,2026-03-10,
-47,Clarify: empty voice note (issue #111),0,2026-03-10,
+43,Add 'thoughts crystallize into habits' section from As A Man Thinketh to resources,1,2026-03-07,personal_growth
+44,Add purpose/weakness quote from As A Man Thinketh to vision section,1,2026-03-07,personal_growth
+45,Clarify: empty voice note (issue #107),1,2026-03-10,
+46,Clarify: empty voice note (issue #109),1,2026-03-10,
+47,Clarify: empty voice note (issue #111),1,2026-03-10,
+48,Clarify: incomplete voice note #114 - re-record thought about typing vs talking,1,2026-03-18,
+49,Build Jarvis always-on assistant — Mac Mini + vertical monitor + OpenClaw + voice. Full spec: docs/specs/jarvis-always-on-assistant.md,0,2026-03-27,personal_growth
+50,Redesign training program — power/athletic physique (Hamza aesthetic + Olympic lifts) with superset format. Full spec: docs/specs/training-program-redesign.md,0,2026-03-26,health
+51,Add today's workout label to plan/day page and morning report — e.g. 'Gym: Deadlift Day (Wed)' linking to /health page. Touchpoints: DayView.tsx, compute-morning-report.js, checkin skill.,0,2026-03-28,health

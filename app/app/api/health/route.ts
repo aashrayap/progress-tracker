@@ -2,92 +2,15 @@ import { NextResponse } from "next/server";
 import { todayStr as todayLocal, daysAgoStr } from "../../lib/utils";
 import {
   getExerciseProgress,
-  getExerciseTargets,
   getLatestValue,
   getMetricHistory,
-  getNextWorkout,
   getStreak,
   groupWorkoutsByDay,
   readDailySignals,
   readReflections,
   readWorkouts,
 } from "../../lib/csv";
-import { config, normalizeWorkoutKey } from "../../lib/config";
-import type { PrescribedExercise, WorkoutDay } from "../../lib/types";
-
-function getDisplayWorkout(
-  gymToday: boolean,
-  todayWorkout: WorkoutDay | null,
-  nextWorkout: string
-): {
-  templateKey: string;
-  displayTemplate: string;
-  displayExercises: PrescribedExercise[];
-  totalSets: number;
-  isCardio: boolean;
-  cardioInfo: { label: string; detail: string; minutes: number } | null;
-} {
-  const cycle = config.workoutCycle;
-  const allExercises = Object.values(config.exercises).flat();
-
-  const normalizedNextWorkout = normalizeWorkoutKey(nextWorkout, cycle) || nextWorkout;
-  const normalizedTodayWorkout =
-    normalizeWorkoutKey(todayWorkout?.workout, cycle) || todayWorkout?.workout;
-
-  const templateKey =
-    (gymToday
-      ? normalizedTodayWorkout || normalizedNextWorkout
-      : normalizedNextWorkout) || cycle[0];
-
-  const isCardio = templateKey in config.cardioTemplates;
-  const cardioInfo = config.cardioTemplates[templateKey] || null;
-
-  const template = config.workoutTemplates[templateKey];
-  const prescribedExercises: PrescribedExercise[] = template
-    ? template
-        .map((id) => allExercises.find((exercise) => exercise.id === id))
-        .filter(
-          (exercise): exercise is (typeof allExercises)[number] => Boolean(exercise)
-        )
-        .map((exercise) => ({
-          id: exercise.id,
-          name: exercise.name,
-          sets: exercise.sets,
-          reps: exercise.reps,
-        }))
-    : [];
-
-  const loggedExercises = todayWorkout?.exercises || [];
-  const loggedOnlyExercises: PrescribedExercise[] = loggedExercises
-    .filter((logged) => !prescribedExercises.some((prescribed) => prescribed.id === logged.id))
-    .map((logged) => ({
-      id: logged.id,
-      name: logged.name,
-      sets: Math.max(logged.sets.length, 1),
-      reps: "logged",
-    }));
-
-  const loggedAsDisplay: PrescribedExercise[] = loggedExercises.map((logged) => ({
-    id: logged.id,
-    name: logged.name,
-    sets: Math.max(logged.sets.length, 1),
-    reps: "logged",
-  }));
-
-  const displayExercises =
-    gymToday && loggedAsDisplay.length > 0
-      ? loggedAsDisplay
-      : [...prescribedExercises, ...loggedOnlyExercises];
-
-  return {
-    templateKey,
-    displayTemplate: `Day ${templateKey}`,
-    displayExercises,
-    totalSets: displayExercises.reduce((sum, exercise) => sum + exercise.sets, 0),
-    isCardio,
-    cardioInfo,
-  };
-}
+import { config, WEEKLY_PROGRAM } from "../../lib/config";
 
 export async function GET() {
   try {
@@ -108,7 +31,6 @@ export async function GET() {
 
     const workoutDays = groupWorkoutsByDay(workoutSets);
     const todayStr = todayLocal();
-    const todayWorkout = workoutDays.find((workout) => workout.date === todayStr) || null;
 
     const gymStreak = getStreak(signals, "gym");
 
@@ -121,24 +43,21 @@ export async function GET() {
         entry.date <= todayStr
     ).length;
 
-    const cycle = config.workoutCycle;
-    const nextWorkout = getNextWorkout(signals, cycle);
-
     const gymToday = signals.some(
       (entry) => entry.date === todayStr && entry.signal === "gym" && entry.value === "1"
     );
 
-    const mealsToday = signals
-      .filter((entry) => entry.date === todayStr && entry.signal === "ate_clean")
-      .map((entry) => ({
-        slot: entry.category?.trim() || "meal",
-        clean: entry.value === "1",
-        notes: entry.context || "",
-      }));
+    const gymCompletionByDate = signals
+      .filter((entry) => entry.signal === "gym" && entry.value === "1")
+      .map((entry) => entry.date);
 
     const eatingSummary = {
-      clean: mealsToday.filter((meal) => meal.clean).length,
-      total: mealsToday.length,
+      clean: signals.filter(
+        (entry) => entry.date === todayStr && entry.signal === "ate_clean" && entry.value === "1"
+      ).length,
+      total: signals.filter(
+        (entry) => entry.date === todayStr && entry.signal === "ate_clean"
+      ).length,
     };
 
     const latestGymReflection =
@@ -147,13 +66,6 @@ export async function GET() {
         .sort((a, b) => b.date.localeCompare(a.date))[0] || null;
 
     const exerciseProgress = getExerciseProgress(workoutDays);
-    const displayWorkout = getDisplayWorkout(gymToday, todayWorkout, nextWorkout);
-
-    // Compute progressive overload targets for the current/next workout
-    const prescribedIds = displayWorkout.displayExercises.map((e) => e.id);
-    const exerciseTargets = displayWorkout.isCardio
-      ? []
-      : getExerciseTargets(prescribedIds, workoutDays);
 
     return NextResponse.json({
       weight: {
@@ -164,25 +76,14 @@ export async function GET() {
         checkpoints: config.weight.checkpoints,
         history: weightHistory,
       },
+      weeklyProgram: WEEKLY_PROGRAM,
+      gymCompletionByDate,
       workouts: {
-        today: todayWorkout,
-        history: workoutDays.slice(0, 20),
-        nextWorkout,
-        templateKey: displayWorkout.templateKey,
-        displayTemplate: displayWorkout.displayTemplate,
-        displayExercises: displayWorkout.displayExercises,
-        totalSets: displayWorkout.totalSets,
-        cardioFinisherMin: config.trainingPlan.liftSessionCardioFinisherMin,
-        rotationLength: config.workoutCycle.length,
-        isCardio: displayWorkout.isCardio,
-        cardioInfo: displayWorkout.cardioInfo,
-        rotation: config.trainingPlan.rotation,
-        exerciseTargets,
+        history: workoutDays.slice(0, 30),
       },
       gymToday,
       gymStreak,
       gymLast7,
-      mealsToday,
       eatingSummary,
       gymReflection: latestGymReflection,
       exerciseProgress,

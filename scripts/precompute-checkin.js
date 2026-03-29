@@ -36,14 +36,18 @@ function formatCardDate(ds) {
   return `${days[d.getDay()]} ${months[d.getMonth()]} ${d.getDate()}`;
 }
 
-// Workout cycle from config.ts
-const WORKOUT_CYCLE = ["A", "B", "C", "D", "E", "F", "G"];
+// Day-of-week program mapping (replaces old A-G rotation)
+const DOW_TO_PROGRAM_KEY = { 0: null, 1: "Mon", 2: "Tue", 3: "Wed", 4: "Thu", 5: "Fri", 6: null };
+const NEXT_DAY_MAP = { Mon: "Tue", Tue: "Wed", Wed: "Thu", Thu: "Fri", Fri: "Mon" };
 
 // Label map for display
 const HABIT_LABELS = {
   gym: "Gym", sleep: "Sleep", meditate: "Meditate",
   deep_work: "Deep work", ate_clean: "Ate clean",
   weed: "Weed", lol: "League", poker: "Poker", clarity: "Clarity",
+  morning_review: "AM review", midday_review: "Mid review",
+  evening_review: "PM review", wim_hof_am: "Wim Hof AM",
+  wim_hof_pm: "Wim Hof PM",
 };
 
 // ── Read data ──────────────────────────────────────────────────────
@@ -74,11 +78,22 @@ const yesterdaySignals = getSignalsForDate(yesterday);
 // ── Card 1: Habits ─────────────────────────────────────────────────
 
 function buildCard1() {
-  // Yesterday side: all habits except sleep
-  const yesterdayHabits = HABIT_LIST.filter(h => h !== "sleep");
+  // Yesterday side: sleep first (logged on yesterday = night before yesterday), then rest
   const yesterdayLines = [];
   let yesterdayAllLogged = true;
 
+  // Sleep for yesterday (the night before yesterday)
+  const yesterdaySleep = yesterdaySignals["sleep"];
+  if (!yesterdaySleep) {
+    yesterdayAllLogged = false;
+    yesterdayLines.push("· Sleep");
+  } else if (yesterdaySleep.value === "1") {
+    yesterdayLines.push("✓ Sleep");
+  } else {
+    yesterdayLines.push("✗ Sleep");
+  }
+
+  const yesterdayHabits = HABIT_LIST.filter(h => h !== "sleep");
   for (const habit of yesterdayHabits) {
     const sig = yesterdaySignals[habit];
     const label = HABIT_LABELS[habit];
@@ -110,7 +125,7 @@ function buildCard1() {
   if (yesterdayAllLogged && yesterdayLines.length > 0) {
     yesterdayLines.push("All logged.");
   } else {
-    const openCount = yesterdayHabits.filter(h => !yesterdaySignals[h]).length;
+    const openCount = yesterdayHabits.filter(h => !yesterdaySignals[h]).length + (yesterdaySleep ? 0 : 1);
     if (openCount > 0) yesterdayLines.push(`${openCount} open.`);
   }
 
@@ -265,21 +280,14 @@ function buildCard2() {
   const gymSignals = signals.filter(r => r.signal === "gym" && r.value === "1").sort((a, b) => a.date.localeCompare(b.date));
   if (gymSignals.length > 0) {
     const lastGym = gymSignals[gymSignals.length - 1];
-    const dayMatch = lastGym.context ? lastGym.context.match(/Day\s*([A-G])/i) : null;
-    const lastDay = dayMatch ? dayMatch[1].toUpperCase() : null;
-    let nextDay = "";
-    if (lastDay) {
-      const idx = WORKOUT_CYCLE.indexOf(lastDay);
-      if (idx !== -1) {
-        nextDay = WORKOUT_CYCLE[(idx + 1) % WORKOUT_CYCLE.length];
-      }
-    }
     const lastDate = new Date(lastGym.date + "T12:00:00");
     const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const lastDayName = dayNames[lastDate.getDay()];
+    const lastDay = DOW_TO_PROGRAM_KEY[lastDate.getDay()] ?? null;
+    const nextDay = lastDay ? (NEXT_DAY_MAP[lastDay] ?? null) : null;
     let line;
     if (lastDay && nextDay) {
-      line = `Day ${lastDay} (${lastDayName}) → next: Day ${nextDay}`;
+      line = `${lastDay} (${lastDayName}) → next: ${nextDay}`;
     } else {
       line = `${lastDayName} ${lastGym.date}`;
     }
@@ -400,13 +408,9 @@ function buildDigest() {
   let lastWorkout = null;
   if (gymSignals.length > 0) {
     const last = gymSignals[gymSignals.length - 1];
-    const dayMatch = last.context ? last.context.match(/Day\s*([A-G])/i) : null;
-    const lastDay = dayMatch ? dayMatch[1].toUpperCase() : null;
-    let nextDay = null;
-    if (lastDay) {
-      const idx = WORKOUT_CYCLE.indexOf(lastDay);
-      if (idx !== -1) nextDay = WORKOUT_CYCLE[(idx + 1) % WORKOUT_CYCLE.length];
-    }
+    const lastDate = new Date(last.date + "T12:00:00");
+    const lastDay = DOW_TO_PROGRAM_KEY[lastDate.getDay()] ?? null;
+    const nextDay = lastDay ? (NEXT_DAY_MAP[lastDay] ?? null) : null;
     lastWorkout = { date: last.date, day: lastDay, next: nextDay ? `Day ${nextDay}` : null };
   }
 

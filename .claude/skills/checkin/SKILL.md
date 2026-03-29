@@ -111,54 +111,18 @@ The `digest` object contains structured data for AI reasoning in subsequent step
 - `digest.recent_reflections` — last 14 days of reflections
 - `digest.last_workout` — last gym date/day and next workout day
 
-After both cards, **ask about sleep before showing the menu**.
-
-#### 2. Sleep (always first, before the menu)
-
-Sleep is today's cornerstone habit — going to bed on time last night sets up today for success. It is ALWAYS logged on today's date and asked FIRST, before the menu appears.
-
-- If today's `sleep` is missing: "Did you sleep on time last night?"
-- Write to `daily_signals.csv` with today's date immediately.
-- Sleep is NEVER part of yesterday's backfill. If the user mentions sleep while listing yesterday's habits, log it on TODAY's date and clarify if needed.
-- Once sleep is answered, proceed to the daily intention check (if needed), then show the menu.
-
-#### 3. Daily Intention (only if not set today)
-
-If `digest.daily_intention` is null (not yet set today):
-
-1. Show weekly context if available: "This week: *{digest.weekly_intention}*"
-2. Ask: "What's today's intention in mantra form? (e.g., 'bounce back clean', not 'go to gym')"
-3. If the user gives a task-style answer, ask for a concise mantra rewrite.
-4. Do NOT auto-copy the weekly intention — weekly guides daily, different granularity.
-5. Infer `domain` from the final intention.
-6. Write to `daily_signals.csv`:
-   - `signal=intention`
-   - `value=<domain>`
-   - `context=<mantra text>`
-   - `category=<domain>`
-7. Allow skip: if user says `skip`, move on without writing.
-
-If `digest.daily_intention` is already set, skip this section entirely and go to the menu.
+After both cards, go straight to the menu. No pre-menu gates.
 
 ### Menu
 
-After sleep + intention are handled, present all options. No time-of-day gating — user picks freely. Labels are guidance, not auto-detected gates.
+Present all options immediately after cards. No time-of-day gating — user picks freely. Labels are guidance, not auto-detected gates.
 
 ```
 What do you want to do?
 
-── Morning ──
   1. Log             (8 open today)
-  2. Anchor
-  3. Today's plan
-
-── Evening ──
-  4. Decompress
-  5. Reflect on today
-  6. Set tomorrow
-
-── Anytime ──
-  7. Brain state
+  2. Process          (anchor / decompress / reflect / reframe)
+  3. Plan             (today / tomorrow / week)
 ```
 
 Rules:
@@ -166,6 +130,7 @@ Rules:
 - Options with nothing to do still appear but show "(done)" or "(0 items)"
 - User can pick any option in any order regardless of time of day
 - User can pick the same option again (re-enterable)
+- User can specify a target with Option 3: "3 tomorrow", "3 thursday", "3 week"
 - After completing an option, ask "What next?" with the updated menu
 - When user says "done" or stops, write `checkin_daily=1` if not already written today
 
@@ -195,316 +160,93 @@ Write updates to `experiments.csv` immediately after each experiment is conclude
 
 ### Option 1: Log
 
-Ask ONLY about habits/addiction not yet logged for the relevant day.
+**Single-round logging.** Present one card with everything unlogged for the target day. User answers in one shot via speech-to-text or typing.
 
-**Yesterday backfill** — ask only if yesterday has gaps:
+#### Day detection
 
-Addiction (non-skippable -- must answer):
+- **Morning (before 2pm)**: default to yesterday. Today's habits aren't done yet.
+- **Evening (2pm+)**: default to today.
+- User can override: "log today" or "log yesterday".
+- If the non-default day also has gaps, offer it after the first day is done: "Yesterday has gaps too — want to log those?"
 
-| Signal | Question |
-|--------|----------|
-| `weed` | Clean from weed yesterday? |
-| `lol` | Clean from League yesterday? |
-| `poker` | Clean from poker yesterday? |
-| `clarity` | Clean from Clarity yesterday? |
+#### The card
 
-Habits (skippable):
-
-| Signal | Question |
-|--------|----------|
-| `gym` | Did you work out yesterday? |
-| `deep_work` | Deep work done yesterday? |
-| `meditate` | Did you meditate yesterday? |
-| `ate_clean` | Eat clean yesterday? |
-
-If all signals for a category are already logged, skip with a quick note: "Yesterday's addiction habits are all logged -- moving on."
-
-**Today** — ask about today's habits that are missing:
-
-Note: Sleep is handled BEFORE the menu (see Pre-Menu section above). It is NOT part of Option 1.
-
-| Signal | Question |
-|--------|----------|
-| `gym` | Work out today? |
-| `deep_work` | Deep work today? |
-| `meditate` | Meditate today? |
-| `ate_clean` | Eating clean today? |
-| `wim_hof_am` | Wim Hof this morning? |
-| `wim_hof_pm` | Wim Hof this evening? |
-| `morning_review` | Morning protocol complete? |
-| `midday_review` | Midday protocol complete? |
-| `evening_review` | Evening protocol complete? |
-| `weed` | Clean from weed today? |
-| `lol` | Clean from League today? |
-| `poker` | Clean from poker today? |
-| `clarity` | Clean from Clarity today? |
-
-Accept "not yet" / "in progress" -- do not write a row for unknowns.
-
-Write signals to `daily_signals.csv` immediately after this option completes.
-
----
-
-### Option 2: Anchor
-
-A mirror, not therapy. Reads the user's own pre-committed words back at the moment of decision. Target: ~2 minutes.
-
-#### Step 1: NAME IT
-
-Ask: "What's pulling you right now?"
-
-Accept free text. Store the response for use in subsequent steps.
-
-#### Step 2: STATE CHECK
-
-Ask two questions:
-- "Energy right now?" (depleted / ok / good)
-- "Clarity right now?" (foggy / clear)
-
-If depleted + foggy:
-> "You're in a low-reliability state. Decisions made here tend to serve the old identity."
-
-#### Step 3: IDENTITY LENS
-
-Surface from vision.json (read via `cat data/vision.json` — do NOT use API):
-
-1. **Core traits + decision style**: `identityScript.coreTraits` and `identityScript.decisionStyle`
-2. **Anti-vision**: `antiVision` (full text)
-3. **Matched trigger replacements**: scan `distractions.triggerReplacements` for keyword overlap with the user's "pull" from step 1. Show matches.
-4. **Matched destructive habits**: scan `habitAudit.destructive` for keyword overlap with the pull. Show matches.
-5. **Relevant recent reflections**: grep `data/reflections.csv` for keyword overlap with the pull (last 30 days). Show up to 3 matches with date and lesson.
-
-Present all surfaced content, then ask:
-
-> "Does the person you're becoming do this? Or does this serve who you used to be?"
-
-Keep it LEAN. Do NOT surface ABT(H) domains, becoming, timeline, or habits arrays.
-
-#### Step 4: DECIDE + LOG
-
-Wait for user's decision statement. Then:
-
-- Classify as: `chose_new` (aligned with identity), `chose_old` (served old patterns), or `chose_middle` (compromise/unclear)
-- Confirm classification with user: "I'd call that chose_new — sound right?"
-
-Write to `daily_signals.csv`:
-```
-date,signal,value,unit,context,source,capture_id,category
-<today>,crossroads,<chose_new|chose_old|chose_middle>,,<pull description> → <decision description>,chat,,personal_growth
-```
-
-Return to menu.
-
----
-
-### Option 3: Today's Plan
-
-Surfaces existing drafts, assigns times, adds new blocks, handles rollover. Absorbs former /plan skill quick actions.
-
-#### 3.1 Surface Existing Drafts
-
-Read today's plan entries from `data/plan.csv` where `start=0` and `end=0`.
-
-If drafts exist:
-```
-Today's drafts (unscheduled):
-  1. "Deep work block" — assign time? (e.g., 9-10:30am)
-  2. "Gym session" — assign time?
-  3. "Weekly team sync" — assign time?
-
-  → assign times, skip, or add more
-```
-
-For each draft the user assigns a time:
-- Parse time to decimal hours
-- Update the row in plan.csv: set start and end to the parsed values
-- Confirm: "Scheduled: [item] at [time]"
-
-For drafts the user skips: leave as start=0, end=0.
-
-#### 3.2 Rollover (skippable)
-
-Use `digest.rollover_items` from the precompute output (each has `item` and `roll_count`).
-
-If any exist, present them one by one:
-
-**Rollover depth check:** Before presenting each item, check its `notes` field for a `[rolled:N]` tag.
-- If N >= 2: present differently: "This has rolled 2+ times. Drop it, convert to a todo, or force-keep?"
-  - `drop`: do not write a new plan row
-  - `todo`: write to `todos.csv` (`item=<text>, done=0, created=today, domain=<infer from item>`) and do not write a plan row
-  - `force-keep`: treat as regular keep (ask time, write plan row with `[rolled:N+1]` in notes)
-- If N < 2 or no tag: present normally: "Keep this today, defer it, or drop it?"
-
-Allowed responses: `keep`, `defer`, `drop`, `skip` (skip = stop rollover and leave remaining items untouched)
-
-For each choice:
-- `keep`:
-  - Ask: "What time should this happen today?"
-  - Accept either a range (`1:00-2:00`) or start + duration (`1pm for 45m`)
-  - Write a new `plan.csv` row for today with that time slot
-  - Add `[rolled:N+1]` to the notes field (N=0 if no prior tag, increment if exists)
-- `defer`:
-  - Ask: "What date should this move to?" (allow skip)
-  - If date provided, write a `plan.csv` row on that date with a placeholder time (`0,0`) unless user gives a time
-  - Add `[rolled:N+1]` to the notes field
-- `drop`:
-  - Do not write a new plan row
-
-If none are incomplete, say: "No incomplete plan items from yesterday."
-
-#### 3.3 Context-Aware Suggestions (skippable)
-
-Use digest fields from precompute output:
-- `digest.stale_todos` — open todos older than 7 days
-- `digest.recent_reflections` — last 14 days of reflections
-- `digest.habit_misses` and `digest.streak_breaks` — today's gaps and recent broken streaks
-- user's emotional context from Option 4 (if completed)
-- `digest.weekly_goals` — current week's goals
-- `digest.weekly_intention` — current week's mantra
-
-Use LLM reasoning over all of the above (not keyword matching) to propose up to 3 high-relevance candidate actions for today. Consider weekly goals alongside todos, reflections, and signals when proposing actions. If a weekly goal hasn't had blocks scheduled this week, it's a strong candidate.
-
-Merge goal-based and context-based suggestions into one round — do NOT add a separate "goals" prompt.
-
-For each suggestion:
-- show a 1-line reason tied to intention/feeling/state with source attribution: "(from weekly goal)", "(from reflection)", or "(from todo)"
-- ask: "Add this to today, keep as todo, or skip?"
-- if "add to today", ask "what time?" and write to `plan.csv`
-- if "keep as todo", leave in `todos.csv`
-- if "skip", ignore
-
-Allow global skip: "skip suggestions" keeps everything unchanged.
-
-#### 3.4 Ritual Block Suggestions (morning only, skippable)
-
-If the current time is before 12:00 PM and the user hasn't already planned ritual-aligned blocks:
-
-1. Read `data/vision.json` via `cat` — extract `ritualBlueprint.morning.steps` and `domains[].habits`
-2. Cross-reference with today's existing plan blocks
-3. Suggest up to 3 time blocks that aren't already scheduled:
+Show a single card with two columns — addiction on the left, habits on the right. Only show unlogged signals for the target day.
 
 ```
-Ritual-aligned blocks (from your blueprint + habits):
-
-1. "Wim Hof AM + Identity Review" — 5:45-6:15 AM (morning ritual steps 4+6)
-   → skip / add / adjust time
-
-2. "Deep Work Block 1" — 9:00-10:30 AM (wealth habit: 3 deep work blocks)
-   → skip / add / adjust time
-
-3. "Midday Reset" — 12:00-12:30 PM (midday ritual: walk/gym + cold shower + meditation)
-   → skip / add / adjust time
+┌─ Wed Mar 25 ──────────────────────────────┐
+│ Addiction       │ Habits                   │
+│ · Weed          │ · Sleep                  │
+│ · League        │ · Gym                    │
+│ · Poker         │ · Deep work              │
+│ · Clarity       │ · Meditate               │
+│                 │ · Ate clean              │
+│ Clean from      │ · Wim Hof AM             │
+│ all? (y/n/      │ · Wim Hof PM             │
+│ except X)       │ · AM review              │
+│                 │ · Mid review             │
+│                 │ · PM review              │
+│                 │ · Intention              │
+│                 │                          │
+│                 │ Which did you hit?        │
+└─────────────────┴──────────────────────────┘
 ```
+
+Sleep is logged on TODAY's date regardless of which day is being logged (it reflects last night's sleep). If today's sleep is already logged, omit it from the card.
+
+Intention: if not yet set today, include it in the habits column. If the user provides one, infer domain and write as `signal=intention, value=<domain>, context=<mantra text>, category=<domain>`. Show weekly intention as context: "This week: *{weekly_intention}*". If intention is already set, omit from card.
+
+#### Parsing the response
+
+Accept natural language in one message. Examples:
+- "clean all, hit gym meditate ate clean, intention is stay present"
+- "clean except league, gym and meditate"
+- "all clean, everything except deep work"
 
 Rules:
-- Only suggest in morning mode (before 12:00 PM)
-- Max 3 suggestions
-- Each maps to a ritual step or domain habit — show the source in parentheses
-- Accept "skip suggestions" to bypass all
-- For each "add": write to `plan.csv` with the suggested or adjusted time
-- Infer `domain` from the source (ritual step → `personal_growth`, domain habit → that domain's canonical ID)
-- Do NOT suggest blocks that overlap with existing plan items
-- Do NOT suggest blocks for habits already logged today (e.g., don't suggest gym block if gym=1 already)
+- Addiction signals are non-skippable. If user doesn't address addiction, re-prompt once: "Need the addiction check — clean from all?"
+- Habits not mentioned = not logged (skip). Do NOT ask follow-ups for unmentioned habits.
+- "not yet" / "later" for a specific habit = don't write a row.
+- Parse "all" / "everything" as all habits hit. Parse "except X" as exclusions.
+- Write all signals to `daily_signals.csv` immediately after parsing.
 
-#### 3.5 Quick Actions
+#### Signal reference
 
-After the planning flow, or if user enters a quick command:
+Addiction signals (value: 1=clean, 0=used):
+`weed`, `lol`, `poker`, `clarity`
 
-- **"add <item> <time>"**: Parse item and time, write plan.csv row. See Inline Commands for full spec.
-- **"done <item>"**: Find matching block, mark done=1, check signal map. See Inline Commands for full spec.
-- **"move <item> <new-time>"**: Find matching block, update start/end. See Inline Commands for full spec.
-
-#### 3.6 Confirm Plan (skippable)
-
-Show today's plan including:
-- existing today's blocks
-- kept/deferred items that were scheduled today
-- any surfaced actions added in 3.3
-- any drafts assigned times in 3.1
-
-Ask: "Anything else to adjust, or lock this in?"
-- If user adjusts timing/items, write updates to `plan.csv`.
-- If user says `skip`, keep current plan as-is.
-
-Write plan rows immediately.
+Habit signals (value: 1=done, 0=not done):
+`sleep`, `gym`, `deep_work`, `meditate`, `ate_clean`, `wim_hof_am`, `wim_hof_pm`, `morning_review`, `midday_review`, `evening_review`
 
 ---
 
-### Option 4: Decompress
+### Option 2: Process
 
-Renamed from "Emotional check". Same core flow. New name reflects evening decompression framing.
+Delegate to the **process** agent. Do NOT perform this inline — spawn the agent and present its output.
 
-Ask: "How are you feeling right now? Anything unresolved you're carrying?"
+Ask: **"What's on your mind?"** — the agent auto-detects the branch:
+- **Pull** (temptation/vice keywords) → crossroads flow with identity lens
+- **Feeling** (emotion words) → capture feeling + opportunistic depth
+- **Reflection** (backward-looking) → win/lesson/change/system-adjustment
+- **Lag/Stuck** (stagnation words) → Abrada lag reframe
 
-- Accept free text
-- If the user shares something substantive, write to `daily_signals.csv`:
-  - `signal=feeling`, `value=<1-word summary>`, `context=<their words>`, `category=health`
-- If "fine" / "good" / nothing notable, skip -- don't write empty feelings
-
-**Mind capture (opportunistic, not forced):**
-
-If the user shares something substantive (not "fine"/"good"):
-1. Follow up conversationally: "Was there a specific trigger?" (only if natural)
-2. If trigger shared: "What thought came up?" (only if conversation flows there)
-3. If thought shared: "What did you do about it?" (only if natural)
-
-If any trigger was identified, write a single `signal=mind` row to `daily_signals.csv`:
-- `value` = trigger keyword (infer from their words, e.g. `work_pressure`, `isolation`)
-- `context` = pipe-delimited: `thought: <X> | action: <Y> | circumstance: <Z>` (any subset -- not all fields required)
-- `category` = `health` or `personal_growth` (infer from content)
-- `source` = `chat`
-
-Do NOT force the deeper questions. If user gives a feeling and moves on, just log the feeling signal. The mind capture is opportunistic -- no "mind" completion flag.
-
-Write immediately after this option completes.
+The agent handles re-entry ("Anything else?") internally. After it returns, resume the menu.
 
 ---
 
-### Option 5: Reflect on Today
+### Option 3: Plan
 
-Captures reflection on TODAY. Intended for evening use but available anytime.
+Delegate to the **plan** agent. Do NOT perform this inline — spawn the agent and present its output.
 
-Check `reflections.csv` for today. If no row exists:
+The agent detects target from user input:
+- `3` or `3 today` → manage today's plan (assign times, add/move/done blocks)
+- `3 tomorrow` → set tomorrow's priorities as draft blocks
+- `3 thursday` (any day name) → set that day's priorities
+- `3 week` → sketch the whole week
 
-1. "Quick win from today?"
-2. "Anything you learned?"
-3. "What would you do differently?"
+The agent runs `node scripts/precompute-plan.js`, shows the target day's state, accepts a single free-form response, writes everything, and shows the final plan.
 
-Infer domain from answers. Write one row to `reflections.csv` with today's date immediately.
-
-If reflection exists, say: "Today's reflection is already captured." and offer to view it.
-
----
-
-### Option 6: Set Tomorrow
-
-Writes 2-3 draft blocks for tomorrow's date with start=0, end=0.
-
-#### Flow:
-
-1. Compute tomorrow's date: `date -v+1d '+%Y-%m-%d'`
-2. Show tomorrow's existing plan (if any): read plan.csv for tomorrow's date
-3. Ask: "What are tomorrow's 2-3 priorities?"
-4. Accept natural language list. For each item:
-   - Write to plan.csv: `date=<tomorrow>, start=0, end=0, item=<text>, done=, notes=, domain=<inferred>`
-   - Do NOT ask for times — these are drafts. Times are assigned in the morning via Option 3.
-5. Confirm: "Set [N] priorities for tomorrow."
-
-Rules:
-- Max 5 draft blocks per invocation
-- If tomorrow already has drafts, show them and ask: "Add to these or replace?"
-- If replace: do not delete old rows (append-only). Write new rows. Old 0,0 rows for tomorrow become orphaned drafts — acceptable.
-- Infer domain from content (e.g., "gym" → health, "deep work" → career, "call mom" → relationships)
-
----
-
-### Option 7: Brain State
-
-Delegate to the `brain-state` agent. Do NOT perform this analysis inline — spawn the agent and present its output.
-
-The agent runs `node scripts/compute-brain-state.js`, receives pre-computed JSON (streaks, habit grid, vice load, sleep pattern, dopamine balance), and returns a neuroscience-informed assessment.
-
-No writes. Read-only analysis. Return to menu after presenting.
+Two rounds max. After the agent returns, resume the menu.
 
 ---
 
@@ -549,7 +291,9 @@ Use `digest.habit_by_domain` for per-domain habit breakdowns when presenting eac
 
   1. What went well this week in health?
   2. What would you do differently?
-  3. One small experiment for next week?
+  3. How long before you know if your current approach is working?
+     (Feedback loop audit — shrink the lag if too long)
+  4. One small experiment for next week?
 ```
 
 Rules:
@@ -799,6 +543,21 @@ Send a single PATCH request with all updated fields:
 
 Only include pillars that changed. Always include `intentions.weekly` (set in Phase 6).
 
+### Phase 6c: Week Sketch (draft planning)
+
+After goals and vision update, sketch the week with draft blocks.
+
+1. Show the goals just set in Phase 6: "You set these goals: [goals]. Let's sketch the week."
+2. Ask: "What does this week look like? List priorities per day, or general items for the week."
+3. Accept natural language input — e.g., "gym MWF, deep work daily, call mom Tuesday, no poker"
+4. For each item:
+   - Write to plan.csv: `date=<target day>, start=0, end=0, item=<text>, done=, notes=, domain=<inferred>`
+   - If no specific day given, write to Monday (start of week)
+   - Do NOT ask for times — these are drafts. Times assigned each morning via daily Option 3.
+5. Day abbreviation mapping: M=Mon, T=Tue, W=Wed, R=Thu, F=Fri, S=Sat, U=Sun. "daily"=all 7 days, "weekdays"=Mon-Fri, "MWF"=Mon/Wed/Fri.
+6. Confirm: "Sketched [N] blocks across [days]. These will show as priorities each morning."
+7. Allow skip — "skip" or "I'll do it later" skips this phase entirely.
+
 ### Phase 7: Stale Review & Close
 
 - Use `digest.stale_todos` from the precompute script output. Present items with age: "These have been open 7+ days — keep, kill, or defer?" (ask user)
@@ -815,9 +574,10 @@ Phase 4.5  Inbox Triage         interactive     2-3 min
 Phase 5    Experiment Loop      conclude + new  2 min
 Phase 6    Goals & Intention    review + set    3 min
 Phase 6b   Vision Update        interactive     2-3 min
+Phase 6c   Week Sketch          draft blocks    2-3 min
 Phase 7    Stale Review         interactive     1 min
                                            ──────────
-                                Target:     ~15 min
+                                Target:     ~18 min
 ```
 
 ---
@@ -869,8 +629,11 @@ Key formatting rules for the monthly summary:
 
 1. "What's working in your current system?"
 2. "What's not working that you keep ignoring?"
-3. "Does your direction still match where you want to be in 5 years?"
-4. "One protocol change for this month?"
+3. "What inputs are you consuming that aren't serving the target identity?" (signal-to-noise reduction)
+4. "Which habits need less friction? Which destructive habits need more?" (friction engineering)
+5. "Any new attention leaks since last month?" (distraction inventory)
+6. "Does your direction still match where you want to be in 5 years?"
+7. "One protocol change for this month?"
 
 ### Step 3b: Vision Rewrite (monthly)
 
@@ -943,14 +706,34 @@ Run every 3 months (or `/checkin quarterly` to force on demand).
 
 Quarterly is a full rebuild of vision.json. Uses PUT /api/vision (full replace).
 
+### Step 0: Strategic Orientation (preamble)
+
+Before rebuilding the vision, orient with three questions:
+
+```
+─── STRATEGIC ORIENTATION ──────────────────────────────────
+  1. Set Point Audit: "What position do you snap back to
+     when you stop trying? Name the default shape."
+
+  2. Single-Dimension Focus: "Which ONE life dimension gets
+     concentrated force this quarter? (You can maintain
+     others — but only ONE gets full force.)"
+
+  3. 6 Freedoms: Rate 1-10 and identify the bottleneck.
+     Distraction | Financial | Time | Location | People | Purpose
+```
+
+Record answers — they ground the ABT(H) rebuild that follows.
+
 ### Step 1: Full ABT(H) Rebuild
 
 For each of the 4 pillars (health, wealth, love, self), walk through:
 
 1. **Becoming** — "Where do you want to be in this pillar?" (vivid, specific, measurable)
-2. **Timeline** — "By when?" (specific date)
-3. **Actual** — "Where are you right now, honestly?"
-4. **Habits** — "What daily actions get you from Actual to Becoming?" (3-5 statements)
+2. **Target Shape** — "Describe this person in behavioral terms — what do they do daily, refuse to tolerate, how do they respond under pressure?" (not possessions or titles)
+3. **Timeline** — "By when?" (specific date)
+4. **Actual** — "Where are you right now, honestly?"
+5. **Habits** — "What daily actions get you from Actual to Becoming?" (3-5 statements)
 
 Show the current values for each. Accept rewrites or keep.
 
@@ -1000,6 +783,51 @@ Walk through morning, midday, evening. For each:
   Destructive: Weed, League of Legends, Poker, Porn, ...
 
   Any changes? Move items between categories, add, remove?
+```
+
+After the standard audit, reference the Abrada inversion playbooks (`docs/resources/daniel-abrada/the-abrada-system.md`, concept 9) — scan each pillar's failure playbook against current behavior:
+
+```
+─── INVERSION CHECK (per pillar) ──────────────────────────
+  Review the failure playbook for [pillar].
+  Circle any patterns that feel familiar right now.
+  What's the opposite behavior?
+```
+
+### Step 3.5: Forces & Skills Audit
+
+```
+─── FORCES AUDIT ──────────────────────────────────────────
+  Passive forces (shaping you by default — environment,
+  people, habits you didn't choose):
+  • ...
+
+  Active forces (deliberately chosen):
+  • ...
+
+  Which passive forces need to be removed or countered?
+```
+
+```
+─── SKILL STACK (Wealth pillar) ──────────────────────────
+  Current skills (rate 0-100):
+  • ...
+
+  The Power Six: Writing, Sales, Marketing, Storytelling,
+  Speaking, Digital/Automation
+
+  Gaps: which skill to develop to 80% next?
+```
+
+```
+─── PEER GROUP ────────────────────────────────────────────
+  5 closest relationships:
+  • ...
+
+  For each: does this person pull you up or down
+  across the 4 pillars?
+
+  One upgrade action for this quarter?
 ```
 
 ### Step 4: Input Control

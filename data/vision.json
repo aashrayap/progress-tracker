@@ -1,15 +1,27 @@
 {
+  "philosophy": "Finite time, infinite options — that's what makes life beautiful. You get to choose your own unique set of things to compound on. Meaning flows where investment goes. Wasting time is the real loss.",
   "identityScript": {
     "coreTraits": {
-      "health": "I am a 200lb Olympic lifter who never skips training. I eat clean, sleep by 9:30, and treat my body like the foundation everything else is built on.",
-      "wealth": "I am building a 100k/year business providing premium value across AI, meditation, personal growth, and addiction recovery. I ship daily. I do deep work, not busy work.",
-      "love": "I am genuine, caring, and a leader in my relationships. I show up — present, honest, initiating. I put in effort and build real connections, not convenient ones.",
-      "self": "I am 3 years clean, calm, curious, never stagnant. I protect my mind at all costs. I read, reflect, and sit in stillness. Morning priorities before anyone else's."
+      "health": "I feel solid and capable in my body. Training is automatic — not a negotiation, just the next thing I do. Every meal is a compounding input: protein first, clean fuel, no junk defaults. What I eat today is building the body I'll have in 6 months. I sleep deeply and wake sharp. Discomfort is familiar and welcome.",
+      "wealth": "I wake up with clarity about what matters today. I sit down and the work flows — calm, focused, unhurried. I build things that compound. I ship, not because I have to, but because creating is who I am. The 9-5 funds the mission; the deep work IS the mission.",
+      "love": "I feel warmth toward the people in my life. Reaching out is natural, not effortful. I'm curious about them, not performing for them. Hard conversations feel like investment, not threat. I lead with honesty and let people see me.",
+      "self": "My mind is quiet. Stillness is my default state, not something I have to chase. Urges pass through without landing — I notice them and they dissolve. I'm curious, grounded, proactive. Mornings belong to me. Every clean day compounds into a person I respect."
     },
     "nonNegotiables": "Wim Hof every morning. Movement and gym. Meditation. Clean eating. Deep work. No substances. No video games. Quietness, reflection, and stillness.",
     "languageRules": {
-      "use": ["Locked in", "Non-negotiable", "Just do it", "Embrace discomfort", "Embrace pain"],
-      "forbid": ["Tired", "Maybe", "Try", "I think"]
+      "use": [
+        "Locked in",
+        "Non-negotiable",
+        "Just do it",
+        "Embrace discomfort",
+        "Embrace pain"
+      ],
+      "forbid": [
+        "Tired",
+        "Maybe",
+        "Try",
+        "I think"
+      ]
     },
     "physicalPresence": "Kind to others. Confident. Assertive. But genuine.",
     "socialFilter": "Kind, happy people who are self-motivated. Share interests. Genuine. Trustworthy. Unselfish.",
@@ -26,7 +38,9 @@
       "id": "health",
       "label": "Health",
       "hex": "#10b981",
-      "canonicalIds": ["health"],
+      "canonicalIds": [
+        "health"
+      ],
       "actual": "Hit planned gym sessions, run protein-first meals, prioritize sleep quality and emotional regulation during stress.",
       "becoming": "200 lbs with an athletic Olympic lifter build. Lean, strong, disciplined. Training is non-negotiable.",
       "timeline": "December 2026",
@@ -36,13 +50,20 @@
         "Clean eating — protein-first every meal",
         "Sleep by 9:30, protect sleep quality",
         "Track via app"
-      ]
+      ],
+      "fundamentals": {
+        "universal": [],
+        "personal": []
+      }
     },
     {
       "id": "wealth",
       "label": "Wealth",
       "hex": "#f59e0b",
-      "canonicalIds": ["career", "finances"],
+      "canonicalIds": [
+        "career",
+        "finances"
+      ],
       "actual": "Prioritize AI fluency and minimum two deep-work blocks/day on high-leverage output. Keep compounding systems steady and tie major spending decisions to explicit long-term intent.",
       "becoming": "100k/year providing premium value across AI, meditation, personal growth, and addiction recovery. Financial tracker app and productivity/self-improvement vision app as primary vehicles.",
       "timeline": "December 2027",
@@ -52,15 +73,21 @@
         "Build and ship on financial tracker app",
         "Build and ship on productivity/vision app",
         "Study and apply AI to domains I love"
-      ]
+      ],
+      "fundamentals": {
+        "universal": [],
+        "personal": []
+      }
     },
     {
       "id": "love",
       "label": "Love",
       "hex": "#ec4899",
-      "canonicalIds": ["relationships"],
+      "canonicalIds": [
+        "relationships"
+      ],
       "actual": "Reduce isolation with deliberate weekly social contact. Pursue honest relationship clarity conversations.",
-      "becoming": "Romantic: shared vision of future, alignment on daily and long-term routine and goals. Mutual respect. Excitement. Fulfilling relationship. Social: active local community, friends who push each other forward.",
+      "becoming": "Romantic: a partner who meets universal fundamentals and my personal fundamentals. Built through investment, not discovered through optimization.\nSocial: active local community, friends who push each other forward.",
       "timeline": "",
       "habits": [
         "Be grateful for parents, family, partner, friends — daily",
@@ -68,13 +95,27 @@
         "Check in with partner 2-3x/week with prepared topics",
         "Smile to parents and ask about them",
         "Initiate one social plan per week"
-      ]
+      ],
+      "fundamentals": {
+        "universal": [
+          "Teamwork",
+          "Kindness / compassion",
+          "Ability to argue well & communicate",
+          "Showing up in hard times",
+          "Making space for each other's flaws"
+        ],
+        "personal": []
+      }
     },
     {
       "id": "self",
       "label": "Self",
       "hex": "#a855f7",
-      "canonicalIds": ["personal_growth", "fun", "environment"],
+      "canonicalIds": [
+        "personal_growth",
+        "fun",
+        "environment"
+      ],
       "actual": "Keep daily reflection/journaling and meditation active; protect sobriety streaks and interrupt urges immediately. Replace at least one zero-sum leisure loop with a positive-sum activity.",
       "becoming": "Calm, resilient, self-aware. Mind protected at all costs. Morning priorities before others. Focused. Grounded. Proactive. 3 years clean from all substances. Consistently curious — reading, exploring, never stagnant.",
       "timeline": "",
@@ -85,28 +126,30 @@
         "Plan daily via app",
         "No substances — non-negotiable",
         "Protect mornings — my priorities before others"
-      ]
+      ],
+      "fundamentals": {
+        "universal": [],
+        "personal": []
+      }
     }
   ],
   "intentions": {
-    "daily": "",
-    "weekly": ""
+    "weekly": "make the hard decision"
   },
   "ritualBlueprint": {
     "morning": {
       "steps": [
         "Wake — no snooze",
-        "Open /plan/day (blueprint)",
         "Brush teeth + warm water",
         "Wim Hof (1 round)",
-        "Journal (top priorities)",
-        "Review identity script",
-        "Plan day (or confirm last night's drafts)",
+        "Open morning report — sit with identity script, feel into the state",
+        "Journal",
+        "Open /plan/day — confirm plan, toggle habits",
         "Start work"
       ],
       "habitStacks": [
-        "Open laptop → blueprint first, nothing else",
-        "After warm water → Wim Hof immediately"
+        "After warm water → Wim Hof immediately",
+        "After Wim Hof → open morning report before anything else"
       ]
     },
     "midday": {
@@ -139,8 +182,13 @@
     }
   },
   "inputControl": {
-    "mentors": ["Daniel Abrada"],
-    "books": ["As a Man Thinketh — James Allen", "The Perfume of Silence — Francis Lucille"],
+    "mentors": [
+      "Daniel Abrada"
+    ],
+    "books": [
+      "As a Man Thinketh — James Allen",
+      "The Perfume of Silence — Francis Lucille"
+    ],
     "podcasts": [],
     "playlists": [],
     "nutritionRules": [
@@ -167,10 +215,22 @@
       "Future fantasizing without action"
     ],
     "triggerReplacements": [
-      { "trigger": "Boredom after work", "replacement": "Walk with Cooper or cook" },
-      { "trigger": "Stress/overwhelm", "replacement": "Breathwork or cold shower" },
-      { "trigger": "Urge to game", "replacement": "Read or meditate" },
-      { "trigger": "After lunch — YouTube pull", "replacement": "Walk first, or short meditation outside" }
+      {
+        "trigger": "Boredom after work",
+        "replacement": "Walk with Cooper or cook"
+      },
+      {
+        "trigger": "Stress/overwhelm",
+        "replacement": "Breathwork or cold shower"
+      },
+      {
+        "trigger": "Urge to game",
+        "replacement": "Read or meditate"
+      },
+      {
+        "trigger": "After lunch — YouTube pull",
+        "replacement": "Walk first, or short meditation outside"
+      }
     ]
   },
   "habitAudit": {

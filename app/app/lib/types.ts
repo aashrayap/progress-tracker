@@ -116,25 +116,14 @@ interface EatingSummary {
 
 export interface HealthData {
   weight: WeightData;
+  weeklyProgram: import("./config").ProgramDay[];
+  gymCompletionByDate: string[];
   workouts: {
-    today: WorkoutDay | null;
     history: WorkoutDay[];
-    nextWorkout: string;
-    templateKey: string;
-    displayTemplate: string;
-    displayExercises: PrescribedExercise[];
-    totalSets: number;
-    cardioFinisherMin: number;
-    rotationLength: number;
-    isCardio: boolean;
-    cardioInfo: { label: string; detail: string; minutes: number } | null;
-    rotation: { key: string; kind: string; label: string; detail: string; minutes?: number }[];
-    exerciseTargets: ExerciseTarget[];
   };
   gymToday: boolean;
   gymStreak: number;
   gymLast7: number;
-  mealsToday: { slot: string; clean: boolean; notes: string }[];
   eatingSummary: EatingSummary;
   gymReflection: GymReflection | null;
   exerciseProgress: Record<string, ExerciseProgressEntry[]>;
@@ -174,21 +163,13 @@ export interface QuoteEntry {
   added: string;
 }
 
-export interface ResourceEntry {
-  title: string;
-  author: string;
-  type: string;
-  domain: string;
-  status: string;
-  notes: string;
-}
 
 interface LanguageRules {
   use: string[];
   forbid: string[];
 }
 
-interface IdentityScript {
+export interface IdentityScript {
   coreTraits: { health: string; wealth: string; love: string; self: string };
   nonNegotiables: string;
   languageRules: LanguageRules;
@@ -245,9 +226,14 @@ export interface VisionDomain {
   becoming: string;
   timeline: string;
   habits: string[];
+  fundamentals?: {
+    universal: string[];
+    personal: string[];
+  };
 }
 
 export interface VisionData {
+  philosophy?: string;
   identityScript: IdentityScript;
   antiVision: { health: string; wealth: string; love: string; self: string };
   domains: VisionDomain[];

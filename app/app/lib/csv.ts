@@ -7,7 +7,6 @@ import type {
   GroceryEntry,
   InboxEntry,
   QuoteEntry,
-  ResourceEntry,
   VisionData,
   WorkoutDay,
 } from "./types";
@@ -36,8 +35,6 @@ const GROCERIES_PATH = path.join(DATA_ROOT, "groceries.csv");
 const GROCERIES_HEADER = "item,section,done,added";
 const QUOTES_PATH = path.join(DATA_ROOT, "quotes.csv");
 const QUOTES_HEADER = "id,text,author,source,domain,added";
-const RESOURCES_PATH = path.join(DATA_ROOT, "resources.csv");
-const RESOURCES_HEADER = "title,author,type,domain,status,notes";
 const BRIEFING_PATH = path.join(DATA_ROOT, "briefing.json");
 const VISION_PATH = path.join(DATA_ROOT, "vision.json");
 const BRIEFING_FEEDBACK_PATH = path.join(DATA_ROOT, "briefing_feedback.csv");
@@ -672,34 +669,23 @@ export function appendWorkouts(entries: WorkoutSetEntry[]): void {
   appendLines(WORKOUTS_PATH, WORKOUTS_HEADER, lines);
 }
 
-const GYM_ROTATION = ["A", "B", "C", "D", "E", "F", "G"] as const;
+const DOW_TO_PROGRAM_KEY: Record<number, string | null> = {
+  0: null,   // Sunday — rest
+  1: "Mon",
+  2: "Tue",
+  3: "Wed",
+  4: "Thu",
+  5: "Fri",
+  6: null,   // Saturday — rest
+};
 
-function parseWorkoutKey(entry: DailySignalEntry, cycle: string[]): string | null {
-  const source = `${entry.context || ""} ${entry.category || ""}`;
-  const dayMatch = source.match(/Day\s*([A-Za-z0-9_-]+)/i)?.[1];
-  const fallback = entry.category || "";
-  return normalizeWorkoutKey(dayMatch || fallback, cycle);
-}
-
-export function getNextWorkout(signals: DailySignalEntry[], cycle: string[] = [...GYM_ROTATION]): string {
-  const gymDays = signals
-    .filter((e) => e.signal === "gym" && e.value === "1")
-    .sort((a, b) => b.date.localeCompare(a.date));
-
-  if (gymDays.length === 0) return cycle[0] || "A";
-
-  // Walk backwards through gym days to find one with a parseable workout key
-  for (const day of gymDays) {
-    const lastDay = parseWorkoutKey(day, cycle);
-    if (!lastDay) continue;
-
-    const cycleUpper = cycle.map((item) => item.toUpperCase());
-    const lastIdx = cycleUpper.indexOf(lastDay.toUpperCase());
-    if (lastIdx === -1) continue;
-    return cycle[(lastIdx + 1) % cycle.length];
-  }
-
-  return cycle[0] || "A";
+/**
+ * Returns the program day key for a given weekday number (0=Sun, 6=Sat).
+ * Returns null for rest days (Sat/Sun).
+ */
+export function getTodayWorkout(weekday?: number): string | null {
+  const dow = weekday !== undefined ? weekday : new Date().getDay();
+  return DOW_TO_PROGRAM_KEY[dow] ?? null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -784,33 +770,6 @@ export function clearDoneGroceries(): void {
 // ─────────────────────────────────────────────────────────────────────────────
 // Quotes
 // ─────────────────────────────────────────────────────────────────────────────
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Resources
-// ─────────────────────────────────────────────────────────────────────────────
-
-export function readResources(): ResourceEntry[] {
-  if (!fs.existsSync(RESOURCES_PATH)) return [];
-  const lines = readDataLines(RESOURCES_PATH);
-  return lines.map((line) => {
-    const c = parseCSVLine(line);
-    return {
-      title: c[0] || "",
-      author: c[1] || "",
-      type: c[2] || "",
-      domain: c[3] || "",
-      status: c[4] || "",
-      notes: c[5] || "",
-    };
-  });
-}
-
-export function addResource(entry: ResourceEntry): void {
-  const line = [entry.title, entry.author, entry.type, entry.domain, entry.status, entry.notes]
-    .map((v) => (v.includes(",") || v.includes('"') ? `"${v.replace(/"/g, '""')}"` : v))
-    .join(",");
-  appendLines(RESOURCES_PATH, RESOURCES_HEADER, [line]);
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Briefing

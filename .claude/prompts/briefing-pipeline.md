@@ -54,12 +54,23 @@ Extract 2-4 concrete priorities for today from:
 2. Open todos (todos.csv) — pick highest impact
 3. If no plan/todos, suggest based on detected state
 
+## Plan Insight
+
+Generate a 1-2 sentence plan-aware insight for the "Today's Plan" card on the Hub. Analyze:
+- Today's plan blocks, current time, and completion rate so far
+- Energy signals: gym done today, sleep quality, any relapses
+- Frame around process over results (Newport-style): "You've blocked 6 hours of focused work — that's the system working" rather than "You need to finish X"
+- When afternoon blocks are empty and depletion signals are present (gym done + afternoon + relapses), suggest recharge
+
+If no plan blocks exist for today, set to `null`.
+
 ## Output Schema
 
 ```json
 {
   "state": "momentum|recovery|neutral|danger|explore|disruption",
   "insight": "2-4 sentence AI-generated insight",
+  "planInsight": "1-2 sentence plan-aware insight or null",
   "priorities": ["priority 1", "priority 2", "priority 3"],
   "quote": { "text": "...", "author": "..." },
   "generated_at": "ISO 8601 timestamp",

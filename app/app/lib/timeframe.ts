@@ -1,4 +1,5 @@
 import { toDateStr } from "./utils";
+import { getWeekStart } from "./date-utils";
 
 export type TimeframeKey = "week" | "month";
 
@@ -10,12 +11,7 @@ export interface TimeframeWindow {
 }
 
 function startOfCurrentWeek(now: Date): Date {
-  const d = new Date(now);
-  const day = d.getDay();
-  const mondayOffset = day === 0 ? 6 : day - 1;
-  d.setDate(d.getDate() - mondayOffset);
-  d.setHours(0, 0, 0, 0);
-  return d;
+  return getWeekStart(now);
 }
 
 function startOfCurrentMonth(now: Date): Date {

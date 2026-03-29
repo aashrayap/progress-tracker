@@ -1,42 +1,27 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import type { HealthData, GroceryEntry } from "../lib/types";
-import { toDateStr } from "../lib/utils";
-import WorkoutCard from "../components/WorkoutCard";
-import WeightChart from "../components/WeightChart";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import type { HealthData } from "../lib/types";
+import WeeklyProgramChart from "../components/WeeklyProgramChart";
 import ExerciseHistory from "../components/ExerciseHistory";
-import GroceryCard from "../components/GroceryCard";
 
-interface GroceryData {
-  sections: { name: string; items: GroceryEntry[] }[];
-  totalItems: number;
-  doneItems: number;
-}
+const DOW_TO_KEY: Record<number, string> = {
+  0: "Sun", 1: "Mon", 2: "Tue", 3: "Wed", 4: "Thu", 5: "Fri", 6: "Sat",
+};
 
 export default function HealthPage() {
   const [data, setData] = useState<HealthData | null>(null);
-  const [groceryData, setGroceryData] = useState<GroceryData | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const fetchGroceries = useCallback(() => {
-    fetch("/api/groceries")
-      .then((res) => res.json())
-      .then(setGroceryData)
-      .catch((err) => console.error("Failed to load groceries:", err));
-  }, []);
+  const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
 
   const fetchData = useCallback(() => {
-    Promise.all([
-      fetch("/api/health").then((res) => {
+    fetch("/api/health")
+      .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch health data");
         return res.json();
-      }),
-      fetch("/api/groceries").then((res) => res.json()).catch(() => null),
-    ])
-      .then(([healthData, groceries]) => {
+      })
+      .then((healthData) => {
         setData(healthData);
-        if (groceries) setGroceryData(groceries);
         setLoading(false);
       })
       .catch((err) => {
@@ -48,6 +33,24 @@ export default function HealthPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Initialize selected day to today's program key on first data load
+  useEffect(() => {
+    if (data && selectedDayKey === null) {
+      const todayKey = DOW_TO_KEY[new Date().getDay()] ?? "Mon";
+      setSelectedDayKey(todayKey);
+    }
+  }, [data, selectedDayKey]);
+
+  const selectedDay = useMemo(
+    () => data?.weeklyProgram.find((d) => d.key === selectedDayKey) ?? null,
+    [data, selectedDayKey]
+  );
+
+  const selectedExerciseIds = useMemo(
+    () => selectedDay?.exercises.map((e) => e.id) ?? [],
+    [selectedDay]
+  );
 
   if (loading) {
     return (
@@ -65,133 +68,26 @@ export default function HealthPage() {
     );
   }
 
-  const {
-    weight,
-    workouts,
-    gymToday,
-    gymStreak,
-    gymLast7,
-    exerciseProgress,
-    eatingSummary,
-    gymReflection,
-  } = data;
-
-  const handleMarkDone = async () => {
-    if (gymToday) return;
-
-    const todayStr = toDateStr(new Date());
-    const res = await fetch("/api/daily-signals", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        entries: [
-          {
-            date: todayStr,
-            signal: "gym",
-            value: "1",
-            unit: "bool",
-            context: workouts.displayTemplate,
-            source: "ui",
-            captureId: "",
-            category: workouts.templateKey,
-          },
-        ],
-      }),
-    });
-
-    if (!res.ok) {
-      console.error("Failed to mark gym done");
-      return;
-    }
-
-    fetchData();
-  };
-
-  const handleGroceryToggle = async (item: string, done: number) => {
-    await fetch("/api/groceries", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ item, done }),
-    });
-    fetchGroceries();
-  };
-
-  const handleGroceryDelete = async (item: string) => {
-    await fetch("/api/groceries", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ item }),
-    });
-    fetchGroceries();
-  };
-
-  const handleClearDone = async () => {
-    await fetch("/api/groceries", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ clear: true }),
-    });
-    fetchGroceries();
-  };
-
   return (
     <div className="min-h-screen bg-black text-zinc-100">
       <div className="p-4 sm:p-6">
-        <div className="max-w-lg mx-auto">
-          <header className="mb-6">
-            <h1 className="text-2xl font-bold mb-3">Health</h1>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="p-3 rounded-xl bg-zinc-900/60 backdrop-blur-md border border-white/10 text-center">
-                <p className="text-2xl font-bold text-emerald-400">{gymStreak}</p>
-                <p className="text-xs text-zinc-400">Gym Streak</p>
-              </div>
-              <div className="p-3 rounded-xl bg-zinc-900/60 backdrop-blur-md border border-white/10 text-center">
-                <p className="text-2xl font-bold text-blue-400">
-                  {gymLast7}/{workouts.rotationLength}
-                </p>
-                <p className="text-xs text-zinc-400">Last 7 Days</p>
-              </div>
-              <div className="p-3 rounded-xl bg-zinc-900/60 backdrop-blur-md border border-white/10 text-center">
-                <p className="text-2xl font-bold text-zinc-100">
-                  {eatingSummary.total > 0 ? `${eatingSummary.clean}/${eatingSummary.total}` : "-"}
-                </p>
-                <p className="text-xs text-zinc-400">Eating</p>
-              </div>
-            </div>
-          </header>
+        <header className="mb-4">
+          <h1 className="text-2xl font-bold">Health</h1>
+        </header>
 
-          <WorkoutCard
-            gymToday={gymToday}
-            templateKey={workouts.templateKey}
-            totalSets={workouts.totalSets}
-            prescribedExercises={workouts.displayExercises}
-            todayWorkout={workouts.today}
-            cardioFinisherMin={workouts.cardioFinisherMin}
-            gymReflection={gymReflection}
-            onMarkDone={handleMarkDone}
-            isCardio={workouts.isCardio}
-            cardioInfo={workouts.cardioInfo}
-            rotation={workouts.rotation}
-            exerciseTargets={workouts.exerciseTargets || []}
-          />
+        <WeeklyProgramChart
+          weeklyProgram={data.weeklyProgram}
+          gymCompletionByDate={data.gymCompletionByDate}
+          selectedDayKey={selectedDayKey}
+          onSelectDay={setSelectedDayKey}
+        />
 
-          <WeightChart weight={weight} />
-
+        <div className="mt-4">
           <ExerciseHistory
-            exerciseProgress={exerciseProgress}
-            workoutHistory={workouts.history}
+            exerciseProgress={data.exerciseProgress}
+            workoutHistory={data.workouts.history}
+            exerciseIds={selectedExerciseIds}
           />
-
-          {groceryData && (
-            <GroceryCard
-              sections={groceryData.sections}
-              totalItems={groceryData.totalItems}
-              doneItems={groceryData.doneItems}
-              onToggle={handleGroceryToggle}
-              onDelete={handleGroceryDelete}
-              onClearDone={handleClearDone}
-            />
-          )}
         </div>
       </div>
     </div>

@@ -264,11 +264,11 @@ date,signal,value,unit,context,source,capture_id,category
 2026-03-06,sleep,0,bool,went to bed late but sleep quality was good,chat,,habits
 2026-03-06,weed,1,bool,clean,chat,,addiction
 2026-03-06,feeling,uncertain,,,chat,,mental
-2026-03-06,intention,health,context: strong habit day — cardio (Day F) + clean car + haircut before poker. check-in ritual bringing backward clarity but needs forward vision alignment,chat,,health
+2026-03-06,intention,health,context: strong habit day — cardio (Day F) + clean car + haircut before poker. check-in ritual bringing backward clarity but needs forward vision alignment,chat,,health,
 2026-03-06,checkin_daily,1,bool,,chat,,system
 2026-03-06,deep_work,1,bool,,chat,,habits
 2026-03-06,meditate,1,bool,,chat,,habits
-2026-03-06,intention,personal_growth,remember my blessings — enjoy recovery and freedom and get wins,chat,,personal_growth
+2026-03-06,intention,personal_growth,remember my blessings — enjoy recovery and freedom and get wins,chat,,personal_growth,
 2026-03-06,gym,1,bool,Day F - 30min walk with Cooper,chat,,habits
 2026-03-06,lol,1,bool,clean so far,chat,,addiction
 2026-03-06,ate_clean,1,bool,hasnt eaten yet - fasting clean,chat,,habits
@@ -300,13 +300,241 @@ date,signal,value,unit,context,source,capture_id,category
 2026-03-08,poker,0,bool,relapsed - played,chat,,addiction
 2026-03-08,clarity,0,bool,relapsed,chat,,addiction
 2026-03-09,social_contact,0,bool,no meaningful social contact this week,chat,,relationships
-2026-03-09,weekly_experiment,personal_growth,context: Poker Friday — zero alcohol and home by midnight and in bed immediately. Secondary: introduce time blocks for research/consumption — outside those blocks and free time no mindless browsing,chat,,personal_growth
-2026-03-09,weekly_goal,health,context: green cornerstone habits every day,chat,,health
-2026-03-09,weekly_goal,personal_growth,context: poker Friday — no beers and home to sleep,chat,,personal_growth
-2026-03-09,weekly_goal,personal_growth,context: strategic consumption only — no mindless YouTube/X,chat,,personal_growth
-2026-03-09,weekly_goal,career,context: lock down vision/goals system in app — daily/weekly/monthly/yearly view,chat,,career
-2026-03-09,weekly_intention,personal_growth,context: consume less and act more,chat,,personal_growth
+2026-03-09,weekly_experiment,personal_growth,context: Poker Friday — zero alcohol and home by midnight and in bed immediately. Secondary: introduce time blocks for research/consumption — outside those blocks and free time no mindless browsing,chat,,personal_growth,
+2026-03-09,weekly_goal,health,context: green cornerstone habits every day,chat,,health,
+2026-03-09,weekly_goal,personal_growth,context: poker Friday — no beers and home to sleep,chat,,personal_growth,
+2026-03-09,weekly_goal,personal_growth,context: strategic consumption only — no mindless YouTube/X,chat,,personal_growth,
+2026-03-09,weekly_goal,career,context: lock down vision/goals system in app — daily/weekly/monthly/yearly view,chat,,career,
+2026-03-09,weekly_intention,personal_growth,context: consume less and act more,chat,,personal_growth,
 2026-03-09,gym,1,bool,Day A logged from workout data,chat,,health
 2026-03-09,deep_work,1,bool,,chat,,career
 2026-03-09,poker,1,bool,green so far,chat,,personal_growth
 2026-03-09,weed,1,bool,green,chat,,personal_growth
+2026-03-09,ate_clean,1,bool,ate healthy,chat,,health
+2026-03-09,lol,0,bool,relapsed,chat,,personal_growth
+2026-03-09,meditate,0,bool,missed,chat,,personal_growth
+2026-03-09,sleep,1,bool,green,chat,,health
+2026-03-09,clarity,0,bool,red,chat,,personal_growth
+2026-03-10,intention,personal_growth,,when drained recharge with vision-aligned actions — not dopamine defaults,chat,,personal_growth
+2026-03-10,checkin_daily,1,bool,,chat,,system
+2026-03-10,gym,1,bool,Day B,chat,,health
+2026-03-10,sleep,1,bool,,chat,,habits
+2026-03-10,weed,1,bool,clean,chat,,addiction
+2026-03-10,lol,1,bool,clean,chat,,addiction
+2026-03-10,poker,1,bool,clean,chat,,addiction
+2026-03-10,clarity,1,bool,clean but struggling — compulsive urge to touch/watch,chat,,addiction
+2026-03-10,deep_work,1,bool,,chat,,habits
+2026-03-10,meditate,1,bool,620-630am; thoughts like birds chirping - no difference between internal and external state outside of labels,chat,,habits
+2026-03-10,ate_clean,1,bool,clean so far,chat,,habits
+2026-03-11,gym,0,bool,,chat,,habits
+2026-03-11,deep_work,1,bool,,chat,,habits
+2026-03-11,meditate,1,bool,,chat,,habits
+2026-03-11,ate_clean,0,bool,,chat,,habits
+2026-03-11,weed,1,bool,clean,chat,,addiction
+2026-03-11,lol,0,bool,relapsed,chat,,addiction
+2026-03-11,poker,1,bool,clean,chat,,addiction
+2026-03-11,clarity,1,bool,clean,chat,,addiction
+2026-03-12,sleep,0,bool,bed too late Wed night but got 7.5h,chat,,habits
+2026-03-11,sleep,1,bool,,chat,,habits
+2026-03-12,intention,survive,mental,,,chat,
+2026-03-12,weed,1,addiction,,,chat,
+2026-03-12,lol,1,addiction,,,chat,
+2026-03-12,clarity,1,addiction,,,chat,
+2026-03-12,gym,0,health,,,chat,
+2026-03-12,deep_work,1,career,,,chat,
+2026-03-12,meditate,0,health,,,chat,
+2026-03-12,ate_clean,0,health,,,chat,
+2026-03-12,feeling,restless,mental,craving dopamine hit — work drain and AI automation spiral driving need to escape. Going to poker despite knowing the risk,,chat,
+2026-03-12,mind,work_depletion,addiction,thought: need to not be isolated / do something enjoyable | action: going to poker | circumstance: spiralling on AI automation at work — willpower depleted,,chat,
+2026-03-13,sleep,1,,health,chat,,
+2026-03-13,intention,career,be intentional about the work you spend time on,career,chat,,
+2026-03-12,poker,0,,addiction,chat,,
+2026-03-12,meditate,1,,health,chat,,
+2026-03-13,feeling,uncertain,Head says relationship is great but gut has unresolved doubts — LDR distance + withdrawal fog making it hard to trust own signal,chat,,relationships,
+2026-03-13,mind,attraction_pull,thought: so many options out there why am I stuck | action: none yet — wants to track patterns | circumstance: post-poker depleted + 6mo LDR + weed/clarity withdrawal,chat,,relationships,
+2026-03-14,gym,1,bool,Day C,ui,,C
+2026-03-13,weed,0,,personal_growth,chat,,addiction
+2026-03-13,lol,0,,personal_growth,chat,,addiction
+2026-03-13,poker,0,,personal_growth,chat,,addiction
+2026-03-13,clarity,0,,personal_growth,chat,,addiction
+2026-03-13,gym,0,,health,chat,,health
+2026-03-13,meditate,0,,health,chat,,health
+2026-03-13,deep_work,0,,career,chat,,career
+2026-03-13,ate_clean,0,,health,chat,,health
+2026-03-14,sleep,0,,health,chat,,health
+2026-03-14,weed,0,,personal_growth,chat,,addiction
+2026-03-14,lol,0,,personal_growth,chat,,addiction
+2026-03-14,poker,0,,personal_growth,chat,,addiction
+2026-03-14,clarity,0,,personal_growth,chat,,addiction
+2026-03-14,meditate,0,,health,chat,,health
+2026-03-14,deep_work,0,,career,chat,,career
+2026-03-14,ate_clean,0,,health,chat,,health
+2026-03-15,sleep,0,,health,chat,,health
+2026-03-15,weed,0,,personal_growth,chat,,addiction
+2026-03-15,lol,0,,personal_growth,chat,,addiction
+2026-03-15,poker,0,,personal_growth,chat,,addiction
+2026-03-15,clarity,0,,personal_growth,chat,,addiction
+2026-03-15,gym,0,,health,chat,,health
+2026-03-15,meditate,0,,health,chat,,health
+2026-03-15,deep_work,0,,career,chat,,career
+2026-03-15,ate_clean,0,,health,chat,,health
+2026-03-16,sleep,0,,health,chat,,health
+2026-03-16,lol,0,,personal_growth,chat,,addiction
+2026-03-16,poker,1,,personal_growth,chat,,addiction
+2026-03-16,clarity,0,,personal_growth,chat,,addiction
+2026-03-16,gym,0,,health,chat,,health
+2026-03-16,meditate,0,,health,chat,,health
+2026-03-16,deep_work,0,,career,chat,,career
+2026-03-16,ate_clean,0,,health,chat,,health
+2026-03-17,sleep,0,,health,chat,,health
+2026-03-17,lol,1,,personal_growth,chat,,addiction
+2026-03-17,poker,1,,personal_growth,chat,,addiction
+2026-03-17,clarity,1,,personal_growth,chat,,addiction
+2026-03-17,gym,0,,health,chat,,health
+2026-03-17,meditate,0,,health,chat,,health
+2026-03-17,deep_work,0,,career,chat,,career
+2026-03-17,ate_clean,0,,health,chat,,health
+2026-03-17,intention,health,recover,health,chat,,
+2026-03-18,sleep,1,,slept on time,chat,,
+2026-03-18,intention,personal_growth,slow and steady,chat,,,
+2026-03-16,weed,1,,personal_growth,chat,,addiction
+2026-03-17,weed,1,,personal_growth,chat,,addiction
+2026-03-18,feeling,overwhelmed,,,chat,,
+2026-03-18,mind,comparison_spiral,thought: my life sucks theirs is good | trigger: lifestyle YouTube (attractive creator + travel + NYC) | pattern: depletion state → dopamine seeking (stimulating content) → comparison amplified by withdrawal → craving spike → stuck feeling. withdrawal makes gap feel massive. same content lands differently when not depleted. levers: reduce stimulating input in deficit state + close isolation gap with actual contact,,,chat,mental
+2026-03-19,sleep,1,bool,,chat,,health
+2026-03-19,weed,1,bool,,chat,,addiction
+2026-03-19,lol,1,bool,,chat,,addiction
+2026-03-19,deep_work,1,bool,,chat,,career
+2026-03-19,ate_clean,1,bool,,chat,,health
+2026-03-19,poker,0,bool,,chat,,addiction
+2026-03-19,clarity,0,bool,,chat,,addiction
+2026-03-19,gym,0,bool,,chat,,health
+2026-03-20,sleep,1,bool,,chat,,health
+2026-03-20,vision_reviewed,1,,morning,app,,personal_growth
+2026-03-20,intention,health,,move embrace enjoy,chat,,health
+2026-03-21,sleep,0,,,,,
+2026-03-21,gym,0,,,,,
+2026-03-21,weed,1,,,,,
+2026-03-21,ate_clean,0,,,,,
+2026-03-21,deep_work,0,,,,,
+2026-03-21,meditate,0,,,,,
+2026-03-21,lol,0,,,,,
+2026-03-21,poker,1,,,,,
+2026-03-21,clarity,0,,,,,
+2026-03-20,clarity,0,,,,,
+2026-03-18,clarity,0,,,,,
+2026-03-20,poker,0,,,,,
+2026-03-20,lol,0,,,,,
+2026-03-20,meditate,0,,,,,
+2026-03-20,deep_work,0,,,,,
+2026-03-20,ate_clean,0,,,,,
+2026-03-20,weed,1,,,,,
+2026-03-20,gym,1,,,,,
+2026-03-18,weed,1,,,,,
+2026-03-18,gym,0,,,,,
+2026-03-18,ate_clean,0,,,,,
+2026-03-18,deep_work,1,,,,,
+2026-03-18,meditate,1,,,,,
+2026-03-18,lol,1,,,,,
+2026-03-18,poker,1,,,,,
+2026-03-23,sleep,1,bool,,chat,,health
+2026-03-23,intention,personal_growth,bool,momentum,chat,,personal_growth
+2026-03-22,weed,1,bool,,chat,,addiction
+2026-03-22,lol,0,bool,,chat,,addiction
+2026-03-22,poker,1,bool,,chat,,addiction
+2026-03-22,clarity,1,bool,,chat,,addiction
+2026-03-22,gym,0,bool,,chat,,health
+2026-03-22,deep_work,1,bool,,chat,,career
+2026-03-22,meditate,1,bool,,chat,,personal_growth
+2026-03-22,ate_clean,0,bool,,chat,,health
+2026-03-22,sleep,0,bool,,chat,,health
+2026-03-23,feeling,drained,,long work day + gym - been in same room 4 hours,chat,,health
+2026-03-23,weed,1,,clean,chat,,personal_growth
+2026-03-23,lol,1,,clean,chat,,personal_growth
+2026-03-23,poker,1,,clean,chat,,personal_growth
+2026-03-23,clarity,1,,clean,chat,,personal_growth
+2026-03-23,gym,1,,,chat,,health
+2026-03-23,deep_work,1,,,chat,,career
+2026-03-23,ate_clean,1,,,chat,,health
+2026-03-23,vision_reviewed,1,,evening,app,,personal_growth
+2026-03-23,evening_review,1,,,app,,personal_growth
+2026-03-23,meditate,1,,,app,,personal_growth
+2026-03-23,wim_hof_am,1,,,app,,personal_growth
+2026-03-23,wim_hof_pm,1,,,app,,personal_growth
+2026-03-23,social_contact,0,,dog park briefly,chat,,relationships
+2026-03-23,weekly_goal,health,,green habits — gym sleep eat clean meditate consistently,chat,,health
+2026-03-23,weekly_goal,career,,progress on personal tracker project,chat,,career
+2026-03-23,weekly_goal,personal_growth,,no poker and no weed — protect sobriety,chat,,personal_growth
+2026-03-23,weekly_intention,personal_growth,,make the hard decision,chat,,personal_growth
+2026-03-23,checkin_weekly,1,,,chat,,personal_growth
+2026-03-24,morning_review,1,,morning,app,,personal_growth
+2026-03-25,sleep,0,,chat,,health
+2026-03-25,intention,health,bounce back clean,chat,,health
+2026-03-24,weed,1,,chat,,personal_growth
+2026-03-24,lol,0,,chat,,personal_growth
+2026-03-24,poker,1,,chat,,personal_growth
+2026-03-24,clarity,1,,chat,,personal_growth
+2026-03-24,gym,0,,chat,,health
+2026-03-24,deep_work,1,,chat,,career
+2026-03-24,meditate,1,,chat,,personal_growth
+2026-03-24,ate_clean,1,,chat,,health
+2026-03-24,sleep,1,,chat,,health
+2026-03-24,wim_hof_am,1,,chat,,health
+2026-03-24,wim_hof_pm,1,,chat,,health
+2026-03-25,gym,1,,,,,
+2026-03-26,sleep,1,,,,,
+2026-03-26,intention,personal_growth,,experiencing life is the most interesting game of all,,,personal_growth
+2026-03-25,weed,1,,,,,personal_growth
+2026-03-25,poker,1,,,,,personal_growth
+2026-03-25,clarity,1,,,,,personal_growth
+2026-03-25,lol,0,,,,,personal_growth
+2026-03-25,deep_work,0,,,,,career
+2026-03-25,meditate,1,,,,,health
+2026-03-25,ate_clean,1,,,,,health
+2026-03-25,wim_hof_am,1,,,,,health
+2026-03-25,wim_hof_pm,1,,,,,health
+2026-03-25,morning_review,1,,,,,personal_growth
+2026-03-25,midday_review,0,,,,,personal_growth
+2026-03-25,evening_review,0,,,,,personal_growth
+2026-03-26,weed,1,,,,,personal_growth
+2026-03-26,poker,1,,,,,personal_growth
+2026-03-26,lol,0,,,,,personal_growth
+2026-03-26,clarity,0,,,,,personal_growth
+2026-03-26,meditate,1,,,,,personal_growth
+2026-03-26,deep_work,1,,,,,career
+2026-03-26,wim_hof_am,1,,,,,health
+2026-03-26,wim_hof_pm,1,,,,,health
+2026-03-26,morning_review,1,,,,,personal_growth
+2026-03-26,midday_review,1,,,,,personal_growth
+2026-03-26,evening_review,0,,,,,personal_growth
+2026-03-26,gym,0,,,,,health
+2026-03-26,ate_clean,0,,,,,health
+2026-03-27,sleep,0,,,,,health
+2026-03-27,wim_hof_am,1,,,,,health
+2026-03-27,morning_review,1,,,,,personal_growth
+2026-03-27,weed,1,,chat,,,personal_growth
+2026-03-27,lol,0,,chat,,,personal_growth
+2026-03-27,poker,1,,chat,,,personal_growth
+2026-03-27,clarity,1,,chat,,,personal_growth
+2026-03-27,deep_work,1,,chat,,,career
+2026-03-27,gym,0,,chat,,,health
+2026-03-27,meditate,0,,chat,,,personal_growth
+2026-03-27,ate_clean,0,,chat,,,health
+2026-03-27,midday_review,0,,chat,,,personal_growth
+2026-03-27,evening_review,0,,chat,,,personal_growth
+2026-03-27,wim_hof_pm,0,,chat,,,health
+2026-03-28,weed,1,,,,,personal_growth
+2026-03-28,lol,0,,,,,"personal_growth"
+2026-03-28,poker,1,,,,,personal_growth
+2026-03-28,clarity,1,,,,,personal_growth
+2026-03-28,sleep,0,,,,,health
+2026-03-28,gym,1,,,,,health
+2026-03-28,deep_work,1,,,,,career
+2026-03-28,meditate,1,,,,,personal_growth
+2026-03-28,ate_clean,0,,,,,health
+2026-03-28,morning_review,1,,,,,personal_growth
+2026-03-28,midday_review,0,,,,,personal_growth
+2026-03-28,evening_review,0,,,,,personal_growth
+2026-03-28,wim_hof_am,1,,,,,health
+2026-03-28,wim_hof_pm,1,,,,,health
+2026-03-29,sleep,1,,,,,health

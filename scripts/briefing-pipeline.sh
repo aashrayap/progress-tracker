@@ -87,6 +87,12 @@ compute_hash() {
       hash_input+="$(stat -f '%m' "$f" 2>/dev/null || echo 0)"
     fi
   done
+  # Add hour bucket during waking hours (7am-10pm) to trigger hourly regeneration
+  local current_hour
+  current_hour=$(date '+%H')
+  if [ "$current_hour" -ge 7 ] && [ "$current_hour" -le 22 ]; then
+    hash_input+="h${current_hour}"
+  fi
   echo -n "$hash_input" | md5 -q 2>/dev/null || echo -n "$hash_input" | md5sum | cut -d' ' -f1
 }
 

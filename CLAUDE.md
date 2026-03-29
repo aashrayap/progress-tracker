@@ -4,7 +4,7 @@ Personal life execution system for health, career, relationships, finances, fun,
 
 ## Objective
 
-Turn daily inputs into reliable next actions using canonical CSV data.
+Turn daily inputs into reliable next actions using canonical CSV data. Guided by a 4-pillar vision model (Health, Wealth, Love, Self) that connects daily signals to long-term identity change.
 
 ## Canonical Domain Taxonomy (7 domains)
 
@@ -34,31 +34,9 @@ The 4-pillar model is the human-facing overlay used in `data/vision.json`, the `
 | Love | `love` | `relationships` | Partner, friends, family, social |
 | Self | `self` | `personal_growth`, `fun`, `environment` | Reading, reflection, meditation, addiction recovery, hobbies, home |
 
-## System Vocabulary
+## Layer Rule
 
-Use these terms consistently in docs, specs, code comments, and conversation:
-
-```
-┌─────────────────────────────────────────────────────────┐
-│ Layer 0: Core Docs       (defines the system)           │
-│ Layer 1: Core Data       (records evidence)             │ ← Foundation
-├─────────────────────────────────────────────────────────┤
-│ Layer 2: Intelligence    (lib + api — computes meaning) │ ← Backend = L0-L2
-├─────────────────────────────────────────────────────────┤
-│ Layer 3: Surfaces        (pages + components — UI)      │
-└─────────────────────────────────────────────────────────┘
-```
-
-| Term | Layers | Contains | When to use |
-|------|--------|----------|-------------|
-| **Core Docs** | L0 | `CLAUDE.md`, `docs/*.md` | "Does this align with core docs?" |
-| **Core Data** | L1 | `data/*.csv` | "What does core data say?" |
-| **Foundation** | L0 + L1 | Core Docs + Core Data | "Bring the UI in line with foundation" |
-| **Intelligence** | L2 | `app/app/lib/`, `app/app/api/` | "This logic belongs in intelligence, not surfaces" |
-| **Backend** | L0-L2 | Foundation + Intelligence | "Is this a backend or surface change?" |
-| **Surfaces** | L3 | `app/app/*/page.tsx`, `app/app/components/` | "Surfaces consume, they don't define" |
-
-Core rule: each layer only depends downward. Surfaces consume Intelligence. Intelligence reads Foundation. Foundation is self-contained.
+Each layer depends only downward: Surfaces (`app/*/page.tsx`, components) → Intelligence (`lib/`, `api/`) → Foundation (`docs/`, `data/*.csv`). Full vocabulary in `docs/architecture.md`.
 
 ## Read Before Editing
 
@@ -108,7 +86,7 @@ experiments:        name,hypothesis,start_date,duration_days,domain,status,verdi
 | `/log`           | Quick-fire utility for one-off CSV writes. `/checkin` + voice cover most logging — `/log` is best for quick weight entries and notes | `log weight`, `log note`, `log relapse` |
 | `/weekly-review` | Weekly accountability and planning      | `weekly review`, `plan the week`       |
 | `/review-notes`  | Cross-CSV activity summary              | `review notes`, `what happened`        |
-| `/checkin`       | Single entry point for all daily writes. Morning: log, anchor, plan. Evening: decompress, reflect, set tomorrow. Also handles weekly/monthly/quarterly. Absorbed /plan skill. | `checkin`, `check in`, `morning check-in`, `plan`, `add block` |
+| `/checkin`       | Single entry point for all writes. Daily menu: Log, Process (anchor/decompress/reflect/reframe), Plan (today/tomorrow/week). Also handles weekly/monthly/quarterly. | `checkin`, `check in`, `morning check-in`, `plan`, `add block` |
 | `/feature-interview` | Scope a feature: audit, interview, lock decisions, write spec | `feature interview`, `spec a feature`, `new feature` |
 | `/audit`         | Codebase health scan (read-only, versioned reports) | `audit`, `find dead code`, `cleanup scan` |
 | `/remove-slop`   | Strip AI-generated code slop from diff   | `remove slop`, `clean up slop`, `slop check` |
@@ -117,36 +95,30 @@ experiments:        name,hypothesis,start_date,duration_days,domain,status,verdi
 
 ## Guardrails
 
-- CSVs are truth.
-- Keep logic in `lib/` and `api/`, not UI.
+- CSVs are truth. Don't create new CSV files when existing ones can hold the data.
+- Logic in `lib/` and `api/`, never in page components or UI.
 - Voice + text both flow through the same inbox pipeline.
-- Keep navigation flat: use top-level routes for primary surfaces; avoid secondary route trees and prefer in-page tabs/sidebars/modals for depth.
-- **Agents are for reasoning, not computation.** Easily-defined compute (streaks, aggregations, date math, filtering, pivoting, grids, scoring) belongs in `scripts/`. Agents receive pre-computed JSON via stdout and reason over the residual. An agent that counts rows is wasting tokens.
+- Flat navigation only: top-level routes for primary surfaces, in-page tabs/sidebars/modals for depth.
+- Config values in `config.ts` are static — runtime data belongs in CSV.
+- Agents are for reasoning, not computation. Easily-defined compute belongs in `scripts/`.
 
 ## Health Metrics (must not degrade)
 
-- **3-layer boundary integrity**: CSV (data) / lib+api (intelligence) / pages (surface) stays clean
+- **3-layer boundary**: CSV (data) / lib+api (intelligence) / pages (surface) stays clean
 - **Flat navigation**: no new route trees — depth via in-page UI only
 - **Capture reliability**: voice/text intake pipeline must keep working
 - **Data simplicity**: no new CSV files unless existing ones genuinely can't hold the data
 - **Startup friction**: daily use shouldn't require more steps than it does today
 
-## Escalation Triggers (Project-Specific)
+## Escalation Triggers
 
-In addition to root-level escalation rules, ask before:
+Ask before:
 
-- Creating a new top-level route or API endpoint.
-- Modifying CSV schemas (adding/removing/renaming columns).
-- Changing the voice-inbox script.
+- Creating a new top-level route or API endpoint
+- Modifying CSV schemas (adding/removing/renaming columns)
+- Changing the voice-inbox script
 
-## Common Failure Modes
-
-- Adding business logic to page components instead of `lib/` or `api/`.
-- Creating a new CSV file when an existing one can hold the data.
-- Adding config values to `config.ts` that are really runtime data (belongs in CSV).
-- Breaking the layer boundary: Foundation (L0-L1) → Intelligence (L2) → Surfaces (L3).
-
-## Verification (Project-Specific)
+## Verification
 
 In addition to root-level verification:
 

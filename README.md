@@ -76,8 +76,6 @@ npm run build
 - `app/README.md` - app-specific architecture and guardrails
 - `docs/architecture.md` - system flow and boundaries
 - `docs/data-schemas.md` - CSV contracts
-- `docs/features.md` - active surfaces + open gaps
-- `docs/personal-os.md` - decision loop blueprint
 - `docs/life-playbook.md` - life-domain protocols and constraints
 
 ## Cleanup Rules
