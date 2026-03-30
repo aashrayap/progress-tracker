@@ -6,7 +6,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const { SIGNAL_TO_PLAN_KEYWORD } = require("./config");
+const { SIGNAL_TO_PLAN_KEYWORD, HABIT_LIST } = require("./config");
 const { parseCSVLine, readLines, csvQuote, todayStr } = require("./csv-utils");
 
 const DATA_ROOT = path.join(__dirname, "..", "data");
@@ -57,4 +57,20 @@ if (changed) {
   console.log("reconcile: plan.csv updated");
 } else {
   console.log("reconcile: no plan items to update");
+}
+
+// Ensure checkin_daily flag exists if any habit was logged today
+const allTodaySignals = signalLines
+  .map((l) => parseCSVLine(l))
+  .filter((c) => c[0] === today);
+
+const hasHabits = allTodaySignals.some((c) => HABIT_LIST.includes(c[1]));
+const hasCheckinFlag = allTodaySignals.some((c) => c[1] === "checkin_daily" && c[2] === "1");
+
+if (hasHabits && !hasCheckinFlag) {
+  const row = `${today},checkin_daily,1,,,,`;
+  fs.appendFileSync(DAILY_SIGNALS_PATH, row + "\n");
+  console.log("reconcile: wrote checkin_daily=1");
+} else if (hasCheckinFlag) {
+  console.log("reconcile: checkin_daily already set");
 }

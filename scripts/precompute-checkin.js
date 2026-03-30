@@ -2,7 +2,7 @@
 
 // Pre-compute checkin display cards and digest data.
 // Outputs JSON to stdout with { display: { card1, card2 }, digest: { ... } }.
-// Reads: daily_signals.csv, plan.csv, todos.csv, reflections.csv, inbox.csv
+// Reads: daily_signals.csv, plan.csv, todos.csv, reflections.csv
 
 const path = require("path");
 const { readCSV, todayStr } = require("./csv-utils");
@@ -56,7 +56,6 @@ const signals = readCSV(path.join(DATA_ROOT, "daily_signals.csv"));
 const plans = readCSV(path.join(DATA_ROOT, "plan.csv"));
 const todos = readCSV(path.join(DATA_ROOT, "todos.csv"));
 const reflections = readCSV(path.join(DATA_ROOT, "reflections.csv"));
-const inbox = readCSV(path.join(DATA_ROOT, "inbox.csv"));
 
 const yesterday = yesterdayStr();
 
@@ -213,33 +212,6 @@ function buildCard1() {
 
 function buildCard2() {
   const sections = [];
-
-  // Inbox: unprocessed items
-  const unprocessed = inbox.filter(r => r.status === "logged" || r.status === "needs_review")
-    .filter(r => r.raw_text && r.raw_text.trim() !== "");
-  if (unprocessed.length > 0) {
-    sections.push(`│ Inbox        ${unprocessed.length} unprocessed${" ".repeat(Math.max(0, 37 - `${unprocessed.length} unprocessed`.length))}│`);
-    const shown = unprocessed.slice(0, 3);
-    for (const item of shown) {
-      const age = item.captured_at ? daysSince(item.captured_at.substring(0, 10), today) : "";
-      const ageStr = age ? ` (${age}d old)` : "";
-      const text = (item.raw_text || "").substring(0, 35);
-      const line = `${text}${ageStr}`;
-      sections.push(`│               • ${line}${" ".repeat(Math.max(0, 53 - line.length - 19))}│`);
-    }
-  }
-
-  // Shipped PRs
-  const shipped = inbox.filter(r => r.status === "shipped");
-  if (shipped.length > 0) {
-    sections.push(`│ Shipped      ${shipped.length} auto-PRs${" ".repeat(Math.max(0, 37 - `${shipped.length} auto-PRs`.length))}│`);
-    const shown = shipped.slice(0, 3);
-    for (const item of shown) {
-      const text = (item.normalized_text || item.raw_text || "").substring(0, 40);
-      const line = text;
-      sections.push(`│               • ${line}${" ".repeat(Math.max(0, 53 - line.length - 19))}│`);
-    }
-  }
 
   // Todos: open count + oldest
   const openTodos = todos.filter(r => r.done !== "1");

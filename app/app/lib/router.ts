@@ -7,16 +7,16 @@ import {
   appendReflection,
   appendTodo,
   appendGrocery,
-  appendInbox,
+
   type PlanEntry,
   type WorkoutSetEntry,
   type ReflectionEntry,
 } from "./csv";
-import type { DailySignalEntry, InboxEntry } from "./types";
+import type { DailySignalEntry } from "./types";
 import { todayStr } from "./utils";
 import path from "path";
 
-export type WriteType = "workout" | "signal" | "reflection" | "todo" | "grocery" | "plan" | "inbox";
+export type WriteType = "workout" | "signal" | "reflection" | "todo" | "grocery" | "plan";
 
 export interface WriteResult {
   primary: { file: string; rowsWritten: number };
@@ -141,15 +141,6 @@ export function writeAndSideEffect(type: WriteType, data: unknown, date?: string
       upsertPlanEntry(entry);
       return {
         primary: { file: "plan.csv", rowsWritten: 1 },
-        sideEffects,
-      };
-    }
-
-    case "inbox": {
-      const entries = data as InboxEntry[];
-      appendInbox(entries);
-      return {
-        primary: { file: "inbox.csv", rowsWritten: entries.length },
         sideEffects,
       };
     }

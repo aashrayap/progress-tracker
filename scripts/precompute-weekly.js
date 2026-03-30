@@ -3,6 +3,7 @@
 // Pre-compute weekly score card and digest data for weekly review.
 // Outputs JSON to stdout with `display` (formatted text) and `digest` (structured data).
 
+const fs = require("fs");
 const path = require("path");
 const { readCSV, todayStr } = require("./csv-utils");
 const { HABIT_LIST, ADDICTION_SIGNALS, LIFESTYLE_SIGNALS, DOMAINS } = require("./config");
@@ -13,6 +14,7 @@ const REFLECTIONS_PATH = path.join(DATA_ROOT, "reflections.csv");
 const TODOS_PATH = path.join(DATA_ROOT, "todos.csv");
 const FEEDBACK_PATH = path.join(DATA_ROOT, "briefing_feedback.csv");
 const PLAN_PATH = path.join(DATA_ROOT, "plan.csv");
+const VISION_PATH = path.join(DATA_ROOT, "vision.json");
 
 // Habit-to-domain mapping (from SKILL.md)
 const HABIT_DOMAIN = {
@@ -47,18 +49,21 @@ function monthDay(d) {
   return `${months[d.getMonth()]} ${d.getDate()}`;
 }
 
-// Get Monday..Sunday week range ending on or before `refDate`
-// If refDate is Sunday, that's the end. Otherwise, find most recent Sunday.
+// Get Sun..Sat week range. Sunday is reflection day — its habits land in NEXT week.
+// If refDate is Sunday, return the PREVIOUS week (Sun-Sat) for review.
+// If refDate is Mon-Sat, return the week starting from the most recent Sunday.
 function getWeekRange(refDate) {
   const ref = new Date(refDate);
   const dayOfWeek = ref.getDay(); // 0=Sun
-  // End of week = most recent Sunday (or today if Sunday)
-  const end = new Date(ref);
-  if (dayOfWeek !== 0) {
-    end.setDate(end.getDate() - dayOfWeek);
+  // Start of week = most recent Sunday (or previous Sunday if today is Sunday)
+  const start = new Date(ref);
+  if (dayOfWeek === 0) {
+    start.setDate(start.getDate() - 7); // Previous Sunday
+  } else {
+    start.setDate(start.getDate() - dayOfWeek);
   }
-  const start = new Date(end);
-  start.setDate(start.getDate() - 6); // Monday
+  const end = new Date(start);
+  end.setDate(end.getDate() + 6); // Saturday
   return { start, end };
 }
 
@@ -186,7 +191,7 @@ function findStreakBreak(signals, habit, dateRange) {
 // --- Bar chart helpers ---
 
 function bar(score, max) {
-  const filled = Math.round((score / max) * 8);
+  const filled = Math.min(8, Math.max(0, Math.round((score / max) * 8)));
   return "█".repeat(filled) + "░".repeat(8 - filled);
 }
 
@@ -253,7 +258,7 @@ function main() {
   // --- Streaks (addiction signals) ---
   const streakSignals = ADDICTION_SIGNALS;
   const streaks = streakSignals.map((h) => {
-    const currentStreak = computeStreak(signals, h, today);
+    const currentStreak = computeStreak(signals, h, thisWeek.end);
     const lastWeekStreak = computeStreak(signals, h, lastWeek.end);
     const brokeDate = findStreakBreak(signals, h, thisWeek);
     return { habit: h, current: currentStreak, lastWeek: lastWeekStreak, broke: brokeDate };
@@ -535,7 +540,293 @@ function main() {
     },
   };
 
-  process.stdout.write(JSON.stringify(output, null, 2) + "\n");
+  // --- HTML mode ---
+  const htmlMode = process.argv.includes("--html");
+
+  if (htmlMode) {
+    const domainBalance = computeDomainBalance(habitByDomain);
+    const reflectionCoverage = computeReflectionCoverage(reflections, thisWeekStart, thisWeekEnd, DOMAINS);
+
+    const htmlData = {
+      thisTotal, lastTotal, maxTotal, thisPct, lastPct,
+      bestDay, worstDay,
+      thisWeekScores, lastWeekScores,
+      habitDetail, streaks,
+      checkinDays: checkinDays.length,
+      missedCheckins: missedCheckins.map((d) => dayName(parseDate(d))),
+      domainBalance,
+      reflectionCoverage,
+    };
+
+    const html = generateHTML(htmlData, thisWeek, lastWeek);
+    const artifactsDir = path.join(DATA_ROOT, "artifacts");
+    fs.mkdirSync(artifactsDir, { recursive: true });
+    const outPath = path.join(artifactsDir, `weekly-report-${todayStr()}.html`);
+    fs.writeFileSync(outPath, html, "utf8");
+    process.stderr.write(`Weekly report: ${outPath}\n`);
+  } else {
+    process.stdout.write(JSON.stringify(output, null, 2) + "\n");
+  }
+}
+
+// --- Analysis functions (HTML mode only) ---
+
+// 4-pillar grouping
+const PILLAR_MAP = {
+  health: "Health",
+  career: "Wealth",
+  finances: "Wealth",
+  relationships: "Love",
+  personal_growth: "Self",
+  fun: "Self",
+  environment: "Self",
+};
+
+function computeDomainBalance(habitByDomain) {
+  const pillars = {};
+  for (const [domain, data] of Object.entries(habitByDomain)) {
+    const pillar = PILLAR_MAP[domain] || "Other";
+    if (!pillars[pillar]) pillars[pillar] = { thisWeek: 0, max: 0 };
+    pillars[pillar].thisWeek += data.this_week;
+    pillars[pillar].max += data.max;
+  }
+  const result = {};
+  for (const [pillar, data] of Object.entries(pillars)) {
+    result[pillar] = {
+      thisWeek: data.thisWeek,
+      max: data.max,
+      pct: data.max > 0 ? Math.round((data.thisWeek / data.max) * 100) : 0,
+    };
+  }
+  return result;
+}
+
+function computeReflectionCoverage(reflections, startStr, endStr, domains) {
+  const weekReflections = reflections.filter(
+    (r) => r.date >= startStr && r.date <= endStr
+  );
+  const covered = new Set(weekReflections.map((r) => r.domain));
+  return domains.map((d) => ({ domain: d, covered: covered.has(d) }));
+}
+
+// --- HTML generation ---
+
+function esc(str) {
+  if (!str) return "";
+  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function signalLabel(signal) {
+  const labels = {
+    gym: "Gym", sleep: "Sleep", ate_clean: "Ate Clean", deep_work: "Deep Work",
+    meditate: "Meditate", weed: "Weed-free", lol: "LoL-free", poker: "Poker-free",
+    clarity: "Clarity", wim_hof_am: "Wim Hof AM", wim_hof_pm: "Wim Hof PM",
+    morning_review: "Morning Review", midday_review: "Midday Review", evening_review: "Evening Review",
+  };
+  return labels[signal] || signal;
+}
+
+function generateHTML(data, thisWeek, lastWeek) {
+  const {
+    thisTotal, lastTotal, maxTotal, thisPct, lastPct,
+    bestDay, worstDay, thisWeekScores, lastWeekScores,
+    habitDetail, streaks, checkinDays, missedCheckins,
+    domainBalance, reflectionCoverage,
+  } = data;
+
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const fmtDate = (d) => `${days[d.getDay()]} ${months[d.getMonth()]} ${d.getDate()}`;
+  const now = new Date();
+  const timestamp = now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+
+  // Daily breakdown: horizontal table with days as columns
+  const dayHeaders = thisWeekScores.map((d) => `<th class="r">${d.day}</th>`).join("");
+  const lastRow = lastWeekScores.map((d) => `<td class="mono r">${d.score}</td>`).join("");
+  const thisRow = thisWeekScores.map((d) => `<td class="mono r">${d.score}</td>`).join("");
+
+  // Habit groups
+  const HABIT_GROUPS = [
+    { label: "Addiction", signals: ["weed", "lol", "poker", "clarity"], isAddiction: true },
+    { label: "Health", signals: ["gym", "sleep", "ate_clean"] },
+    { label: "Performance", signals: ["deep_work", "meditate", "wim_hof_am", "wim_hof_pm"] },
+    { label: "Protocol", signals: ["morning_review", "midday_review", "evening_review"] },
+  ];
+
+  const habitGroupsHTML = HABIT_GROUPS.map((group) => {
+    const rows = group.signals.map((sig) => {
+      const h = habitDetail.find((x) => x.habit === sig);
+      if (!h) return "";
+      const name = signalLabel(h.habit);
+      const diff = h.thisWeek - h.lastWeek;
+      const diffStr = diff > 0 ? `+${diff}` : String(diff);
+      const warn = group.isAddiction && h.thisWeek < 7 ? ' <span class="warn-icon">\u26A0</span>' : "";
+      return `<tr><td>${name}</td><td class="mono r">${h.lastWeek}/7</td><td class="mono r">${h.thisWeek}/7${warn}</td><td class="mono r ${diff > 0 ? "pos" : diff < 0 ? "neg" : "flat"}">${diffStr}</td></tr>`;
+    }).join("\n      ");
+    return `<div class="habit-group">
+      <div class="group-label">${group.label}</div>
+      <table>
+        <tr><th>Habit</th><th class="r">Last</th><th class="r">This</th><th class="r">\u0394</th></tr>
+        ${rows}
+      </table>
+    </div>`;
+  }).join("\n");
+
+  // Sobriety streaks
+  const streakRows = streaks.map((s) => {
+    const name = signalLabel(s.habit);
+    const brokeNote = s.broke ? `<span class="muted"> broke ${dayName(parseDate(s.broke))}</span>` : "";
+    return `<tr><td>${name}</td><td class="mono r">${s.lastWeek}d</td><td class="mono r">${s.current}d${brokeNote}</td></tr>`;
+  }).join("\n      ");
+
+  // Domain balance
+  const balanceRows = Object.entries(domainBalance).map(([pillar, d]) => {
+    const filled = Math.round((d.pct / 100) * 20);
+    const barStr = "\u2588".repeat(filled) + "\u2591".repeat(20 - filled);
+    return `<tr><td>${esc(pillar)}</td><td class="mono bar-cell">${barStr}</td><td class="mono r">${d.pct}%</td><td class="mono r muted">${d.thisWeek}/${d.max}</td></tr>`;
+  }).join("\n      ");
+
+  // Reflection coverage — inline
+  const reflectionInline = reflectionCoverage.map((r) => {
+    const dot = r.covered ? '<span class="dot-on">\u25CF</span>' : '<span class="dot-off">\u25CB</span>';
+    return `${esc(r.domain)} ${dot}`;
+  }).join("&nbsp;&nbsp;&nbsp;");
+
+  // Missed checkins
+  const missedStr = missedCheckins.length > 0 ? `Missed: ${missedCheckins.join(", ")}` : "All days";
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Weekly Report \u2014 ${fmtDate(thisWeek.start)} to ${fmtDate(thisWeek.end)}</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Mono", "Fira Code", monospace;
+  background: #111; color: #d4d4d8;
+  max-width: 600px; margin: 0 auto; padding: 32px 20px 48px;
+  line-height: 1.6;
+}
+h1 { font-size: 14px; font-weight: 600; color: #a1a1aa; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+.date { font-size: 11px; color: #52525b; margin-bottom: 36px; }
+.section { margin-bottom: 32px; }
+.stitle {
+  font-size: 10px; font-weight: 600; color: #71717a;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.desc { font-size: 11px; color: #3f3f46; margin-bottom: 12px; line-height: 1.4; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th { text-align: left; font-size: 10px; color: #52525b; text-transform: uppercase; letter-spacing: 0.06em; padding: 4px 8px 6px; }
+td { padding: 5px 8px; }
+tr + tr td { border-top: 1px solid #1a1a1a; }
+.r { text-align: right; }
+.mono { font-family: "SF Mono", "Fira Code", monospace; }
+.muted { color: #52525b; }
+.bar-cell { letter-spacing: -1px; color: #52525b; }
+.pos { color: #4ade80; }
+.neg { color: #f87171; }
+.flat { color: #52525b; }
+.warn-icon { color: #f59e0b; }
+.dot-on { color: #4ade80; }
+.dot-off { color: #3f3f46; }
+.stat-row { display: flex; gap: 20px; margin-bottom: 4px; }
+.stat { flex: 1; }
+.stat-label { font-size: 10px; color: #52525b; text-transform: uppercase; letter-spacing: 0.06em; }
+.stat-value { font-size: 18px; color: #d4d4d8; font-weight: 500; }
+.stat-sub { font-size: 10px; color: #52525b; }
+.sep { border: none; border-top: 1px solid #1e1e1e; margin: 28px 0; }
+.habit-group { margin-bottom: 20px; }
+.group-label { font-size: 10px; font-weight: 600; color: #3f3f46; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+.inline-row { font-size: 12px; line-height: 2; }
+</style>
+</head>
+<body>
+
+<h1>Weekly Report</h1>
+<div class="date">${fmtDate(thisWeek.start)} to ${fmtDate(thisWeek.end)} \u2014 ${timestamp}</div>
+
+<!-- Score -->
+<div class="section">
+  <div class="stitle">Score</div>
+  <div class="desc">Composite daily score (0\u20139). Weed relapse zeros the day.</div>
+  <div class="stat-row">
+    <div class="stat"><div class="stat-label">Total</div><div class="stat-value">${thisTotal}/${maxTotal}</div><div class="stat-sub">${thisPct}%</div></div>
+    <div class="stat"><div class="stat-label">Last Week</div><div class="stat-value">${lastTotal}/${maxTotal}</div><div class="stat-sub">${lastPct}% ${trend(thisTotal, lastTotal)}</div></div>
+    <div class="stat"><div class="stat-label">Best</div><div class="stat-value">${bestDay.day} ${bestDay.score}</div></div>
+    <div class="stat"><div class="stat-label">Worst</div><div class="stat-value">${worstDay.day} ${worstDay.score}</div></div>
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- Daily -->
+<div class="section">
+  <div class="stitle">Daily</div>
+  <div class="desc">Day-by-day scores. Spot which days you show up and which you coast.</div>
+  <table>
+    <tr><th></th>${dayHeaders}</tr>
+    <tr><td class="muted">Last</td>${lastRow}</tr>
+    <tr><td class="muted">This</td>${thisRow}</tr>
+  </table>
+</div>
+
+<hr class="sep">
+
+<!-- Habits -->
+<div class="section">
+  <div class="stitle">Habits</div>
+  <div class="desc">Per-habit hit rate. Column order: last \u2192 this \u2192 delta. Scan the \u0394 column for the signal.</div>
+  ${habitGroupsHTML}
+</div>
+
+<hr class="sep">
+
+<!-- Sobriety Streaks -->
+<div class="section">
+  <div class="stitle">Sobriety Streaks</div>
+  <div class="desc">Consecutive clean days as of Saturday.</div>
+  <table>
+    <tr><th>Signal</th><th class="r">Last Wk</th><th class="r">Current</th></tr>
+    ${streakRows}
+  </table>
+</div>
+
+<hr class="sep">
+
+<!-- Domain Balance -->
+<div class="section">
+  <div class="stitle">Domain Balance</div>
+  <div class="desc">Habit completion by life pillar. Are you investing evenly or neglecting a pillar?</div>
+  <table>
+    <tr><th>Pillar</th><th>Coverage</th><th class="r">%</th><th class="r">Raw</th></tr>
+    ${balanceRows}
+  </table>
+</div>
+
+<hr class="sep">
+
+<!-- Reflections -->
+<div class="section">
+  <div class="stitle">Reflections</div>
+  <div class="desc">Domains with a written reflection this week. Uncovered = blind spot.</div>
+  <div class="inline-row">${reflectionInline}</div>
+</div>
+
+<hr class="sep">
+
+<!-- Check-ins -->
+<div class="section">
+  <div class="stitle">Check-ins</div>
+  <div class="stat-row">
+    <div class="stat"><div class="stat-value">${checkinDays}/7</div><div class="stat-sub">${missedStr}</div></div>
+  </div>
+</div>
+
+</body>
+</html>`;
 }
 
 main();

@@ -81,11 +81,6 @@ date,domain,win,lesson,change,archived
 - `domain`: canonical domain ID for new rows; legacy values remain valid for historical rows.
 - `archived`: `0|1` style flag used by the reflections API (`1` means hidden from active views); leave empty for new rows unless archiving.
 
-## data/inbox.csv
-```
-capture_id,captured_at,source,raw_text,status,suggested_destination,normalized_text,error
-```
-
 ## data/groceries.csv
 ```
 item,section,done,added
@@ -223,6 +218,5 @@ Plan matching uses case-insensitive substring match against a fixed keyword map.
 ## Relationship Notes
 - `gym=1` in `data/daily_signals.csv` can have supporting set data in `data/workouts.csv`.
 - `signal=mind` in `data/daily_signals.csv` stores mind entries (trigger/thought/action/circumstance) captured during check-in.
-- `data/inbox.csv` is append-only audit memory for raw captures.
 - `data/plan.csv` + `data/todos.csv` represent action memory.
 - `data/reflections.csv` stores evidence for future rule updates.

@@ -22,7 +22,6 @@ Core rule: Surfaces consume read models and trigger actions; semantics are owned
 - When consolidating features, merge into an existing top-level route or replace with a new top-level route.
 
 ## Canonical Data Layer
-- `data/inbox.csv`: append-only raw capture audit
 - `data/daily_signals.csv`: daily facts and habits
 - `data/workouts.csv`: set-level training logs
 - `data/reflections.csv`: win/lesson/change memory
@@ -92,7 +91,6 @@ Current consumers:
 
 ## What Is Working
 - Single canonical data model based on CSV files
-- End-to-end capture path from phone to structured logs
 - Vision-driven daily execution surface
 - Calendar/todo execution loop
 - Reflection capture and lesson surfacing
@@ -100,12 +98,11 @@ Current consumers:
 ## Feature Specs
 Specs live in `docs/specs/`. Status: `draft` | `in-progress` | `shipped` | `archived`. Template: `docs/feature-spec-template.md`.
 
-## Voice + Text Intake Pipeline
-Both iOS shortcuts (voice and text) flow through one processor:
-1. Shortcut creates GitHub issue (`Voice ...`)
-2. `scripts/voice-inbox.sh` polls open issues
-3. Claude prompt (`.claude/prompts/voice-inbox.md`) classifies/routes input
-4. CSVs are updated
+## Phone Intake (iMessage Channel)
+Data entry from phone flows through Claude Code iMessage channel:
+- Gym sets: text mid-workout → workouts.csv
+- Todos: add/list/complete → todos.csv
+- Requires persistent Claude Code session with `--channels plugin:imessage`
 5. Commit + push, issue comment, issue close
 
 ## API Surface (Current)

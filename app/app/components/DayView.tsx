@@ -542,6 +542,30 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
   return (
     <>
       <div className="space-y-4">
+        {/* 0. Persistent report links — always visible for today */}
+        {isToday && (
+          <div className="flex gap-3 px-1">
+            <a
+              href={`/artifacts/morning-report-${dateStr}.html`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors underline decoration-zinc-700"
+            >
+              Morning Report
+            </a>
+            {focusDate.getDay() === 0 && (
+              <a
+                href={`/artifacts/weekly-report-${dateStr}.html`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors underline decoration-zinc-700"
+              >
+                Weekly Report
+              </a>
+            )}
+          </div>
+        )}
+
         {/* 1. Ritual checklist + mark-complete — today only */}
         {isToday && ritual && (() => {
           const phase = getRitualPhase();

@@ -27,17 +27,6 @@ export interface DailySignalEntry {
   category?: string;
 }
 
-export interface InboxEntry {
-  captureId: string;
-  capturedAt: string;
-  source: string;
-  rawText: string;
-  status: "logged" | "new" | "needs_review" | "accepted" | "archived" | "failed" | "investigating" | "shipped";
-  suggestedDestination: string;
-  normalizedText: string;
-  error: string;
-}
-
 export type HabitMap = Record<string, Record<string, boolean>>;
 
 export type ZoomLevel = "year" | "month" | "week" | "day";

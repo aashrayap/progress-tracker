@@ -49,3 +49,4 @@ id,item,done,created,domain
 49,Build Jarvis always-on assistant — Mac Mini + vertical monitor + OpenClaw + voice. Full spec: docs/specs/jarvis-always-on-assistant.md,0,2026-03-27,personal_growth
 50,Redesign training program — power/athletic physique (Hamza aesthetic + Olympic lifts) with superset format. Full spec: docs/specs/training-program-redesign.md,0,2026-03-26,health
 51,Add today's workout label to plan/day page and morning report — e.g. 'Gym: Deadlift Day (Wed)' linking to /health page. Touchpoints: DayView.tsx, compute-morning-report.js, checkin skill.,0,2026-03-28,health
+52,Text Pawel before going to Warsaw,0,2026-03-29,relationships

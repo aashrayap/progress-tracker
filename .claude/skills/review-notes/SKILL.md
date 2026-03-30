@@ -13,7 +13,6 @@ Read-only summary across tracker data for a selected period.
 - `~/Documents/2026/tracker/data/reflections.csv`
 - `~/Documents/2026/tracker/data/plan.csv`
 - `~/Documents/2026/tracker/data/todos.csv`
-- `~/Documents/2026/tracker/data/inbox.csv`
 
 ## Commands
 - `/review-notes` (default: last 7 days)
@@ -30,7 +29,6 @@ Read-only summary across tracker data for a selected period.
 5. Output compact summary + totals
 
 ## Output Includes
-- Raw captures (`inbox`)
 - Contextual/critical signals (`daily_signals`)
 - Workout entries
 - Reflections

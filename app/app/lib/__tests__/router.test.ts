@@ -11,7 +11,7 @@ vi.mock("../csv", () => ({
   appendReflection: vi.fn(),
   appendTodo: vi.fn(),
   appendGrocery: vi.fn(),
-  appendInbox: vi.fn(),
+
 }));
 
 vi.mock("../utils", () => ({

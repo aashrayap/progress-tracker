@@ -538,3 +538,23 @@ date,signal,value,unit,context,source,capture_id,category
 2026-03-28,wim_hof_am,1,,,,,health
 2026-03-28,wim_hof_pm,1,,,,,health
 2026-03-29,sleep,1,,,,,health
+2026-03-29,checkin_daily,1,,,,
+2026-03-29,weekly_goal,personal_growth,,Quit league,chat,,personal_growth
+2026-03-29,weekly_goal,health,,Sleep on time,chat,,health
+2026-03-29,weekly_goal,fun,,Focus on quality transition in Poland,chat,,fun
+2026-03-29,weekly_intention,personal_growth,,no league,chat,,personal_growth
+2026-03-29,no_fap,0,bool,relapsed x2,chat,,,personal_growth
+2026-03-29,lol,1,bool,6-7 hours — overwhelm escape,chat,,,personal_growth
+2026-03-29,gym,0,bool,,chat,,,health
+2026-03-29,ate_clean,0,bool,,chat,,,health
+2026-03-29,weed,1,bool,,chat,,,personal_growth
+2026-03-29,poker,1,bool,,chat,,,personal_growth
+2026-03-29,clarity,1,bool,,chat,,,personal_growth
+2026-03-29,meditate,1,bool,,chat,,,health
+2026-03-29,deep_work,1,bool,,chat,,,career
+2026-03-29,morning_review,1,bool,,chat,,,personal_growth
+2026-03-29,midday_review,1,bool,,chat,,,personal_growth
+2026-03-29,evening_review,1,bool,,chat,,,personal_growth
+2026-03-29,wim_hof_am,0,bool,,chat,,,health
+2026-03-29,wim_hof_pm,1,bool,,chat,,,health
+2026-03-30,sleep,0,bool,,chat,,,health

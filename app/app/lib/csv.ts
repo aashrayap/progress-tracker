@@ -5,7 +5,7 @@ import type {
   ExerciseProgressEntry,
   ExerciseTarget,
   GroceryEntry,
-  InboxEntry,
+
   QuoteEntry,
   VisionData,
   WorkoutDay,
@@ -13,20 +13,17 @@ import type {
 import { daysAgoStr, todayStr } from "./utils";
 import { config, normalizeWorkoutKey } from "./config";
 
-export type { DailySignalEntry, InboxEntry };
+export type { DailySignalEntry };
 
 const ROOT = path.join(process.cwd(), "..");
 const DATA_ROOT = path.join(ROOT, "data");
 const DAILY_SIGNALS_PATH = path.join(DATA_ROOT, "daily_signals.csv");
-const INBOX_PATH = path.join(DATA_ROOT, "inbox.csv");
 const PLAN_PATH = path.join(DATA_ROOT, "plan.csv");
 const TODOS_PATH = path.join(DATA_ROOT, "todos.csv");
 const WORKOUTS_PATH = path.join(DATA_ROOT, "workouts.csv");
 const REFLECTIONS_PATH = path.join(DATA_ROOT, "reflections.csv");
 
 const DAILY_SIGNALS_HEADER = "date,signal,value,unit,context,source,capture_id,category";
-const INBOX_HEADER =
-  "capture_id,captured_at,source,raw_text,status,suggested_destination,normalized_text,error";
 const PLAN_HEADER = "date,start,end,item,done,notes,domain";
 const TODOS_HEADER = "id,item,done,created,domain";
 const WORKOUTS_HEADER = "date,workout,exercise,set,weight,reps,notes";
@@ -237,22 +234,6 @@ export function getDaysSince(dateStr: string): number {
   const start = new Date(dateStr);
   const now = new Date();
   return Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Inbox
-// ─────────────────────────────────────────────────────────────────────────────
-
-export function appendInbox(entries: InboxEntry[]): void {
-  const lines = entries.map(
-    (e) =>
-      `${csvQuote(e.captureId)},${csvQuote(e.capturedAt)},${csvQuote(e.source)},${csvQuote(
-        e.rawText
-      )},${csvQuote(e.status)},${csvQuote(e.suggestedDestination)},${csvQuote(
-        e.normalizedText || ""
-      )},${csvQuote(e.error || "")}`
-  );
-  appendLines(INBOX_PATH, INBOX_HEADER, lines);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -62,7 +62,7 @@ nvm use 22.14.0
 - `app/app/lib/config.ts`
 - `app/app/api/`
 - `app/app/components/`
-- `scripts/voice-inbox.sh`
+- `scripts/compute-morning-report.js`
 
 ## CSV Headers (quick ref — full semantics in `docs/data-schemas.md`)
 
@@ -72,7 +72,6 @@ workouts:      date,workout,exercise,set,weight,reps,notes
 plan:          date,start,end,item,done,notes,domain
 todos:         id,item,done,created,domain
 reflections:   date,domain,win,lesson,change,archived
-inbox:         capture_id,captured_at,source,raw_text,status,suggested_destination,normalized_text,error
 groceries:     item,section,done,added
 resources:     title,author,type,domain,status,notes
 briefing_feedback: date,state,rating,feedback_text,briefing_hash
@@ -97,7 +96,7 @@ experiments:        name,hypothesis,start_date,duration_days,domain,status,verdi
 
 - CSVs are truth. Don't create new CSV files when existing ones can hold the data.
 - Logic in `lib/` and `api/`, never in page components or UI.
-- Voice + text both flow through the same inbox pipeline.
+- Data entry from phone flows through iMessage channel to persistent Claude Code session.
 - Flat navigation only: top-level routes for primary surfaces, in-page tabs/sidebars/modals for depth.
 - Config values in `config.ts` are static — runtime data belongs in CSV.
 - Agents are for reasoning, not computation. Easily-defined compute belongs in `scripts/`.
@@ -116,7 +115,7 @@ Ask before:
 
 - Creating a new top-level route or API endpoint
 - Modifying CSV schemas (adding/removing/renaming columns)
-- Changing the voice-inbox script
+- Changing the morning-report pipeline
 
 ## Verification
 

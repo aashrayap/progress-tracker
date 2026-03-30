@@ -72,10 +72,8 @@ Append to `daily_signals.csv` after each check-in:
 - `~/Documents/2026/tracker/data/reflections.csv`
 - `~/Documents/2026/tracker/data/plan.csv`
 - `~/Documents/2026/tracker/data/todos.csv`
-- `~/Documents/2026/tracker/data/inbox.csv`
 - `~/Documents/2026/tracker/data/experiments.csv`
 - `~/Documents/2026/tracker/data/vision.json` (via GET /api/vision — weekly+ cadences)
-- **GitHub Issues** — `aashrayap/progress-tracker` open issues (synced live during inbox triage)
 
 ## Canonical Files Written
 
@@ -83,7 +81,6 @@ Append to `daily_signals.csv` after each check-in:
 - `~/Documents/2026/tracker/data/reflections.csv`
 - `~/Documents/2026/tracker/data/plan.csv`
 - `~/Documents/2026/tracker/data/todos.csv`
-- `~/Documents/2026/tracker/data/inbox.csv` (status updates during triage)
 - `~/Documents/2026/tracker/data/experiments.csv` (conclude expired, create new)
 - `~/Documents/2026/tracker/data/vision.json` (via PATCH /api/vision for weekly/monthly, PUT for quarterly)
 
@@ -254,331 +251,49 @@ Two rounds max. After the agent returns, resume the menu.
 
 Run on **Sundays only** (or `/checkin weekly` to force on demand).
 
-### Data Sources
+### Step 1: Generate Weekly Report
 
-Run `node ~/Documents/2026/tracker/scripts/precompute-weekly.js` and parse the JSON output. Store the full output for use in Phases 1-7.
-
-Additional sources read directly by AI for interactive phases:
-- `docs/vision.md` — domain "Now" goals for grounding reflections
-
-### Phase 1: Quantitative Score Card (auto-generated, no user input)
-
-Display `display.score_card` **verbatim** — do not reformat, re-compute, or summarize it. The script handles all score computation, bar charts, streaks, execution stats, and briefing feedback.
-
-### Phase 2: Mood & Trigger Arc (auto-generated, no user input)
-
-Use `digest.mood_arc` and `digest.triggers` from the script output. Do not re-read raw CSVs for this phase.
-
-**Mood arc:** If `digest.mood_arc` has 3+ entries, present the emotional arc and detect patterns (correlation between mood shifts and habit misses/relapses, comparison to prior weeks). If fewer than 3, note "Not enough mood data this week."
-
-**Triggers:** If `digest.triggers` is non-empty, present triggers and detect patterns (time, circumstance, recurring patterns across prior 2-4 weeks). Flag recurring patterns explicitly.
-
-### Phase 3: Domain Spotlight (2-3 domains, data-selected, interactive)
-
-Use `digest.domain_spotlight_candidates` from the script output to select 2-3 domains. The script pre-computes candidates using: biggest decline, biggest improvement, stalled (3+ weeks flat), and vision-misaligned. AI picks the final 2-3 from the candidates.
-
-Use `digest.habit_by_domain` for per-domain habit breakdowns when presenting each spotlight.
-
-**For each spotlighted domain, show:**
-
-```
-─── HEALTH (biggest improvement) ──────────────────────────
-  This week: Gym 6/7, Sleep 5/7, Ate clean 5/7
-  Last week: Gym 5/7, Sleep 6/7, Ate clean 4/7
-
-  Vision (Now): "hit planned gym sessions, protein-first meals,
-                 prioritize sleep quality"
-
-  1. What went well this week in health?
-  2. What would you do differently?
-  3. How long before you know if your current approach is working?
-     (Feedback loop audit — shrink the lag if too long)
-  4. One small experiment for next week?
+```bash
+node ~/Documents/2026/tracker/scripts/precompute-weekly.js --html
 ```
 
-Rules:
-- Pull the domain's "Now" horizon goal from `docs/vision.md` to ground reflection
-- 3 questions per domain, max 3 domains = 9 questions worst case
-- Accept short answers — this isn't journaling
-- Write each domain's reflection to `reflections.csv`: `domain=<domain>`, `win=<Q1 answer>`, `lesson=<Q2 answer>`, `change=<Q3 answer>`
-- Spotlighted domains are natural candidates for the experiment in Phase 5, but don't force it
+The script writes `data/artifacts/weekly-report-YYYY-MM-DD.html` — a self-contained HTML report with score card, trajectory deltas, streak momentum, domain balance, identity-action gap, plan accuracy, and reflection coverage.
 
-### Phase 4: Social Contact Check (one question, always asked)
+Print the path. Tell the user: **"Open your weekly report, read it, then type 'continue'."** Wait for "continue" before proceeding.
 
-```
-SOCIAL
-  Did you have meaningful social contact this week?
-  If yes: with who / what?
-```
+### Step 2: Delegate to weekly-reflect agent
 
-- Always ask — vision says "reduce isolation with deliberate weekly social contact"
-- Write to `daily_signals.csv`:
-  - `signal=social_contact`
-  - `value=0|1`
-  - `context=<details if provided>`
-  - `category=relationships`
-  - `date` = Sunday (week-end date)
+Spawn the **weekly-reflect** agent. It self-fetches data (runs `precompute-weekly.js`, reads `vision.json`), then runs the interactive reflection phases:
 
-### Phase 4.5: Inbox Triage
+- Domain Spotlight (2-3 data-selected domains → `reflections.csv`)
+- Feedback Loop Audit ("where is lag longest?")
+- Belief × Action × Duration check ("which multiplier is broken?")
+- Inversion Quick-Scan (failure playbook per pillar, using anti-vision)
+- Social Contact (`daily_signals.csv`)
 
-#### GitHub Issue Sync (always run first)
+After it returns, continue.
 
-Before reading `inbox.csv`, ALWAYS fetch open issues from GitHub:
+### Step 3: Delegate to weekly-vision agent
 
-```
-gh api repos/aashrayap/progress-tracker/issues --paginate -q '.[] | select(.pull_request == null)'
-```
+Spawn the **weekly-vision** agent. It self-fetches data, then runs:
 
-Or use `mcp__github__list_issues` with `owner=aashrayap`, `repo=progress-tracker`, `state=OPEN`.
+- Review last week's goals (mark ✓/✗/~ → `daily_signals.csv`)
+- Set this week's goals, 1-3 (`daily_signals.csv`)
+- Set weekly intention / mantra (`daily_signals.csv`)
+- ABT(H) Update per pillar — actual + habits (`vision.json` via PATCH)
 
-**Sync logic:**
-1. Fetch all open issues from GitHub
-2. Compare against `inbox.csv` — any issue ID not present in `inbox.csv` is NEW
-3. For new issues:
-   - Read the issue body/title to determine content
-   - Auto-discard empty issues (no body or garbled)
-   - Add substantive issues to `inbox.csv` with `status=logged`
-   - Classify `suggested_destination` (workouts, todos, idea, reflection, question, etc.)
-4. For issues already in `inbox.csv` but still open on GitHub:
-   - If `status=discarded` or `status=archived` in CSV but issue is still open on GitHub, note the mismatch but don't resurface — the CSV status is canonical
-5. Present the merged view (CSV + newly synced) for triage
+After it returns, continue.
 
-This ensures voice notes that created GitHub issues but weren't written to `inbox.csv` are never missed.
+### Step 4: Delegate to plan agent (week mode)
 
-#### Triage Sections
+Spawn the **plan** agent with week mode (`3 week`). It shows weekly goals as context, accepts natural language priorities per day, and writes draft blocks to `plan.csv`. After it returns, continue.
 
-Read `inbox.csv` (now synced) and present items in two sections.
+### Step 5: Close
 
-#### Section 1: Shipped PRs (review)
+Write to `daily_signals.csv`:
+`date=<today>, signal=checkin_weekly, value=1, unit=, context=, source=chat, capture_id=, category=`
 
-Show inbox items with `status=shipped` that the user hasn't reviewed yet. These are auto-PRs created from voice ideas.
-
-```
-Shipped from your voice ideas:
-
-PR #63: Meditation stats card on Hub
-  voice-62: "want to add meditation aspect to the app..."
-  → merged? working? need changes?
-
-PR #84: Vision tab redesign
-  voice-83: "vision tab to align with direction..."
-  → merged? working? need changes?
-```
-
-For each: user can say "looks good" (mark reviewed), "need changes" (note what), or "skip".
-
-#### Section 2: Unprocessed Items
-
-Show items with `status=logged` or `status=needs_review`, excluding empty/garbled notes (auto-discard those).
-
-```
-Unprocessed:
-1. neuroscience talk (voice, Mar 3)
-   "Talk through habit/reward/fitness/eating goal neuroscience"
-   → process / discuss now / defer / discard
-
-2. As A Man Thinketh (voice, Mar 3)
-   "Transcribe and add quotes page to app"
-   → process / discuss now / defer / discard
-```
-
-Actions per item:
-- **process** — move to appropriate destination (todo, reflection, idea). Write to target CSV, update inbox status.
-- **discuss now** — talk through the item right here. After discussion, decide: process, defer, or discard.
-- **defer** — leave as-is for next checkin
-- **discard** — set `status=discarded` in inbox.csv
-
-Rules:
-- Cap at 5 items per triage round. If more exist, show count and offer "more" or "skip".
-- Auto-discard empty voice notes (empty raw_text) — never show these to the user.
-- Items processed here may create new todos.
-- Write inbox status updates immediately per item.
-
-### Phase 5: Experiment Loop
-
-**Step 1: Catch unconcluded experiments**
-
-Read `experiments.csv` for `status=active` where `today >= start_date + duration_days`. If any exist, run the conclude flow:
-
-```
-─── EXPERIMENT EXPIRED ──────────────────────────────────
-  "<name>" (<duration> days, <domain>)
-
-  Verdict: kept / dropped / extended?
-  What did you learn? (one line)
-```
-
-- **kept**: Update row — `status=concluded`, `verdict=kept`, `reflection=<answer>`.
-- **dropped**: Update row — `status=concluded`, `verdict=dropped`, `reflection=<answer>`.
-- **extended**: Update old row as above with `verdict=extended`. Append NEW row: same `name`, `hypothesis`, `domain`, `start_date=today`, `duration_days=7` (ask if different), `status=active`, empty `verdict`, empty `reflection`.
-- **"I'll decide later"**: Skip — leave as active.
-- Match rows on `name` + `start_date`.
-
-If no expired experiments, skip step 1.
-
-**Step 2: Start new experiment**
-
-```
-─── NEW EXPERIMENT ──────────────────────────────────────
-  Want to start a new experiment?
-
-  If yes:
-  • Name (short label)
-  • Hypothesis (what you expect)
-  • Domain (infer from content, confirm)
-  • Duration (default 7 days)
-```
-
-- Write new row to `experiments.csv`: `name`, `hypothesis`, `start_date=today`, `duration_days`, `domain`, `status=active`, empty `verdict`, empty `reflection`.
-- Allow skip.
-
-**Note:** Historical `weekly_experiment` and `experiment_result` signals in `daily_signals.csv` are preserved. New experiments use `experiments.csv` exclusively. Phase 5 no longer reads or writes those signals.
-
-### Phase 6: Weekly Goals & Intention (vision-connected)
-
-**Review last week's goals first:**
-
-Use `digest.goals_last_week` from the precompute script output. Each entry has `goal` and `domain`.
-
-If any exist:
-```
-─── LAST WEEK'S GOALS ────────────────────────────────────
-  ✓ 4 gym sessions — hit 6/7
-  ✗ Call mom — didn't happen
-  ~ Ship auth refactor — partial, PR open
-
-  Score: 1/3 complete, 1 partial
-```
-
-- Ask user to mark each: ✓ (complete) / ✗ (missed) / ~ (partial)
-- Write for each: `signal=weekly_goal_result`, `value=complete|missed|partial`, `context=<goal text>`, `category=<domain>`
-
-**Set this week's goals (1-3):**
-
-```
-─── THIS WEEK'S GOALS ────────────────────────────────────
-  Set 1-3 goals for the week. Each should connect to a
-  domain and your current vision horizon.
-
-  Example:
-  • "4 gym sessions" (health → 90-day: stabilize training)
-  • "2 social plans" (relationships → Now: reduce isolation)
-  • "Ship tracker feature" (career → Now: AI fluency + deep work)
-```
-
-- For each goal, write to `daily_signals.csv`:
-  - `signal=weekly_goal`
-  - `value=<domain>`
-  - `context=<goal text>`
-  - `category=<domain>`
-- Infer domain from content; confirm with user if ambiguous
-
-**Set weekly intention (mantra):**
-
-```
-  What's the mantra for this week?
-  (broad direction, not a task — e.g., "reclaim the midweek")
-```
-
-- If task-like, ask for a mantra rewrite
-- Infer `domain`
-- Write to `daily_signals.csv`:
-  - `signal=weekly_intention`
-  - `value=<domain>`
-  - `context=<mantra text>`
-  - `category=<domain>`
-- Allow skip
-
-### Phase 6b: Vision Update (weekly, after goals)
-
-Update vision.json fields based on this week's reflections and progress. Uses PATCH /api/vision.
-
-**Step 1: Update Actual (per pillar)**
-
-For each of the 4 pillars (health, wealth, love, self), using this week's reflections and habit data:
-
-```
-─── VISION UPDATE: HEALTH ──────────────────────────────
-  Current Actual: "Hit planned gym sessions, run protein-first
-  meals, prioritize sleep quality and emotional regulation
-  during stress."
-
-  Based on this week: Gym 6/7, Sleep 5/7, Ate clean 5/7.
-
-  Does this still describe where you are? Update or keep?
-```
-
-- If user says "keep" → skip
-- If user provides update → PATCH `domains[].actual` for that pillar (match by domain id)
-- Keep it grounded — actual = current reality, not aspiration
-
-**Step 2: Adjust Habits (per pillar, optional)**
-
-After reviewing actual for each pillar:
-
-```
-  Current habits:
-  1. Train daily — no excuses for emotion or timing
-  2. No substances
-  3. Clean eating — protein-first every meal
-  ...
-
-  Any habit to add, remove, or reword? (or skip)
-```
-
-- If user adjusts → PATCH `domains[].habits` for that pillar
-- Keep habits as action statements, not goals
-
-**Step 3: Write**
-
-Send a single PATCH request with all updated fields:
-```json
-{
-  "domains": [
-    { "id": "health", "actual": "<updated>", "habits": ["<updated>"] }
-  ],
-  "intentions": { "weekly": "<from Phase 6 mantra>" }
-}
-```
-
-Only include pillars that changed. Always include `intentions.weekly` (set in Phase 6).
-
-### Phase 6c: Week Sketch (draft planning)
-
-After goals and vision update, sketch the week with draft blocks.
-
-1. Show the goals just set in Phase 6: "You set these goals: [goals]. Let's sketch the week."
-2. Ask: "What does this week look like? List priorities per day, or general items for the week."
-3. Accept natural language input — e.g., "gym MWF, deep work daily, call mom Tuesday, no poker"
-4. For each item:
-   - Write to plan.csv: `date=<target day>, start=0, end=0, item=<text>, done=, notes=, domain=<inferred>`
-   - If no specific day given, write to Monday (start of week)
-   - Do NOT ask for times — these are drafts. Times assigned each morning via daily Option 3.
-5. Day abbreviation mapping: M=Mon, T=Tue, W=Wed, R=Thu, F=Fri, S=Sat, U=Sun. "daily"=all 7 days, "weekdays"=Mon-Fri, "MWF"=Mon/Wed/Fri.
-6. Confirm: "Sketched [N] blocks across [days]. These will show as priorities each morning."
-7. Allow skip — "skip" or "I'll do it later" skips this phase entirely.
-
-### Phase 7: Stale Review & Close
-
-- Use `digest.stale_todos` from the precompute script output. Present items with age: "These have been open 7+ days — keep, kill, or defer?" (ask user)
-- Write `checkin_weekly=1` to `daily_signals.csv`
-
-### Weekly Phase Order Summary
-
-```
-Phase 1    Score Card           auto-gen        0 min
-Phase 2    Mood & Triggers      auto-gen        0 min
-Phase 3    Domain Spotlight     interactive     3-5 min
-Phase 4    Social Contact       1 question      30 sec
-Phase 4.5  Inbox Triage         interactive     2-3 min
-Phase 5    Experiment Loop      conclude + new  2 min
-Phase 6    Goals & Intention    review + set    3 min
-Phase 6b   Vision Update        interactive     2-3 min
-Phase 6c   Week Sketch          draft blocks    2-3 min
-Phase 7    Stale Review         interactive     1 min
-                                           ──────────
-                                Target:     ~18 min
-```
+Print: **"Weekly check-in complete."**
 
 ---
 
