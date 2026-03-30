@@ -71,14 +71,6 @@ export const WEEKLY_PROGRAM: ProgramDay[] = [
   { key: "Sun", label: "Sunday",   isRest: true, exercises: [] },
 ];
 
-export interface RotationDay {
-  key: string;
-  kind: "lift" | "cardio";
-  label: string;
-  detail: string;
-  minutes?: number;
-}
-
 export const HABIT_CONFIG = {
   weed:           { label: "No Weed",       abbr: "W"  },
   lol:            { label: "No LoL",        abbr: "L"  },
@@ -96,26 +88,11 @@ export const HABIT_CONFIG = {
   wim_hof_pm:     { label: "Wim Hof PM",   abbr: "WP" },
 } satisfies Record<string, HabitConfigEntry>;
 
+// Legacy keys for normalizing old workout.csv rows (A-G rotation + W1-W5 aliases)
+const LEGACY_CYCLE = ["A", "B", "C", "D", "E", "F", "G"];
 const LEGACY_WORKOUT_ALIASES: Record<string, string> = {
-  W1: "A",
-  W2: "B",
-  W3: "C",
-  W4: "D",
-  W5: "E",
+  W1: "A", W2: "B", W3: "C", W4: "D", W5: "E",
 };
-
-function extractWorkoutToken(value: string): string {
-  const normalized = value.trim().toUpperCase();
-  if (!normalized) return "";
-
-  const dayMatch = normalized.match(/DAY\s*([A-Z0-9_-]+)/i);
-  if (dayMatch?.[1]) return dayMatch[1].toUpperCase();
-
-  const weekMatch = normalized.match(/\bW[0-9]+\b/i);
-  if (weekMatch?.[0]) return weekMatch[0].toUpperCase();
-
-  return normalized;
-}
 
 export function normalizeWorkoutKey(
   rawValue: string | null | undefined,
@@ -123,16 +100,19 @@ export function normalizeWorkoutKey(
 ): string | null {
   if (!rawValue) return null;
 
-  const activeCycle =
-    cycle && cycle.length > 0 ? cycle : [...config.workoutCycle];
+  const activeCycle = cycle && cycle.length > 0 ? cycle : LEGACY_CYCLE;
   const cycleUpper = activeCycle.map((item) => item.toUpperCase());
-  const token = extractWorkoutToken(rawValue);
+  const token = rawValue.trim().toUpperCase();
   if (!token) return null;
 
-  const exactIdx = cycleUpper.indexOf(token);
+  // Try "Day X" format
+  const dayMatch = token.match(/DAY\s*([A-Z0-9_-]+)/i);
+  const key = dayMatch?.[1]?.toUpperCase() ?? token.match(/\bW[0-9]+\b/i)?.[0]?.toUpperCase() ?? token;
+
+  const exactIdx = cycleUpper.indexOf(key);
   if (exactIdx !== -1) return activeCycle[exactIdx];
 
-  const mapped = LEGACY_WORKOUT_ALIASES[token];
+  const mapped = LEGACY_WORKOUT_ALIASES[key];
   if (!mapped) return null;
 
   const mappedIdx = cycleUpper.indexOf(mapped.toUpperCase());
@@ -221,43 +201,4 @@ export const config = {
     ],
   } as Record<string, ExerciseDef[]>,
 
-  workoutTemplates: {
-    A: ["squat", "bench", "lat_pulldown"],
-    B: ["incline_bench", "barbell_row", "lat_raise"],
-    C: ["rdl", "bench", "pullup"],
-    D: ["front_squat", "incline_bench", "cable_row"],
-    E: ["lunges", "ohp", "pullup"],
-    G: ["clean", "machine_bicep_curl", "rdl"],
-  } as Record<string, string[]>,
-
-  cardioTemplates: {
-    F: { label: "Zone 2", detail: "Conversational pace", minutes: 45 },
-    G: { label: "Moderate Cardio", detail: "Bike, jog, or brisk walk", minutes: 25 },
-  } as Record<string, { label: string; detail: string; minutes: number }>,
-
-  workoutCycle: ["A", "B", "C", "D", "E", "F", "G"],
-
-  trainingPlan: {
-    option: "B",
-    liftSessionCardioFinisherMin: 5,
-    homeDose: {
-      pullupsPerDay: 6,
-      pushupsPerDay: 20,
-      guidance: "Same every day. Keep reps easy and never to failure.",
-    },
-    rotation: [
-      { key: "A", kind: "lift", label: "Lift A", detail: "Back Squat, Bench Press, Lat Pulldown" },
-      { key: "B", kind: "lift", label: "Lift B", detail: "Incline Bench, Barbell Row, Lateral Raise" },
-      { key: "C", kind: "lift", label: "Lift C", detail: "RDL, Bench Press, Pull-Up" },
-      { key: "D", kind: "lift", label: "Lift D", detail: "Front Squat, Incline Bench, Cable Row" },
-      { key: "E", kind: "lift", label: "Lift E", detail: "Lunges, OHP, Pull-Up" },
-      { key: "F", kind: "cardio", label: "Zone 2", detail: "Conversational pace, 45 min", minutes: 45 },
-      { key: "G", kind: "cardio", label: "Moderate Cardio", detail: "Bike, jog, or brisk walk, 25 min + Barbell Clean, Machine Bicep Curl, RDL", minutes: 25 },
-    ] as RotationDay[],
-    masterList: {
-      lower: ["squat", "front_squat", "lunges", "rdl", "trap_bar_deadlift"],
-      push: ["bench", "incline_bench", "ohp", "lat_raise"],
-      pull: ["lat_pulldown", "lat_row", "pullup"],
-    },
-  },
 };

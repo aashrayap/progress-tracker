@@ -57,8 +57,7 @@ After the Vision Reinvention (March 2026), the app consolidated from 6 surfaces 
 - Vision-driven, not feature-driven — every surface must trace back to the life vision
 - Plan/day as daily entry point, Vision as weekly+ deep review
 - CSV-first data model (no database migration)
-- Voice and text converge through one pipeline
-- Automation via idea-pipeline and voice-inbox (human gate = PR review only)
+- Phone intake via iMessage channel
 - Reflections should feed back into rules, not just sit in storage
 - Fewer surfaces with more gravity, not more surfaces with less
 - Capture works; retrieval and loop-closing are the gaps to fix
@@ -86,7 +85,7 @@ Create/refresh an insight candidate only when at least one condition is true:
 - Recurrence: same issue/opportunity appears at least 3 times in 14 days, or 5 times in 30 days.
 - Streak break: a core behavior misses for 2+ consecutive planned days.
 - Trend shift: a tracked metric moves at least 10% from its 14-day baseline for 4+ days.
-- Cross-source confirmation: the same pattern appears in at least 2 sources (`reflection`, `mind_loop`, `signal`, `manual`) within 21 days.
+- Cross-source confirmation: the same pattern appears in at least 2 sources (`reflection`, `signal`, `manual`) within 21 days.
 
 ### Scoring (High-Leverage Definition)
 
@@ -149,18 +148,4 @@ Append-only log. When a directional choice is made during a feature, record it h
 | 2026-03-23 | SchedulerModal removed — no in-app plan editing | CLI-first writes, app is for reading + done toggles only |
 | 2026-03-23 | Evening flow added to /checkin (decompress, reflect, set tomorrow) | Evening shapes tomorrow — Daniel Abrada principle |
 
-## Future Work
-
-| Item | Description | Status |
-|------|-------------|--------|
-| Checkin → vision.json writes | Weekly/monthly/quarterly checkins update vision.json fields | In progress (Phase 4 of daily-ritual-alignment spec) |
-| Plan ritual reminder | Plan day view shows ritual context strip from vision.json | In progress (Phase 5 of daily-ritual-alignment spec) |
-| Generative plan blocks | Morning skill auto-suggests plan blocks from ritual blueprint | In progress (Phase 6 of daily-ritual-alignment spec) |
-
 <!-- Add rows as decisions happen. Format: date, what was decided, why -->
-
-## Execution Contract
-
-See **[docs/feature-spec-template.md](feature-spec-template.md)** for the full feature specification and verification protocol.
-
-That template is the single source of truth for how features are specified, verified, and fixed. It is system-agnostic — any AI tool or human developer should follow it.

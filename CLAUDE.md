@@ -36,13 +36,13 @@ The 4-pillar model is the human-facing overlay used in `data/vision.json`, the `
 
 ## Layer Rule
 
-Each layer depends only downward: Surfaces (`app/*/page.tsx`, components) → Intelligence (`lib/`, `api/`) → Foundation (`docs/`, `data/*.csv`). Full vocabulary in `docs/architecture.md`.
+Each layer depends only downward: Surfaces (`app/*/page.tsx`, components) → Intelligence (`lib/`, `api/`) → Foundation (`docs/`, `data/*.csv`). Full system map in `README.md`.
 
 ## Read Before Editing
 
 | Doc                     | Use when                                     |
 | ----------------------- | -------------------------------------------- |
-| `docs/architecture.md`  | System boundaries, data flow, voice pipeline |
+| `README.md`             | Full system map: routes, APIs, data, cadence, skills, components |
 | `docs/data-schemas.md`  | CSV headers and write semantics              |
 | `docs/life-playbook.md` | Domain protocols and constraints             |
 | `docs/app-intent.md`   | Product direction, health metrics, decisions  |

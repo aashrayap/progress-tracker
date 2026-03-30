@@ -450,7 +450,7 @@ export function readWorkouts(): WorkoutSetEntry[] {
 
 export function groupWorkoutsByDay(entries: WorkoutSetEntry[]): WorkoutDay[] {
   const allExercises = Object.values(config.exercises).flat();
-  const cycle = Object.keys(config.workoutTemplates);
+  const cycle = ["A", "B", "C", "D", "E", "F", "G"];
   const byDate: Record<string, WorkoutSetEntry[]> = {};
 
   for (const entry of entries) {

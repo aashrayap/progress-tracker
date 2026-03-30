@@ -627,6 +627,73 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
           );
         })()}
 
+        {/* 6. Today's Priorities (drafts) — any date */}
+        {allDayEvents.length > 0 && (
+          <div className="p-4 bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10">
+            <h3 className="text-xs text-zinc-400 uppercase tracking-wide mb-3">
+              Today&apos;s Priorities
+            </h3>
+            <div className="space-y-2">
+              {allDayEvents.map((e, idx) => (
+                <div
+                  key={`${e.date}-${e.start}-${e.end}-${e.item}-${idx}`}
+                  className="flex items-center gap-3 p-2 rounded bg-purple-500/10 border border-purple-500/20"
+                >
+                  <span className="text-sm text-purple-300">{e.item}</span>
+                  {e.notes && (
+                    <span className="text-xs text-zinc-400">{e.notes}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 7. Schedule */}
+        <div className="p-4 bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10">
+          <h3 className="text-xs text-zinc-400 uppercase tracking-wide mb-3">
+            Schedule
+          </h3>
+          {timedEvents.length === 0 ? (
+            <p className="text-sm text-zinc-600">No scheduled events</p>
+          ) : (() => {
+            const pastBlocks = timedEvents.filter((e) => isToday && e.end <= currentHour);
+            const futureBlocks = timedEvents.filter((e) => !isToday || e.end > currentHour);
+            const showNowLine = isToday && pastBlocks.length > 0 && futureBlocks.length > 0;
+            return (
+              <div>
+                {pastBlocks.map((e, idx) => (
+                  <PlanBlock
+                    key={`${e.date}-${e.start}-${e.end}-${e.item}-${idx}`}
+                    start={e.start}
+                    end={e.end}
+                    item={e.item}
+                    done={e.done}
+                    date={e.date}
+                    isPast={true}
+                    onToggleDone={() => setPlanDone(e, e.done === "1" ? "" : "1")}
+                    onMarkMissed={() => setPlanDone(e, "0")}
+                  />
+                ))}
+                {showNowLine && <NowLine />}
+                {futureBlocks.map((e, idx) => (
+                  <PlanBlock
+                    key={`${e.date}-${e.start}-${e.end}-${e.item}-${idx}`}
+                    start={e.start}
+                    end={e.end}
+                    item={e.item}
+                    done={e.done}
+                    date={e.date}
+                    isPast={isToday && e.end <= currentHour}
+                    onToggleDone={() => setPlanDone(e, e.done === "1" ? "" : "1")}
+                    onMarkMissed={() => setPlanDone(e, "0")}
+                  />
+                ))}
+              </div>
+            );
+          })()}
+        </div>
+
         {/* Intentions — any date */}
         {hasIntentions && (
           <div className="px-3 py-2 rounded-lg border border-cyan-400/20 bg-cyan-500/[0.06]">
@@ -843,72 +910,6 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
           );
         })()}
 
-        {/* 6. Today's Priorities (drafts) — any date */}
-        {allDayEvents.length > 0 && (
-          <div className="p-4 bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10">
-            <h3 className="text-xs text-zinc-400 uppercase tracking-wide mb-3">
-              Today&apos;s Priorities
-            </h3>
-            <div className="space-y-2">
-              {allDayEvents.map((e, idx) => (
-                <div
-                  key={`${e.date}-${e.start}-${e.end}-${e.item}-${idx}`}
-                  className="flex items-center gap-3 p-2 rounded bg-purple-500/10 border border-purple-500/20"
-                >
-                  <span className="text-sm text-purple-300">{e.item}</span>
-                  {e.notes && (
-                    <span className="text-xs text-zinc-400">{e.notes}</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 7. Schedule */}
-        <div className="p-4 bg-zinc-900/60 backdrop-blur-md rounded-xl border border-white/10">
-          <h3 className="text-xs text-zinc-400 uppercase tracking-wide mb-3">
-            Schedule
-          </h3>
-          {timedEvents.length === 0 ? (
-            <p className="text-sm text-zinc-600">No scheduled events</p>
-          ) : (() => {
-            const pastBlocks = timedEvents.filter((e) => isToday && e.end <= currentHour);
-            const futureBlocks = timedEvents.filter((e) => !isToday || e.end > currentHour);
-            const showNowLine = isToday && pastBlocks.length > 0 && futureBlocks.length > 0;
-            return (
-              <div>
-                {pastBlocks.map((e, idx) => (
-                  <PlanBlock
-                    key={`${e.date}-${e.start}-${e.end}-${e.item}-${idx}`}
-                    start={e.start}
-                    end={e.end}
-                    item={e.item}
-                    done={e.done}
-                    date={e.date}
-                    isPast={true}
-                    onToggleDone={() => setPlanDone(e, e.done === "1" ? "" : "1")}
-                    onMarkMissed={() => setPlanDone(e, "0")}
-                  />
-                ))}
-                {showNowLine && <NowLine />}
-                {futureBlocks.map((e, idx) => (
-                  <PlanBlock
-                    key={`${e.date}-${e.start}-${e.end}-${e.item}-${idx}`}
-                    start={e.start}
-                    end={e.end}
-                    item={e.item}
-                    done={e.done}
-                    date={e.date}
-                    isPast={isToday && e.end <= currentHour}
-                    onToggleDone={() => setPlanDone(e, e.done === "1" ? "" : "1")}
-                    onMarkMissed={() => setPlanDone(e, "0")}
-                  />
-                ))}
-              </div>
-            );
-          })()}
-        </div>
       </div>
 
       {/* Score trend modal */}

@@ -60,7 +60,6 @@ The 7 canonical domain IDs remain the tagging standard in all CSVs. The 4-pillar
 | Action item | `todos.csv` | "Ship auth refactor", career |
 | Experiment | `experiments.csv` | "Morning meditation before gym", 7 days |
 | Identity/vision content | `vision.json` | identityScript rewrite, domain actual update |
-| Raw capture | `inbox.csv` | Voice note, text note |
 
 Rule: signals and evidence go to CSVs. Identity and direction go to vision.json. Rules go to this playbook. System behavior goes to app-intent.md.
 
