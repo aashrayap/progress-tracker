@@ -5,7 +5,7 @@ description: Weekly accountability review using tracker CSV data.
 
 # Weekly Review
 
-Quick data-only snapshot. For the full interactive weekly check-in (with domain spotlight, experiments, goals, and intention setting), use `/checkin weekly`.
+Quick data-only snapshot. For the full interactive weekly check-in (with domain spotlight, goals, and intention setting), use `/checkin weekly`.
 
 This skill runs Phases 1-2 only from the weekly check-in — the quantitative score card and mood/trigger arc. No interactive questions, no writes.
 

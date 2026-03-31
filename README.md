@@ -61,7 +61,6 @@ vision/page.tsx
 ├── Per-pillar identity script  ← GET /api/vision
 ├── Per-pillar anti-vision
 ├── NorthStarCard (ABT+H per domain)
-├── ExperimentsTable            ← GET /api/hub
 ├── InputControlSection
 ├── DistractionsSection
 └── HabitAuditSection
@@ -103,7 +102,6 @@ health/page.tsx                 ← GET /api/health
 | `plan.csv` | Time blocks + scheduled items | `date,start,end,item,done,notes,domain` | plan agent, DayView |
 | `todos.csv` | Action backlog | `id,item,done,created,domain` | plan agent, /log, todo agent |
 | `reflections.csv` | Micro-AARs | `date,domain,win,lesson,change,archived` | process agent, weekly-reflect agent |
-| `experiments.csv` | Time-boxed behavior experiments | `name,hypothesis,start_date,duration_days,domain,status,verdict,reflection` | /checkin |
 | `groceries.csv` | Grocery items by section | `item,section,done,added` | (no active consumer) |
 | `resources.csv` | Books, articles, resources | `title,author,type,domain,status,notes` | (no active consumer) |
 | `quotes.csv` | Curated quotes | (internal to /api/hub) | — |
@@ -427,26 +425,24 @@ All in `app/app/components/`.
 | `WeightChart` | (unused) | Weight trend chart |
 | `LineTrendChart` | various | Generic line chart |
 | `TrendModal` | various | Trend detail overlay |
-| `ExperimentsTable` | /vision | Active experiments table |
 | `BottomNav` | layout | Sticky top navigation bar |
 
 ---
 
-## Gym Rotation
+## Weekly Program
 
-Pure completion-based 7-day rotation: A→B→C→D→E→F→G→A...
+Day-of-week based (Mon-Fri lift, Sat-Sun rest). Defined in `WEEKLY_PROGRAM` in `config.ts`. `getTodayWorkout()` in `csv.ts` returns key by weekday.
 
-| Day | Type | Exercises |
-|-----|------|-----------|
-| A | Lift | Squat, Bench, Lat Pulldown |
-| B | Lift | OHP, Lat Row, Incline Bench |
-| C | Lift | RDL, Bench, Pullup |
-| D | Lift | Front Squat, Incline Bench, Lat Row |
-| E | Lift | Lunges, OHP, Pullup |
-| F | Cardio | Zone 2 (45 min) |
-| G | Cardio | Moderate (25 min) |
+| Day | Exercises |
+|-----|-----------|
+| Mon | Power Clean, Barbell Row, Incline Bench, Lat Pulldown, Face Pull |
+| Tue | Back Squat, RDL, Pull-Up, Dip, Lateral Raise |
+| Wed | Deadlift, Barbell Row, Incline Bench, Face Pull, Neck Curl |
+| Thu | Hang Clean, Front Squat, Lunges, Barbell Shrug, Lateral Raise |
+| Fri | Power Clean, OHP, Hanging Leg Raise, Machine Bicep Curl, Lat Pulldown |
+| Sat/Sun | Rest |
 
-`getNextWorkout()` in `csv.ts` reads last gym signal. `GYM_ROTATION` constant defined in `csv.ts`.
+Legacy A-G keys in `workouts.csv` are parsed via `normalizeWorkoutKey()` in `config.ts`.
 
 ---
 

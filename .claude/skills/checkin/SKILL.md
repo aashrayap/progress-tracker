@@ -72,7 +72,6 @@ Append to `daily_signals.csv` after each check-in:
 - `~/Documents/2026/tracker/data/reflections.csv`
 - `~/Documents/2026/tracker/data/plan.csv`
 - `~/Documents/2026/tracker/data/todos.csv`
-- `~/Documents/2026/tracker/data/experiments.csv`
 - `~/Documents/2026/tracker/data/vision.json` (via GET /api/vision — weekly+ cadences)
 
 ## Canonical Files Written
@@ -81,7 +80,6 @@ Append to `daily_signals.csv` after each check-in:
 - `~/Documents/2026/tracker/data/reflections.csv`
 - `~/Documents/2026/tracker/data/plan.csv`
 - `~/Documents/2026/tracker/data/todos.csv`
-- `~/Documents/2026/tracker/data/experiments.csv` (conclude expired, create new)
 - `~/Documents/2026/tracker/data/vision.json` (via PATCH /api/vision for weekly/monthly, PUT for quarterly)
 
 ---
@@ -130,30 +128,6 @@ Rules:
 - User can specify a target with Option 3: "3 tomorrow", "3 thursday", "3 week"
 - After completing an option, ask "What next?" with the updated menu
 - When user says "done" or stops, write `checkin_daily=1` if not already written today
-
-### Conclude Expired Experiments (before or after menu, agent's choice)
-
-If expired experiments were surfaced in Card 2, prompt for each one before or after the menu loop:
-
-```
-─── EXPERIMENT EXPIRED ──────────────────────────────────
-  "Morning meditation before gym" (7 days, health)
-
-  Verdict: kept / dropped / extended?
-  What did you learn? (one line)
-```
-
-For each expired experiment:
-- **kept**: Update row in `experiments.csv` — set `status=concluded`, `verdict=kept`, `reflection=<answer>`.
-- **dropped**: Update row in `experiments.csv` — set `status=concluded`, `verdict=dropped`, `reflection=<answer>`.
-- **extended**: Update old row — set `status=concluded`, `verdict=extended`, `reflection=<answer>`. Then append a NEW row with same `name`, `hypothesis`, `domain`, `start_date=today`, `duration_days=7` (ask if different duration wanted), `status=active`, empty `verdict`, empty `reflection`.
-- **"I'll decide later"**: Skip — leave the row as `status=active`. It will surface again next checkin.
-
-Row identification: match on both `name` AND `start_date` (handles extended experiments with the same name but different start dates).
-
-Write updates to `experiments.csv` immediately after each experiment is concluded.
-
----
 
 ### Option 1: Log
 

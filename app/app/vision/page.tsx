@@ -2,17 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { VisionData, VisionDomain, Distractions, InputControl, HabitAudit } from "../lib/types";
-import ExperimentsTable from "../components/ExperimentsTable";
-
-// ── Hub data types (mirrored from page.tsx) ──────────────────────────
-
-interface HubData {
-  experiments: {
-    current: { name: string; dayCount: number; durationDays: number; domain: string; isExpired: boolean }[];
-    past: { name: string; verdict: string; reflection: string; startDate: string }[];
-  };
-}
-
 // ── Collapsible section ──────────────────────────────────────────────
 
 function CollapsibleSection({ title, children, defaultOpen = false }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
@@ -35,15 +24,10 @@ function CollapsibleSection({ title, children, defaultOpen = false }: { title: s
 
 export default function VisionPage() {
   const [vision, setVision] = useState<VisionData | null>(null);
-  const [hub, setHub] = useState<HubData | null>(null);
   const [loading, setLoading] = useState(true);
   const fetchAll = useCallback(() => {
-    Promise.all([
-      fetch("/api/vision").then((r) => r.ok ? r.json() : null),
-      fetch("/api/hub").then((r) => r.ok ? r.json() : null),
-    ]).then(([visionData, hubData]) => {
+    fetch("/api/vision").then((r) => r.ok ? r.json() : null).then((visionData) => {
       setVision(visionData);
-      setHub(hubData);
       setLoading(false);
     }).catch((err) => {
       console.error("Failed to load vision data:", err);
@@ -124,17 +108,7 @@ export default function VisionPage() {
             </div>
           </CollapsibleSection>
 
-          {/* ── 7. Experiments (collapsed) ───────────────────────────── */}
-          {hub && (
-            <CollapsibleSection title="Experiments">
-              <ExperimentsTable
-                current={hub.experiments.current}
-                past={hub.experiments.past}
-              />
-            </CollapsibleSection>
-          )}
-
-          {/* ── 9-11. Input Control, Distractions, Habit Audit ─────── */}
+          {/* ── Input Control, Distractions, Habit Audit ─────── */}
           <InputControlSection data={vision.inputControl} />
           <DistractionsSection data={vision.distractions} />
           <HabitAuditSection data={vision.habitAudit} />

@@ -36,8 +36,6 @@ const BRIEFING_PATH = path.join(DATA_ROOT, "briefing.json");
 const VISION_PATH = path.join(DATA_ROOT, "vision.json");
 const BRIEFING_FEEDBACK_PATH = path.join(DATA_ROOT, "briefing_feedback.csv");
 const BRIEFING_FEEDBACK_HEADER = "date,state,rating,feedback_text,briefing_hash";
-const EXPERIMENTS_PATH = path.join(DATA_ROOT, "experiments.csv");
-const EXPERIMENTS_HEADER = "name,hypothesis,start_date,duration_days,domain,status,verdict,reflection";
 
 export interface PlanEntry {
   date: string;
@@ -76,16 +74,6 @@ export interface ReflectionEntry {
   archived?: string;
 }
 
-export interface ExperimentEntry {
-  name: string;
-  hypothesis: string;
-  startDate: string;      // YYYY-MM-DD
-  durationDays: number;   // default 7
-  domain: string;         // canonical domain ID
-  status: string;         // "active" | "concluded"
-  verdict: string;        // "" | "kept" | "dropped" | "extended"
-  reflection: string;     // "" when active
-}
 
 function ensureFileWithHeader(filePath: string, header: string): void {
   if (!fs.existsSync(filePath)) {
@@ -825,29 +813,4 @@ export function readQuotes(): QuoteEntry[] {
   });
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Experiments
-// ─────────────────────────────────────────────────────────────────────────────
-
-function serializeExperiment(entry: ExperimentEntry): string {
-  return `${csvQuote(entry.name)},${csvQuote(entry.hypothesis)},${entry.startDate},${entry.durationDays},${csvQuote(entry.domain)},${entry.status},${entry.verdict},${csvQuote(entry.reflection)}`;
-}
-
-export function readExperiments(): ExperimentEntry[] {
-  if (!fs.existsSync(EXPERIMENTS_PATH)) return [];
-  const lines = readDataLines(EXPERIMENTS_PATH);
-  return lines.map((line) => {
-    const c = parseCSVLine(line);
-    return {
-      name: c[0] || "",
-      hypothesis: c[1] || "",
-      startDate: c[2] || "",
-      durationDays: parseInt(c[3], 10) || 7,
-      domain: c[4] || "",
-      status: c[5] || "active",
-      verdict: c[6] || "",
-      reflection: c[7] || "",
-    };
-  });
-}
 

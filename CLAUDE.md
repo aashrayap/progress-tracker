@@ -75,7 +75,6 @@ reflections:   date,domain,win,lesson,change,archived
 groceries:     item,section,done,added
 resources:     title,author,type,domain,status,notes
 briefing_feedback: date,state,rating,feedback_text,briefing_hash
-experiments:        name,hypothesis,start_date,duration_days,domain,status,verdict,reflection
 ```
 
 ## Skills

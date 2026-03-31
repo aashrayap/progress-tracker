@@ -69,7 +69,7 @@ What writes where, at what frequency. See `docs/life-playbook.md` for the full c
 | Cadence | Trigger | vision.json fields written | CSV files written |
 |---------|---------|--------------------------|-------------------|
 | Daily | `/checkin daily` or app signals | None | daily_signals, plan, reflections |
-| Weekly | `/checkin weekly` (Sundays) | domains[].actual, domains[].habits, intentions.weekly | daily_signals, reflections, experiments |
+| Weekly | `/checkin weekly` (Sundays) | domains[].actual, domains[].habits, intentions.weekly | daily_signals, reflections |
 | Monthly | `/checkin monthly` (last Sunday) | identityScript, antiVision, intentions | daily_signals |
 | Quarterly | `/checkin quarterly` | All fields (full rebuild) | daily_signals |
 

@@ -198,7 +198,6 @@ vision/page.tsx
 ├── InputControlSection
 ├── DistractionsSection
 ├── HabitAuditSection
-└── ExperimentsTable
 ```
 
 **`/health`**
@@ -224,7 +223,7 @@ Route inventory table. Mark orphaned routes being removed.
 |---|---|---|---|---|
 | `/api/daily-signals` | GET, POST, DELETE | daily_signals.csv | daily_signals.csv (via router.ts) | DayView habit toggles |
 | `/api/health` | GET | daily_signals, workouts, reflections | none | /health page |
-| `/api/hub` | GET | daily_signals, plan, reflections, todos, workouts, quotes, experiments, briefing.json | none | DayView (BriefingCard), /vision page |
+| `/api/hub` | GET | daily_signals, plan, reflections, todos, workouts, quotes, briefing.json | none | DayView (BriefingCard), /vision page |
 | `/api/hub/briefing-feedback` | POST | briefing.json | briefing_feedback.csv | BriefingCard |
 | `/api/plan` | POST, DELETE | none | plan.csv | DayView |
 | `/api/plan/range` | GET | plan.csv, daily_signals.csv | none | PlanProvider, DayView |
@@ -252,7 +251,6 @@ Note: `/api/hub` reads quotes.csv directly via csv.ts — the standalone `/api/q
 | `quotes.csv` | Curated quotes by domain (read by /api/hub) |
 | `resources.csv` | Books, articles, resources (no active page consumer) |
 | `briefing_feedback.csv` | Daily briefing ratings and feedback |
-| `experiments.csv` | Active experiments, verdicts, reflections |
 
 **vision.json** (in `data/`):
 

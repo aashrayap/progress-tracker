@@ -47,7 +47,7 @@ Common signals:
 - `evening_review` (`0|1`) — evening protocol completion, `category=personal_growth`. Logged via mark-complete button on /plan/day.
 - `wim_hof_am` (`0|1`) — morning Wim Hof breathing, `category=health`. Logged via habit toggle on /plan/day.
 - `wim_hof_pm` (`0|1`) — evening Wim Hof breathing, `category=health`. Logged via habit toggle on /plan/day.
-- `weekly_experiment` (text) — **legacy** (replaced by `data/experiments.csv`), `value=<domain>`, `context=<description>`
+- `weekly_experiment` (text) — **legacy**, `value=<domain>`, `context=<description>`
 - `experiment_result` (`yes|partial|no`) — **legacy**, `context=<what was learned>`
 - `weekly_goal` (text) — **legacy**, `value=<domain>`, `context=<goal text>`
 - `weekly_goal_result` (`complete|missed|partial`) — **legacy**, `context=<goal text>`
@@ -180,26 +180,6 @@ Protocol completion is tracked via three review signals in daily_signals.csv:
 - `evening_review` — evening protocol (6 steps) complete
 - Logged via mark-complete buttons on /plan/day (one per protocol phase)
 - Historical `vision_reviewed` rows remain valid — not backfilled or deleted
-
-## data/experiments.csv
-```
-name,hypothesis,start_date,duration_days,domain,status,verdict,reflection
-```
-
-- `name`: short label for the experiment (e.g. "Morning meditation before gym")
-- `hypothesis`: expected outcome (e.g. "Better focus in first deep work block")
-- `start_date`: `YYYY-MM-DD` — date experiment began
-- `duration_days`: integer, default 7, minimum 1
-- `domain`: canonical domain ID (`health`, `career`, `relationships`, `finances`, `fun`, `personal_growth`, `environment`)
-- `status`: `active` or `concluded`
-- `verdict`: empty when `status=active`; one of `kept`, `dropped`, `extended` when `status=concluded`
-- `reflection`: empty when `status=active`; one-line reflection when concluded
-
-Derived state (computed at read time, not stored):
-- **Expired**: `status=active` AND `today >= start_date + duration_days` — needs concluding
-- **Day count**: `today - start_date + 1` for active experiments, capped at `duration_days`
-
-Replaces the legacy `weekly_experiment` and `experiment_result` signals in `daily_signals.csv` for new experiments. Historical signal rows in `daily_signals.csv` are preserved — not backfilled or deleted.
 
 ## Side Effect Rules
 

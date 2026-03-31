@@ -45,8 +45,8 @@ The 7 canonical domain IDs remain the tagging standard in all CSVs. The 4-pillar
 | Cadence | When | What happens | Where it writes |
 |---------|------|-------------|----------------|
 | **Daily** | Every day | Log signals (habits, weight, mood). Review vision. Execute plan. | `daily_signals.csv`, `plan.csv` |
-| **Weekly** | Sundays | Score card, domain spotlight, update Actual + Habits in vision, set weekly intention/goals, experiment loop, stale review | `daily_signals.csv`, `reflections.csv`, `experiments.csv`, `vision.json` (domains[].actual, domains[].habits, intentions.weekly) |
-| **Monthly** | Last Sunday of month | Month trajectory report, rewrite identity script + anti-vision, update intentions, review inputControl + experiments | `daily_signals.csv`, `vision.json` (identityScript, antiVision, intentions) |
+| **Weekly** | Sundays | Score card, domain spotlight, update Actual + Habits in vision, set weekly intention/goals, stale review | `daily_signals.csv`, `reflections.csv`, `vision.json` (domains[].actual, domains[].habits, intentions.weekly) |
+| **Monthly** | Last Sunday of month | Month trajectory report, rewrite identity script + anti-vision, update intentions, review inputControl | `daily_signals.csv`, `vision.json` (identityScript, antiVision, intentions) |
 | **Quarterly** | Every 3 months | Full ABT(H) rebuild (Becoming + Timeline), ritualBlueprint overhaul, habitAudit, inputControl purge | `vision.json` (all fields) |
 
 ### Write Routing Rules
@@ -58,7 +58,6 @@ The 7 canonical domain IDs remain the tagging standard in all CSVs. The 4-pillar
 | Reflection (win/lesson/change) | `reflections.csv` | health domain, "hit all 6 sessions" |
 | Time block | `plan.csv` | 9:00-10:30, Deep work, career |
 | Action item | `todos.csv` | "Ship auth refactor", career |
-| Experiment | `experiments.csv` | "Morning meditation before gym", 7 days |
 | Identity/vision content | `vision.json` | identityScript rewrite, domain actual update |
 
 Rule: signals and evidence go to CSVs. Identity and direction go to vision.json. Rules go to this playbook. System behavior goes to app-intent.md.

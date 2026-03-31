@@ -4,7 +4,6 @@ import {
   getCurrentIntentions,
   readBriefing,
   readDailySignals,
-  readExperiments,
   getDaysSince,
   getHabitsForDate,
   getStreak,
@@ -15,7 +14,6 @@ import {
   readTodos,
   readWorkouts,
   type DailySignalEntry,
-  type ExperimentEntry,
   type WorkoutSetEntry,
 } from "../../lib/csv";
 import { config, HABIT_CONFIG } from "../../lib/config";
@@ -340,38 +338,6 @@ export async function GET() {
       dailyQuote = { text: pick.text, author: pick.author, source: pick.source };
     }
 
-    // Experiments: split into current (active) and past (concluded)
-    const allExperiments = readExperiments();
-    const todayMs = new Date(todayStr).getTime();
-    const experimentsCurrent = allExperiments
-      .filter((e) => e.status === "active")
-      .map((e) => {
-        const startMs = new Date(e.startDate).getTime();
-        const dayCount = Math.floor((todayMs - startMs) / 86400000) + 1;
-        const isExpired = dayCount > e.durationDays;
-        return {
-          name: e.name,
-          dayCount,
-          durationDays: e.durationDays,
-          domain: e.domain,
-          isExpired,
-        };
-      })
-      .sort((a, b) => {
-        if (a.isExpired !== b.isExpired) return a.isExpired ? -1 : 1;
-        return b.dayCount - a.dayCount;
-      });
-    const experimentsPast = allExperiments
-      .filter((e) => e.status === "concluded")
-      .sort((a, b) => b.startDate.localeCompare(a.startDate))
-      .slice(0, 10)
-      .map((e) => ({
-        name: e.name,
-        verdict: e.verdict,
-        reflection: e.reflection,
-        startDate: e.startDate,
-      }));
-
     return NextResponse.json({
       briefing,
       checkinStatus,
@@ -415,10 +381,6 @@ export async function GET() {
       openTodos,
       openTodosCount,
       dailyQuote,
-      experiments: {
-        current: experimentsCurrent,
-        past: experimentsPast,
-      },
     });
   } catch (e) {
     console.error("GET /api/hub error:", e);
