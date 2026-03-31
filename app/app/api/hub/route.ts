@@ -23,8 +23,10 @@ import { computeInsightResponse } from "../../lib/insight";
 import { getWeekStartStr } from "../../lib/date-utils";
 
 function getNowWindow(): "morning" | "day" | "evening" {
-  const hour = new Date().getHours();
-  if (hour < 12) return "morning";
+  const now = new Date();
+  const hour = now.getHours();
+  const min = now.getMinutes();
+  if (hour < 10 || (hour === 10 && min < 30)) return "morning";
   if (hour >= 20) return "evening";
   return "day";
 }

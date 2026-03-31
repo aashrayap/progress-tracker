@@ -12,8 +12,10 @@ import { HABIT_CONFIG } from "../lib/config";
 import { toDateStr } from "../lib/utils";
 
 function getRitualPhase(): "morning" | "midday" | "evening" {
-  const hour = new Date().getHours();
-  if (hour < 12) return "morning";
+  const now = new Date();
+  const hour = now.getHours();
+  const min = now.getMinutes();
+  if (hour < 10 || (hour === 10 && min < 30)) return "morning";
   if (hour < 17) return "midday";
   return "evening";
 }

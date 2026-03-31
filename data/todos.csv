@@ -50,3 +50,6 @@ id,item,done,created,domain
 50,Redesign training program — power/athletic physique (Hamza aesthetic + Olympic lifts) with superset format. Full spec: docs/specs/training-program-redesign.md,0,2026-03-26,health
 51,Add today's workout label to plan/day page and morning report — e.g. 'Gym: Deadlift Day (Wed)' linking to /health page. Touchpoints: DayView.tsx, compute-morning-report.js, checkin skill.,0,2026-03-28,health
 52,Text Pawel before going to Warsaw,0,2026-03-29,relationships
+53,Add exact warmup sets/reps to each workout day (Mon-Fri) — eliminate decision fatigue,0,2026-03-30,health
+54,Figure out target sets reps and weight per workout day,0,2026-03-30,health
+55,Buy travel pack perfume (Amazon),0,2026-03-30,environment
