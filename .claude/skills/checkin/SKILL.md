@@ -118,6 +118,7 @@ What do you want to do?
   1. Log             (8 open today)
   2. Process          (anchor / decompress / reflect / reframe)
   3. Plan             (today / tomorrow / week)
+  4. Wind Down        (end-of-day close)
 ```
 
 Rules:
@@ -218,6 +219,50 @@ The agent detects target from user input:
 The agent runs `node scripts/precompute-plan.js`, shows the target day's state, accepts a single free-form response, writes everything, and shows the final plan.
 
 Two rounds max. After the agent returns, resume the menu.
+
+---
+
+### Option 4: Wind Down
+
+**Single-round end-of-day close.** One card, four questions, one natural-language response. Target: under 60 seconds of user time.
+
+#### The card
+
+Show a single card:
+
+```
+┌─ Wind Down ──────────────────────────────────────┐
+│                                                   │
+│  1. What went well today?                         │
+│  2. What are you grateful for right now?           │
+│  3. What's tomorrow's one priority?                │
+│  4. How are you feeling?                           │
+│                                                   │
+│  Answer all at once.                               │
+└───────────────────────────────────────────────────┘
+```
+
+#### Parsing the response
+
+Accept natural language in one message. Examples:
+- "gym was solid, grateful for basia being here, tomorrow finish the PR, feeling tired but good"
+- "got deep work done, grateful for the quiet morning, priority is gym, feeling calm"
+
+Parse each answer to its destination:
+
+| Question | Destination | Fields |
+|----------|------------|--------|
+| Q1 (win) | `reflections.csv` | `date=today, domain=<inferred>, win=<text>, lesson=, change=, archived=` |
+| Q2 (gratitude) | `daily_signals.csv` | `signal=gratitude, value=<text>, category=personal_growth` |
+| Q3 (tomorrow priority) | `plan.csv` | `date=<tomorrow>, start=0, end=0, item=<text>, done=, notes=, domain=<inferred>` |
+| Q4 (feeling) | `daily_signals.csv` | `signal=feeling, value=<text>, category=health` |
+
+Rules:
+- Infer domain from content for Q1 and Q3. Default to `personal_growth` if unclear.
+- Q3 writes a draft block (start=0, end=0) for the next calendar day.
+- All writes happen immediately after parsing.
+- After writes, confirm briefly: "Logged. Night." — no elaboration.
+- Return to menu with "What next?" (same as other options).
 
 ---
 

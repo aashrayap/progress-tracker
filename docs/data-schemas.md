@@ -51,6 +51,8 @@ Common signals:
 - `experiment_result` (`yes|partial|no`) — **legacy**, `context=<what was learned>`
 - `weekly_goal` (text) — **legacy**, `value=<domain>`, `context=<goal text>`
 - `weekly_goal_result` (`complete|missed|partial`) — **legacy**, `context=<goal text>`
+- `gratitude` (text) — free-text gratitude entry, `category=personal_growth`. Written by /checkin Wind Down (Option 4).
+- `feeling` (text) — free-text emotional state, `category=health`. Written by /checkin Wind Down (Option 4).
 
 ## data/workouts.csv
 ```
