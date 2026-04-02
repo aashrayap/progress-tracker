@@ -415,6 +415,16 @@ export function getHabitsForDate(signals: DailySignalEntry[], date: string): Rec
   return habits;
 }
 
+export function getNaDays(signals: DailySignalEntry[]): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const entry of signals) {
+    if (entry.signal === "day_status" && entry.value === "na") {
+      map.set(entry.date, entry.context || "N/A");
+    }
+  }
+  return map;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Workouts
 // ─────────────────────────────────────────────────────────────────────────────

@@ -116,12 +116,14 @@ interface HubData {
     dates: string[];
     days: Record<string, boolean>[];
   };
+  naDays: Record<string, string>;
   habitTrends: Record<string, { date: string; value: boolean | null }[]>;
   habitLogs: Record<string, HabitLogEntry[]>;
 }
 
 
-function computeDayScore(entry: DopamineDay | undefined, isToday: boolean): { score: number | null; color: string } {
+function computeDayScore(entry: DopamineDay | undefined, isToday: boolean, isNa?: boolean): { score: number | null; color: string } {
+  if (isNa) return { score: null, color: "bg-zinc-600/50" };
   if (!entry) {
     return isToday ? { score: null, color: "bg-zinc-800" } : { score: 0, color: "bg-red-500" };
   }
@@ -474,11 +476,12 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
   const scoreTrendData = useMemo(() => {
     if (!patchedLog || !gridData) return { daily: [], rolling: [], summary: null };
     const { allDates } = gridData;
+    const naDaysMap: Record<string, string> = hubData?.naDays || {};
     const todayIdx = allDates.length - 1;
     const daily = allDates.map((ds, i) => {
       const entry = patchedLog.find((l) => l.date === ds);
       const isTodayCell = i === todayIdx;
-      const { score } = computeDayScore(entry, isTodayCell);
+      const { score } = computeDayScore(entry, isTodayCell, !!naDaysMap[ds]);
       return { date: ds, value: score };
     });
     const WINDOW = 7;
@@ -500,7 +503,7 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
       rolling,
       summary: { avg, recentAvg, best, loggedDays: scored.length },
     };
-  }, [patchedLog, gridData]);
+  }, [patchedLog, gridData, hubData]);
 
   const renderHabitToggleRow = (signals: string[], label: string) => (
     <div key={label}>
@@ -730,6 +733,7 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
 
         {/* 5. 90-day habit grid — today only */}
         {isToday && hubData && gridData && (() => {
+          const naDays: Record<string, string> = hubData.naDays || {};
           const { allDates, allWeeks } = gridData;
           const WEEKS_PER_PAGE = 4;
           const maxPage = Math.max(0, Math.ceil(allWeeks.length / WEEKS_PER_PAGE) - 1);
@@ -795,15 +799,18 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
                 </div>
 
                 {hoveredCol !== null && allDates[hoveredCol] && (() => {
-                  const entry = patchedLog.find((l) => l.date === allDates[hoveredCol]);
+                  const hoveredDate = allDates[hoveredCol];
+                  const entry = patchedLog.find((l) => l.date === hoveredDate);
                   const isTodayCell = hoveredCol === todayIdx;
-                  const { score } = computeDayScore(entry, isTodayCell);
+                  const isNa = !!naDays[hoveredDate];
+                  const { score } = computeDayScore(entry, isTodayCell, isNa);
                   return (
                     <HabitTooltip
-                      dateStr={allDates[hoveredCol]}
+                      dateStr={hoveredDate}
                       columnIndex={hoveredCol}
                       gridRef={gridRef}
                       score={score}
+                      naReason={naDays[hoveredDate]}
                     />
                   );
                 })()}
@@ -831,15 +838,16 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
                       const ds = allDates[i];
                       const entry = patchedLog.find((l) => l.date === ds);
                       const isTodayCell = i === todayIdx;
-                      const { score, color } = computeDayScore(entry, isTodayCell);
+                      const isNa = !!naDays[ds];
+                      const { score, color } = computeDayScore(entry, isTodayCell, isNa);
                       return (
                         <div
                           key={ds}
                           data-col={i}
-                          className={`w-7 h-7 rounded cursor-pointer ${color} ${isTodayCell ? "ring-2 ring-zinc-400 ring-offset-1 ring-offset-zinc-950" : ""}`}
-                          title={score !== null ? `${score}/9` : "Not logged"}
+                          className={`w-7 h-7 rounded ${isNa ? "cursor-default" : "cursor-pointer"} ${color} ${isTodayCell ? "ring-2 ring-zinc-400 ring-offset-1 ring-offset-zinc-950" : ""}`}
+                          title={isNa ? `N/A: ${naDays[ds]}` : score !== null ? `${score}/9` : "Not logged"}
                           onMouseEnter={() => setHoveredCol(i)}
-                          onClick={() => setScoreTrendOpen(true)}
+                          onClick={isNa ? undefined : () => setScoreTrendOpen(true)}
                         />
                       );
                     }))}
@@ -865,17 +873,18 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
                       {weeks.map((wk, wi) => weekCells(wk, wi, (i) => {
                         const ds = allDates[i];
                         const isTodayCell = i === todayIdx;
+                        const isNa = !!naDays[ds];
                         if (row.signals.length === 1) {
                           const val = patchedTrackerDays[i]?.[row.signals[0]];
                           return (
                             <div
                               key={ds}
                               data-col={i}
-                              className={`w-7 h-7 rounded cursor-pointer ${
-                                val === true ? "bg-emerald-500" : val === false ? "bg-red-500" : "bg-zinc-800"
+                              className={`w-7 h-7 rounded ${isNa ? "cursor-default" : "cursor-pointer"} ${
+                                isNa ? "bg-zinc-600/50" : val === true ? "bg-emerald-500" : val === false ? "bg-red-500" : "bg-zinc-800"
                               } ${isTodayCell ? "ring-2 ring-zinc-400 ring-offset-1 ring-offset-zinc-950" : ""}`}
                               onMouseEnter={() => setHoveredCol(i)}
-                              onClick={() => setActiveHabitKey(row.signals[0] as HabitKey)}
+                              onClick={isNa ? undefined : () => setActiveHabitKey(row.signals[0] as HabitKey)}
                             />
                           );
                         }
@@ -884,11 +893,11 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
                           <div
                             key={ds}
                             data-col={i}
-                            className={`w-7 h-7 rounded overflow-hidden flex flex-row cursor-pointer ${
+                            className={`w-7 h-7 rounded overflow-hidden flex flex-row ${isNa ? "cursor-default" : "cursor-pointer"} ${
                               isTodayCell ? "ring-2 ring-zinc-400 ring-offset-1 ring-offset-zinc-950" : ""
                             }`}
                             onMouseEnter={() => setHoveredCol(i)}
-                            onClick={() => setActiveHabitKey(row.signals[0] as HabitKey)}
+                            onClick={isNa ? undefined : () => setActiveHabitKey(row.signals[0] as HabitKey)}
                           >
                             {row.signals.map((sig) => {
                               const val = patchedTrackerDays[i]?.[sig];
@@ -896,7 +905,7 @@ export default function DayView({ events, habits, focusDate, onRefresh }: Props)
                                 <div
                                   key={sig}
                                   className={`flex-1 ${
-                                    val === true ? "bg-emerald-500" : val === false ? "bg-red-500" : "bg-zinc-800"
+                                    isNa ? "bg-zinc-600/50" : val === true ? "bg-emerald-500" : val === false ? "bg-red-500" : "bg-zinc-800"
                                   }`}
                                 />
                               );
